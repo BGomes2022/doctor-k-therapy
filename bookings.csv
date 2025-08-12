@@ -1,0 +1,2 @@
+bookingId,bookingToken,date,time,sessionPackage,createdAt,meetLink,calendarEventId,sessionNumber,status
+a9bbcbca-61a9-48fb-8546-3a258a232562,7c19222e-1744-4312-8832-70464a055fd5,2025-08-13,19:00,"{""id"":""four-sessions"",""name"":""4 Sessions Package"",""price"":350,""originalPrice"":400,""duration"":""Valid for 3 months"",""description"":""Perfect for short-term focused therapy goals"",""savings"":""Save €50"",""icon"":"""",""popular"":true}",2025-08-11T21:56:59.805Z,https://meet.google.com/new,,1,upcoming

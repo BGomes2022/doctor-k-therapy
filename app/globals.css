@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 15% 97%;
+    --foreground: 30 8% 25%;
+    --card: 45 15% 98%;
+    --card-foreground: 30 8% 25%;
+    --popover: 45 15% 98%;
+    --popover-foreground: 30 8% 25%;
+    --primary: 35 25% 45%;
+    --primary-foreground: 45 15% 97%;
+    --secondary: 40 10% 92%;
+    --secondary-foreground: 30 8% 15%;
+    --muted: 40 10% 92%;
+    --muted-foreground: 30 6% 50%;
+    --accent: 40 10% 92%;
+    --accent-foreground: 30 8% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 45 15% 97%;
+    --border: 35 12% 88%;
+    --input: 35 12% 88%;
+    --ring: 35 25% 45%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 20 14.3% 4.1%;
+    --foreground: 60 9.1% 97.8%;
+    --card: 20 14.3% 4.1%;
+    --card-foreground: 60 9.1% 97.8%;
+    --popover: 20 14.3% 4.1%;
+    --popover-foreground: 60 9.1% 97.8%;
+    --primary: 142.1 70.6% 45.3%;
+    --primary-foreground: 144.9 80.4% 10%;
+    --secondary: 12 6.5% 15.1%;
+    --secondary-foreground: 60 9.1% 97.8%;
+    --muted: 12 6.5% 15.1%;
+    --muted-foreground: 24 5.4% 63.9%;
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 60 9.1% 97.8%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 60 9.1% 97.8%;
+    --border: 12 6.5% 15.1%;
+    --input: 12 6.5% 15.1%;
+    --ring: 142.4 71.8% 29.2%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-dm-sans), var(--font-inter), system-ui, sans-serif;
+    font-weight: 300;
+    letter-spacing: 0.01em;
+    background: linear-gradient(135deg, #ffffff 0%, #fefdf9 25%, #faf8f4 50%, #f5f2ed 75%, #ffffff 100%);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Soft shadows and gentle transitions */
+.card-soft {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-soft:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Gentle button styles */
+.btn-soft {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 300;
+}
+
+/* Subtle animated backgrounds */
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+  33% { transform: translateY(-20px) translateX(10px) rotate(1deg); }
+  66% { transform: translateY(10px) translateX(-10px) rotate(-1deg); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-float {
+  animation: float 20s ease-in-out infinite;
+}
+
+.animate-float-delay {
+  animation: float 25s ease-in-out infinite;
+  animation-delay: 5s;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Subtle dot pattern */
+.pattern-dots {
+  background-image: radial-gradient(circle, rgba(251, 191, 36, 0.08) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Subtle grid pattern */
+.pattern-grid {
+  background-image: 
+    linear-gradient(rgba(251, 191, 36, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(251, 191, 36, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Subtle wave pattern */
+.pattern-waves {
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(251, 191, 36, 0.03) 10px,
+      rgba(251, 191, 36, 0.03) 20px
+    );
+}
