@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPatientByToken } from '@/utils/patientData'
+import { getPatientByToken } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 export async function POST(request: NextRequest) {

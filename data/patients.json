@@ -1,0 +1,65 @@
+[
+  {
+    "id": "1c385878bbfecec477b1f5954e055655",
+    "bookingToken": "dd10c1718b7fe3369394834c79478e8a4fb2539ae775dde22302d8d407c5e8d3",
+    "basicInfo": {
+      "fullName": "FINAL TEST 6 Sessions",
+      "email": "final6@test.com",
+      "phone": "+491234567890",
+      "createdAt": "2025-08-13T23:14:24.964Z"
+    },
+    "sessionInfo": {
+      "packageId": "six-sessions",
+      "packageName": "6 Therapy Sessions",
+      "price": 450,
+      "sessionsTotal": 6,
+      "sessionsUsed": 0,
+      "validUntil": "2025-11-14T00:14:24.964Z"
+    },
+    "status": "active",
+    "hasTherapistNotes": false,
+    "lastActivity": "2025-08-13T23:14:24.964Z"
+  },
+  {
+    "id": "f20a6600ddd5e9540133542ab0f69a2a",
+    "bookingToken": "d10e6939dbef2139de233be537ca1d47e5136c8d841ea868cbe5393b75a2b54c",
+    "basicInfo": {
+      "fullName": "NEW 6 Session Test",
+      "email": "new6@test.com",
+      "phone": "+491234567890",
+      "createdAt": "2025-08-13T23:21:30.433Z"
+    },
+    "sessionInfo": {
+      "packageId": "six-sessions",
+      "packageName": "6 Therapy Sessions",
+      "price": 450,
+      "sessionsTotal": 6,
+      "sessionsUsed": 0,
+      "validUntil": "2025-11-14T00:21:30.433Z"
+    },
+    "status": "active",
+    "hasTherapistNotes": false,
+    "lastActivity": "2025-08-13T23:21:30.433Z"
+  },
+  {
+    "id": "7c6ee70345725bf2a58da64de10ed9e2",
+    "bookingToken": "5a076cbc6e85651bd0901c683c513e7c21405ab6e6ef54876ce058222039819e",
+    "basicInfo": {
+      "fullName": "DEBUG 6 Session Test",
+      "email": "debug6@test.com",
+      "phone": "+491234567890",
+      "createdAt": "2025-08-13T23:25:53.042Z"
+    },
+    "sessionInfo": {
+      "packageId": "six-sessions",
+      "packageName": "6 Therapy Sessions",
+      "price": 450,
+      "sessionsTotal": 6,
+      "sessionsUsed": 0,
+      "validUntil": "2025-11-14T00:25:53.042Z"
+    },
+    "status": "active",
+    "hasTherapistNotes": false,
+    "lastActivity": "2025-08-13T23:25:53.042Z"
+  }
+]

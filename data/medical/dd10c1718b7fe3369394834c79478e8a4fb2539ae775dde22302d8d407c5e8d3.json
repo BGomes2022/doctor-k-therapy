@@ -1,0 +1,9 @@
+{
+  "encryptedData": "5080466ec4defdddb0ee6d0b066a2685:09d25b977f7beeaabd91f75e37048510948fc615453c2cf1da8ffd3982166087111eefa9c79b7e99f05905e0c662c7180cc5734c458c9673c14afe7f40e33d5db8f14ce409f65bcfce4b69db3797dad7cde47b6c5673d54f4fdce2c61bb497763dd7efe249273f64da7721e4804a8149",
+  "metadata": {
+    "savedAt": "2025-08-13T23:14:24.966Z",
+    "formVersion": "1.0",
+    "dataIntegrityHash": "7698935429c062429e101a14e9a144756f57639c878f70eea89145af3762a474",
+    "encryptionMethod": "AES-256-CBC"
+  }
+}

@@ -168,20 +168,8 @@ export default function AdminDashboard() {
   }
 
   const getSessionsRemaining = (patient: PatientData) => {
-    const packageInfo = patient.sessionPackage
-    if (!packageInfo) return 0
-    
-    // Count completed sessions for this patient
-    const completedSessions = bookings.filter(b => {
-      return b.bookingToken === patient.bookingToken && new Date(b.date) < new Date()
-    }).length
-
-    // Determine total sessions based on package
-    let totalSessions = 1
-    if (packageInfo.name?.includes('4 Sessions')) totalSessions = 4
-    else if (packageInfo.name?.includes('6 Sessions')) totalSessions = 6
-    
-    return totalSessions - completedSessions
+    // Use the correct data from backend instead of hardcoded logic
+    return patient.sessionsRemaining || 0
   }
 
   const handleAvailabilityUpdate = async () => {
@@ -1226,7 +1214,7 @@ export default function AdminDashboard() {
                                         ? 'bg-blue-100 text-blue-700' 
                                         : 'bg-gray-100 text-gray-700'
                                     }`}>
-                                      {patient.sessionsUsed}/{patient.sessionsTotal} sessions
+                                      {patientBookings.length} bookings
                                     </span>
                                   </div>
                                 </div>

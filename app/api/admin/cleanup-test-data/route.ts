@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { deleteAllTestData as deleteCSVData } from '@/utils/patientData'
+import { deleteAllTestData as deleteCSVData } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 export async function POST() {

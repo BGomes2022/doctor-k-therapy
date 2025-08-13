@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { savePatientData, checkPatientExists } from '@/utils/patientData'
+import { savePatientData, checkPatientExists } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 

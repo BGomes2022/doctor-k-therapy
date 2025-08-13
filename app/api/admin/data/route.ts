@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAllPatients } from '@/utils/patientData'
+import { getAllPatients } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 export async function GET() {
@@ -11,7 +11,7 @@ export async function GET() {
     if (patientsResult.success) {
       patients = patientsResult.patients.map((patient: any) => ({
         bookingToken: patient.bookingToken,
-        userId: patient.id,
+        userId: patient.userId,
         patientEmail: patient.patientEmail,
         patientName: patient.patientName,
         sessionPackage: patient.sessionPackage,
@@ -19,7 +19,7 @@ export async function GET() {
         sessionsUsed: 0, // Will be updated from calendar sessions
         sessionsRemaining: getSessionCountFromPackage(patient.sessionPackage),
         createdAt: patient.createdAt,
-        medicalFormData: patient.medicalData,
+        medicalFormData: patient.medicalFormData,
         therapistNotes: '' // Initialize empty therapist notes
       }))
       
