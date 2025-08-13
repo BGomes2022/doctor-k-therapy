@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
-import fs from 'fs/promises'
-import path from 'path'
-import { encryptMedicalData } from '@/utils/encryption'
+import { savePatientData, checkPatientExists } from '@/utils/patientData'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
 
-const BOOKING_TOKENS_FILE = path.join(process.cwd(), 'booking-tokens.csv')
-const csvHelpers = require('@/utils/csvHelpers')
-
-async function ensureTokensFile() {
-  try {
-    await fs.access(BOOKING_TOKENS_FILE)
-  } catch {
-    await fs.writeFile(BOOKING_TOKENS_FILE, 'bookingToken,userId,medicalFormData,sessionPackage,sessionsTotal,sessionsUsed,patientEmail,patientName,expiresAt,createdAt\n')
-  }
-}
 
 // Email service using Google Workspace
 async function sendBookingLinkEmail(email: string, bookingToken: string, name: string, sessionPackage: any) {
@@ -43,7 +30,10 @@ async function sendBookingLinkEmail(email: string, bookingToken: string, name: s
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, formData } = await request.json()
+    const { userId, formData, sessionPackage } = await request.json()
+
+    console.log('📝 Medical Form Submit - Session Package received:', sessionPackage)
+    console.log('📝 Medical Form Submit - Form Data received:', formData)
 
     if (!userId || !formData) {
       return NextResponse.json(
@@ -52,47 +42,52 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    await ensureTokensFile()
-    await csvHelpers.ensureExtendedCSVStructure()
+    // Check if email already has active patient record
+    const existingCheck = await checkPatientExists(formData.email)
+    if (existingCheck.exists) {
+      return NextResponse.json(
+        { error: 'This email address is already registered. Please use your existing booking link or contact support.' },
+        { status: 409 }
+      )
+    }
     
-    // Generate unique booking token
-    const bookingToken = uuidv4()
+    // Use the session package from request or default
+    const finalSessionPackage = sessionPackage || { 
+      name: "4 Therapy Sessions", 
+      price: 350,
+      sessionType: 'therapy',
+      blockDuration: 60
+    }
+
+    console.log('📦 Final Session Package used:', finalSessionPackage)
     
-    // Get session package from payment record
-    // For now, we'll use a default package since we're using in-memory storage
-    const sessionPackage = { name: "4 Sessions Package", price: 350 }
-    
-    // Calculate session details
-    const sessionsTotal = csvHelpers.getSessionCountFromPackage(sessionPackage)
-    const sessionsUsed = 0
-    const patientEmail = 'ben.gomes28@gmail.com' // Test email for development
-    const patientName = formData.fullName || 'Ben Gomes (Test Patient)'
-    
-    // Set expiry date (3 months from now)
-    const expiresAt = new Date()
-    expiresAt.setMonth(expiresAt.getMonth() + 3)
-    
-    // Store token data in CSV with encrypted medical data using extended format
-    // For development, we'll use a simple JSON string instead of encryption
-    const encryptedMedicalData = process.env.NODE_ENV === 'development' 
-      ? JSON.stringify(formData)
-      : encryptMedicalData(formData)
-    const tokenLine = `${bookingToken},${userId},"${encryptedMedicalData}","${JSON.stringify(sessionPackage).replace(/"/g, '""')}",${sessionsTotal},${sessionsUsed},"${patientEmail}","${patientName}",${expiresAt.toISOString()},${new Date().toISOString()}\n`
-    await fs.appendFile(BOOKING_TOKENS_FILE, tokenLine)
+    // Save patient data to encrypted CSV file
+    const patientResult = await savePatientData({
+      patientEmail: formData.email,
+      patientName: formData.fullName,
+      sessionPackage: finalSessionPackage,
+      medicalData: formData
+    })
+
+    if (!patientResult.success) {
+      throw new Error('Failed to save patient data: ' + patientResult.error)
+    }
+
+    console.log(`✅ Patient saved to CSV: ${formData.fullName} (${patientResult.patientId})`)
 
     // Send booking link email
     try {
       await sendBookingLinkEmail(
-        patientEmail,
-        bookingToken,
-        patientName,
-        sessionPackage
+        formData.email,
+        patientResult.bookingToken,
+        formData.fullName,
+        finalSessionPackage
       )
 
       return NextResponse.json({
         success: true,
         message: 'Medical form submitted successfully. Check your email for the booking link.',
-        bookingToken // Remove in production for security
+        bookingToken: patientResult.bookingToken // Remove in production for security
       })
 
     } catch (emailError) {
@@ -100,7 +95,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Medical form submitted successfully. Booking link will be sent shortly.',
-        bookingToken // Fallback for development
+        bookingToken: patientResult.bookingToken // Fallback for development
       })
     }
 

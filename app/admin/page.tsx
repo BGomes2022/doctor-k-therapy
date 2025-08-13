@@ -33,9 +33,38 @@ export default function AdminDashboard() {
   const [expandedPatients, setExpandedPatients] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<"overview" | "schedule">("overview")
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false)
+  const [showVacationModal, setShowVacationModal] = useState(false)
+  const [showExtraSlotModal, setShowExtraSlotModal] = useState(false)
+  const [showRecurringModal, setShowRecurringModal] = useState(false)
+  const [recurringData, setRecurringData] = useState({
+    dayOfWeek: 'Tuesday',
+    startTime: '09:00',
+    endTime: '17:00',
+    action: 'block',
+    duration: 4
+  })
+  const [vacationData, setVacationData] = useState({
+    startDate: "",
+    endDate: "",
+    reason: ""
+  })
+  const [extraSlotData, setExtraSlotData] = useState({
+    date: "",
+    time: "",
+    reason: ""
+  })
   const [availability, setAvailability] = useState<any[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [showDayDetailModal, setShowDayDetailModal] = useState(false)
+  const [selectedDayData, setSelectedDayData] = useState<any>(null)
+  const [calendarView, setCalendarView] = useState<'month' | 'week'>('month')
+  const [selectedSlots, setSelectedSlots] = useState<string[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStartSlot, setDragStartSlot] = useState<string | null>(null)
+  const [dragEndSlot, setDragEndSlot] = useState<string | null>(null)
+  const [filterMode, setFilterMode] = useState<'all' | 'available' | 'booked'>('all')
+  const [searchTerm, setSearchTerm] = useState('')
   const [quickBlockDays, setQuickBlockDays] = useState(7)
   const [inlineEditDate, setInlineEditDate] = useState<string | null>(null)
   const [inlineEditPosition, setInlineEditPosition] = useState({ x: 0, y: 0 })
@@ -157,7 +186,7 @@ export default function AdminDashboard() {
 
   const handleAvailabilityUpdate = async () => {
     if (!availabilityData.date || !availabilityData.time) {
-      alert('Please select date and time')
+      console.log('Please select date and time')
       return
     }
 
@@ -171,7 +200,7 @@ export default function AdminDashboard() {
       const result = await response.json()
       
       if (result.success) {
-        alert('Availability updated successfully!')
+        console.log('Availability updated successfully!')
         setShowAvailabilityModal(false)
         setAvailabilityData({
           date: "",
@@ -181,11 +210,11 @@ export default function AdminDashboard() {
         })
         fetchAvailability()
       } else {
-        alert(result.error || 'Failed to update availability')
+        console.error(result.error || 'Failed to update availability')
       }
     } catch (error) {
       console.error('Availability update error:', error)
-      alert('Failed to update availability')
+      console.error('Failed to update availability')
     }
   }
 
@@ -215,51 +244,274 @@ export default function AdminDashboard() {
   }
 
   const getDateStatus = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     const dayOfWeek = date.getDay()
     
     // Check if it's a booking
     const hasBooking = bookings.some(b => b.date === dateStr)
     
-    // Check if it's normally available (Tuesday = 2, Thursday = 4)
-    const isNormallyAvailable = dayOfWeek === 2 || dayOfWeek === 4
-    
     // Check for custom availability
-    const customAvailability = availability.find(a => a.date === dateStr)
+    const hasAvailability = availability.some(a => a.date === dateStr && a.available)
     
     if (hasBooking) return 'booked'
-    if (customAvailability && !customAvailability.available) return 'blocked'
-    if (customAvailability && customAvailability.available) return 'available'
-    if (isNormallyAvailable) return 'default-available'
+    if (hasAvailability) return 'available'
     return 'unavailable'
   }
 
-  const handleQuickBlock = async (days: number, reason = 'Blocked') => {
-    const today = new Date()
-    const promises = []
+  const getDayHourlySlots = (dateStr: string) => {
+    const slots = []
     
-    for (let i = 0; i < days; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      const dateStr = date.toISOString().split('T')[0]
+    // Only show available or booked slots from the calendar
+    const daySlots = availability.filter(a => a.date === dateStr)
+    const dayBookings = bookings.filter(b => b.date === dateStr)
+    
+    daySlots.forEach(slot => {
+      const booking = dayBookings.find(b => b.time === slot.time)
       
-      promises.push(
-        fetch('/api/admin/availability', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            date: dateStr,
-            time: '19:00', // Just set one time to mark the day
-            available: false,
-            reason
-          })
+      let status = slot.available ? 'available' : 'blocked'
+      let details = slot.reason || (slot.available ? 'Available for booking' : 'Not available')
+      
+      if (booking) {
+        status = 'booked'
+        details = `Booked: ${booking.patientName || 'Patient'}`
+      }
+      
+      slots.push({
+        time: slot.time,
+        status,
+        details,
+        booking: booking || null,
+        availabilityData: slot
+      })
+    })
+    
+    // Add booked sessions that don't have availability slots
+    dayBookings.forEach(booking => {
+      if (!slots.find(s => s.time === booking.time)) {
+        slots.push({
+          time: booking.time,
+          status: 'booked',
+          details: `Booked: ${booking.patientName || 'Patient'}`,
+          booking,
+          availabilityData: null
         })
-      )
+      }
+    })
+    
+    // Sort slots by time
+    slots.sort((a, b) => a.time.localeCompare(b.time))
+    
+    return slots
+  }
+
+  // Helper function to get local date string without timezone issues
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const handleDayClick = (date: Date) => {
+    const dateStr = getLocalDateString(date)
+    const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
+    
+    if (!isCurrentMonth) return
+    
+    setSelectedDate(dateStr)
+    setSelectedDayData({
+      date: dateStr,
+      dateObj: date
+    })
+    setShowDayDetailModal(true)
+  }
+
+  // Generate time slots for a day (30min intervals, full day)
+  const generateTimeSlots = (date: string) => {
+    const slots = []
+    const dayBookings = bookings.filter(b => b.date === date)
+    const dayAvailability = availability.filter(a => a.date === date)
+    
+    // Generate slots from 00:00 to 23:30 with 30min intervals
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+        // Check if this slot is booked (either directly or part of a longer booking)
+        let booking = dayBookings.find(b => b.time === timeStr)
+        let isBookedSlot = !!booking
+        
+        // For 60-min sessions, also check if this is the second half of a booking
+        if (!booking) {
+          const hour = parseInt(timeStr.split(':')[0])
+          const minute = parseInt(timeStr.split(':')[1])
+          
+          if (minute === 30) {
+            // This is a :30 slot, check if there's a 60-min booking at :00
+            const hourSlot = `${hour.toString().padStart(2, '0')}:00`
+            const hourBooking = dayBookings.find(b => b.time === hourSlot)
+            
+            if (hourBooking && hourBooking.sessionPackage?.sessionType !== 'consultation') {
+              // This :30 slot is blocked by a 60-min session that started at :00
+              booking = hourBooking
+              isBookedSlot = true
+            }
+          }
+        }
+        
+        // Check if this slot is available (has AVAILABLE_SLOT event)
+        const availabilitySlot = dayAvailability.find(a => a.time === timeStr)
+        const isAvailable = availabilitySlot?.available === true // Only available if explicitly marked as available
+        
+        slots.push({
+          time: timeStr,
+          isBooked: !!booking,
+          booking,
+          isAvailable,
+          availability: availabilitySlot
+        })
+      }
     }
     
-    await Promise.all(promises)
-    fetchAvailability()
-    alert(`Next ${days} days blocked successfully!`)
+    return slots
+  }
+
+  // Handle slot selection with drag and drop
+  const handleSlotMouseDown = (time: string) => {
+    setIsDragging(true)
+    setDragStartSlot(time)
+    setDragEndSlot(time)
+    setSelectedSlots([time])
+  }
+
+  const handleSlotMouseEnter = (time: string) => {
+    if (isDragging) {
+      setDragEndSlot(time)
+      
+      // Calculate range between dragStartSlot and time
+      const slots = generateTimeSlots(selectedDate!)
+      const startIndex = slots.findIndex(s => s.time === dragStartSlot)
+      const endIndex = slots.findIndex(s => s.time === time)
+      
+      if (startIndex !== -1 && endIndex !== -1) {
+        const range = slots.slice(
+          Math.min(startIndex, endIndex),
+          Math.max(startIndex, endIndex) + 1
+        ).map(s => s.time)
+        setSelectedSlots(range)
+      }
+    }
+  }
+
+  const handleSlotMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  // Set availability for selected slots
+  const handleSetAvailability = async (available: boolean) => {
+    if (selectedSlots.length === 0) return
+    
+    console.log('Setting availability:', { available, selectedSlots, selectedDate })
+    
+    try {
+      let successCount = 0
+      
+      for (const time of selectedSlots) {
+        console.log(`Processing slot: ${time}`)
+        
+        if (available) {
+          // Make available = create availability slot
+          console.log('Calling make_available for:', { date: selectedDate, time })
+          const result = await handleQuickAction('make_available', {
+            date: selectedDate,
+            time,
+            hours: 0.5, // 30 minute slots
+            reason: 'Available for booking'
+          })
+          console.log('Make available result:', result)
+          if (result && result.success !== false) successCount++
+        } else {
+          // Make unavailable = remove availability slot
+          console.log('Calling make_unavailable for:', { date: selectedDate, time })
+          const result = await handleQuickAction('make_unavailable', {
+            date: selectedDate,
+            time
+          })
+          console.log('Make unavailable result:', result)
+          if (result && result.success !== false) successCount++
+        }
+      }
+      
+      console.log('Refreshing data...')
+      // Force refresh data and wait for completion
+      await Promise.all([
+        fetchAvailability(),
+        fetchData()
+      ])
+      
+      // Clear selection
+      setSelectedSlots([])
+      
+      // No alert needed - just update completed
+      
+    } catch (error) {
+      console.error('Failed to update availability:', error)
+    }
+  }
+
+  // New Google Calendar-based availability management
+  const handleQuickAction = async (action: string, params: any = {}) => {
+    try {
+      console.log('handleQuickAction called:', { action, params })
+      
+      const requestBody = { action, ...params }
+      console.log('Request body:', requestBody)
+      
+      const response = await fetch('/api/admin/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      })
+      
+      console.log('Response status:', response.status)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      console.log('Response result:', result)
+      
+      if (result.success) {
+        // Don't refresh here to avoid double refresh
+        return result
+      } else {
+        throw new Error(result.error || 'Action failed')
+      }
+    } catch (error) {
+      console.error('Quick action error:', error)
+      console.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      return false
+    }
+  }
+
+  const handleBlockToday = () => {
+    const today = new Date().toISOString().split('T')[0]
+    handleQuickAction('block_day', { 
+      date: today, 
+      reason: 'Day blocked from admin' 
+    })
+  }
+
+  const handleBlockWeek = () => {
+    const today = new Date()
+    const nextWeek = new Date(today)
+    nextWeek.setDate(today.getDate() + 6)
+    
+    handleQuickAction('block_vacation', { 
+      startDate: today.toISOString().split('T')[0], 
+      endDate: nextWeek.toISOString().split('T')[0],
+      reason: 'Week blocked from admin' 
+    })
   }
 
   const handleDateClick = (date: Date, event: React.MouseEvent) => {
@@ -323,7 +575,7 @@ export default function AdminDashboard() {
   // State for drag selection
   const [dragStart, setDragStart] = useState<string | null>(null)
   const [dragEnd, setDragEnd] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  // isDragging is already declared above at line 63
   const [dragAction, setDragAction] = useState<'available' | 'blocked' | null>(null)
 
   // Helper function to convert time to minutes for comparison
@@ -501,7 +753,7 @@ export default function AdminDashboard() {
 
   const submitReschedule = async () => {
     if (!selectedBooking || !rescheduleData.date || !rescheduleData.time) {
-      alert('Please select new date and time')
+      console.log('Please select new date and time')
       return
     }
 
@@ -521,21 +773,21 @@ export default function AdminDashboard() {
       const result = await response.json()
       
       if (result.success) {
-        alert('Booking rescheduled successfully!')
+        console.log('Booking rescheduled successfully!')
         setShowRescheduleModal(false)
         fetchData()
       } else {
-        alert(result.error || 'Failed to reschedule booking')
+        console.error(result.error || 'Failed to reschedule booking')
       }
     } catch (error) {
       console.error('Reschedule error:', error)
-      alert('Failed to reschedule booking')
+      console.error('Failed to reschedule booking')
     }
   }
 
   const submitCancel = async () => {
     if (!selectedBooking || !cancelData.reason) {
-      alert('Please provide a cancellation reason')
+      console.log('Please provide a cancellation reason')
       return
     }
 
@@ -554,11 +806,11 @@ export default function AdminDashboard() {
       const result = await response.json()
       
       if (result.success) {
-        alert('Booking cancelled successfully!')
+        console.log('Booking cancelled successfully!')
         setShowCancelModal(false)
         fetchData()
       } else {
-        alert(result.error || 'Failed to cancel booking')
+        console.error(result.error || 'Failed to cancel booking')
       }
     } catch (error) {
       console.error('Cancel error:', error)
@@ -590,11 +842,11 @@ export default function AdminDashboard() {
         setNotesContent("")
         fetchData() // Refresh data to show updated notes
       } else {
-        alert(result.error || 'Failed to save notes')
+        console.error(result.error || 'Failed to save notes')
       }
     } catch (error) {
       console.error('Notes save error:', error)
-      alert('Failed to save notes')
+      console.error('Failed to save notes')
     }
   }
 
@@ -651,13 +903,12 @@ export default function AdminDashboard() {
         
         // Refresh data
         fetchData()
-        alert('Patient created successfully!')
       } else {
-        alert('Error creating patient: ' + result.error)
+        console.error('Error creating patient:', result.error)
       }
     } catch (error) {
       console.error('Error creating patient:', error)
-      alert('Error creating patient')
+      console.error('Error creating patient')
     }
   }
 
@@ -945,7 +1196,7 @@ export default function AdminDashboard() {
                   <CardContent>
                     <div className="space-y-4">
                       {patients.map((patient, index) => {
-                        const data = patient.medicalFormData
+                        const data = patient.medicalFormData || {}
                         const isExpanded = expandedPatients.includes(patient.userId)
                         const sessionsRemaining = getSessionsRemaining(patient)
                         const patientBookings = bookings.filter(b => {
@@ -961,9 +1212,9 @@ export default function AdminDashboard() {
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-4">
                                   <div>
-                                    <div className="font-medium text-lg">{data.fullName}</div>
+                                    <div className="font-medium text-lg">{patient.medicalFormData?.fullName || patient.patientName}</div>
                                     <div className="text-sm text-stone-500">
-                                      {data.email} • {data.phone}
+                                      {patient.medicalFormData?.email || patient.patientEmail} • {patient.medicalFormData?.phone || 'N/A'}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -972,10 +1223,10 @@ export default function AdminDashboard() {
                                     </span>
                                     <span className={`px-3 py-1 rounded-full text-sm ${
                                       sessionsRemaining > 0 
-                                        ? 'bg-green-100 text-green-700' 
+                                        ? 'bg-blue-100 text-blue-700' 
                                         : 'bg-gray-100 text-gray-700'
                                     }`}>
-                                      {sessionsRemaining} sessions left
+                                      {patient.sessionsUsed}/{patient.sessionsTotal} sessions
                                     </span>
                                   </div>
                                 </div>
@@ -1057,7 +1308,7 @@ export default function AdminDashboard() {
                                     </h4>
                                     <div className="bg-gradient-to-br from-white to-cream-50/50 border border-amber-200/40 rounded-lg p-4">
                                       {editingNotes === patient.bookingToken ? (
-                                        <div className="space-y-3">
+                                        <div className="space-y-2">
                                           <textarea
                                             className="w-full p-3 border border-amber-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white"
                                             rows={6}
@@ -1203,279 +1454,315 @@ export default function AdminDashboard() {
                     <h2 className="text-2xl font-light text-stone-800">Calendar Management</h2>
                     <p className="text-sm text-stone-600">Your schedule integrated with Google Calendar</p>
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2">
                     <Button
-                      onClick={() => handleQuickBlock(1, 'Today blocked')}
+                      onClick={() => setShowVacationModal(true)}
                       variant="outline"
                       size="sm"
-                      className="border-red-200 text-red-700 hover:bg-red-50"
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50"
                     >
-                      <X className="h-4 w-4 mr-1" />
-                      Block Today
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Plan Vacation
                     </Button>
                     <Button
-                      onClick={() => handleQuickBlock(7, 'Week blocked')}
+                      onClick={() => setShowRecurringModal(true)}
                       variant="outline"
                       size="sm"
-                      className="border-red-200 text-red-700 hover:bg-red-50"
+                      className="border-purple-200 text-purple-700 hover:bg-purple-50"
                     >
-                      <X className="h-4 w-4 mr-1" />
-                      Block Week
+                      <Clock className="h-4 w-4 mr-1" />
+                      Recurring Rules
                     </Button>
                     <Button
-                      onClick={() => setShowNewPatientModal(true)}
-                      variant="outline"
-                      size="sm"
-                      className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add Patient
-                    </Button>
-                    <Button
-                      onClick={() => alert('Send reminders feature coming soon!')}
+                      onClick={() => window.open('https://calendar.google.com/calendar/u/0/r?cid=dr.k@doctorktherapy.com', '_blank')}
                       className="bg-stone-600 hover:bg-stone-700 text-white"
                       size="sm"
                     >
-                      <Mail className="h-4 w-4 mr-1" />
-                      Send Reminders
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Google Calendar
                     </Button>
                   </div>
                 </div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-stone-600 uppercase tracking-wide">Today's Sessions</p>
-                          <p className="text-2xl font-bold text-stone-800">
-                            {bookings.filter(b => {
-                              const today = new Date().toISOString().split('T')[0];
-                              return b.date === today;
-                            }).length}
-                          </p>
-                        </div>
-                        <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <Calendar className="h-4 w-4 text-green-600" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-stone-600 uppercase tracking-wide">This Week</p>
-                          <p className="text-2xl font-bold text-stone-800">
-                            {bookings.filter(b => {
-                              const bookingDate = new Date(b.date);
-                              const today = new Date();
-                              const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-                              return bookingDate >= today && bookingDate <= weekFromNow;
-                            }).length}
-                          </p>
-                        </div>
-                        <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Clock className="h-4 w-4 text-blue-600" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
 
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-stone-600 uppercase tracking-wide">Active Patients</p>
-                          <p className="text-2xl font-bold text-stone-800">{patients.length}</p>
-                        </div>
-                        <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-                          <User className="h-4 w-4 text-purple-600" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-stone-600 uppercase tracking-wide">Need Follow-up</p>
-                          <p className="text-2xl font-bold text-stone-800">
-                            {patients.filter(p => !p.therapistNotes || p.therapistNotes.trim() === '').length}
-                          </p>
-                        </div>
-                        <div className="h-8 w-8 bg-amber-100 rounded-full flex items-center justify-center">
-                          <AlertTriangle className="h-4 w-4 text-amber-600" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Legend */}
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex flex-wrap gap-6 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                        <span>Available</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
-                        <span>Booked</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
-                        <span>Blocked</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 bg-gray-100 border border-gray-300 rounded"></div>
-                        <span>Unavailable</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Google Calendar Integration */}
+                {/* Calendar Management Interface */}
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-blue-600" />
-                        Your Schedule
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
-                        <div className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                          ✅ Synced with Google Calendar
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => window.open(`https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(process.env.NEXT_PUBLIC_DOCTOR_EMAIL || 'dr.k@doctorktherapy.com')}`, '_blank')}
-                        >
-                          <Settings className="h-4 w-4 mr-1" />
-                          Open in Google
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    {/* Google Calendar Embed */}
-                    <div className="w-full">
-                      <iframe 
-                        src="https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=Europe%2FZurich&bgcolor=%23ffffff&showTitle=0&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=1&mode=WEEK"
-                        className="w-full border-0 rounded-b-lg"
-                        style={{ height: '600px' }}
-                        title="Dr. Katiuscia's Schedule"
-                        frameBorder="0"
-                        scrolling="no"
-                      />
-                      
-                      {/* Fallback Notice */}
-                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                        <div className="flex items-center gap-2 text-blue-800 text-sm">
-                          <div className="h-4 w-4 bg-blue-200 rounded-full flex items-center justify-center">
-                            <span className="text-xs">ℹ</span>
-                          </div>
-                          <span className="font-medium">Calendar Integration Status</span>
-                        </div>
-                        <p className="text-blue-700 text-sm mt-1">
-                          To see your actual therapy appointments here, you need to make your Google Calendar public or configure domain-wide delegation properly.
-                        </p>
-                        <div className="mt-3">
-                          <button 
-                            onClick={() => window.open('https://calendar.google.com/calendar/u/0/r?cid=dr.k@doctorktherapy.com', '_blank')}
-                            className="text-xs bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded border border-blue-300 text-blue-800"
-                          >
-                            📅 Open Google Calendar Directly
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Tips Card */}
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Calendar className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-stone-800 mb-2">Google Calendar Integration</h3>
-                        <p className="text-sm text-stone-600 mb-3">
-                          Your schedule is now fully integrated with Google Calendar. All patient bookings will automatically appear in your calendar with Google Meet links.
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          <div className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">
-                            ✅ Automatic Meet links
-                          </div>
-                          <div className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">
-                            ✅ Calendar invites sent
-                          </div>
-                          <div className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-200">
-                            ✅ Mobile sync
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Working Hours Info */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Clock className="h-5 w-5" />
-                        Default Working Hours
-                      </CardTitle>
-                      <div className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">
-                        Managed in Google Calendar
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
                     <div className="space-y-4">
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="p-4 border border-green-200 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="font-medium text-green-800">Tuesday</div>
-                            <span className="text-xs bg-green-100 px-2 py-1 rounded">Active</span>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Calendar className="h-5 w-5 text-blue-600" />
+                          Calendar Overview (Portuguese Time)
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                            ✅ Live Data from Google Calendar
                           </div>
-                          <div className="text-sm text-green-700">19:00 • 21:00 • 22:00 • 23:00</div>
-                          <div className="text-xs text-stone-500 mt-1">4 time slots available</div>
-                        </div>
-                        <div className="p-4 border border-green-200 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="font-medium text-green-800">Thursday</div>
-                            <span className="text-xs bg-green-100 px-2 py-1 rounded">Active</span>
-                          </div>
-                          <div className="text-sm text-green-700">19:00 • 21:00 • 22:00 • 23:00</div>
-                          <div className="text-xs text-stone-500 mt-1">4 time slots available</div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              fetchAvailability()
+                              fetchData()
+                            }}
+                          >
+                            <Clock className="h-4 w-4 mr-1" />
+                            Refresh
+                          </Button>
                         </div>
                       </div>
                       
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <div className="flex items-start gap-3">
-                          <div className="h-5 w-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Calendar className="h-3 w-3 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium text-blue-800 mb-1">Google Calendar Management</h4>
-                            <p className="text-sm text-blue-700">
-                              To modify your working hours or block specific times, use the Google Calendar above or open it directly in Google Calendar for advanced features like recurring blocks.
-                            </p>
-                          </div>
+                      {/* View Toggle & Filters */}
+                      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                        
+                        <div className="flex gap-2 items-center">
+                          <select
+                            value={filterMode}
+                            onChange={(e) => setFilterMode(e.target.value as any)}
+                            className="px-3 py-1 border border-stone-300 rounded-md text-sm"
+                          >
+                            <option value="all">All Days</option>
+                            <option value="available">Available Only</option>
+                            <option value="booked">Booked Only</option>
+                          </select>
+                          
+                          <Input
+                            type="text"
+                            placeholder="Search patient..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-40"
+                          />
                         </div>
                       </div>
                     </div>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    {loading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="text-stone-500">Loading calendar...</div>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* Calendar Navigation */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <Button
+                              onClick={() => {
+                                const newMonth = new Date(currentMonth)
+                                newMonth.setMonth(newMonth.getMonth() - 1)
+                                setCurrentMonth(newMonth)
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              ◀️ Previous
+                            </Button>
+                            <h3 className="text-xl font-semibold text-stone-800">
+                              {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                            </h3>
+                            <Button
+                              onClick={() => {
+                                const newMonth = new Date(currentMonth)
+                                newMonth.setMonth(newMonth.getMonth() + 1)
+                                setCurrentMonth(newMonth)
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              Next ▶️
+                            </Button>
+                          </div>
+                          <Button
+                            onClick={() => setCurrentMonth(new Date())}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600"
+                          >
+                            Today
+                          </Button>
+                        </div>
+
+                        {/* Calendar Views */}
+                        {calendarView === 'month' && (
+                        <div className="rounded-lg overflow-hidden shadow-md border border-gray-200/60 bg-white/90">
+                          {/* Week header */}
+                          <div className="grid grid-cols-7 bg-gradient-to-r from-stone-100/80 to-stone-200/80">
+                            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, idx) => {
+                              return (
+                                <div 
+                                  key={day} 
+                                  className="p-2.5 text-center text-sm font-medium border-r last:border-r-0 text-stone-600 border-gray-200/60"
+                                >
+                                  <div>{day.slice(0, 3)}</div>
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          {/* Calendar days */}
+                          {(() => {
+                            const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1)
+                            const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)
+                            const startOfCalendar = new Date(startOfMonth)
+                            // Start from Monday (getDay() returns 0=Sunday, 1=Monday, etc.)
+                            const mondayOffset = (startOfMonth.getDay() + 6) % 7 // Convert to Monday=0, Sunday=6
+                            startOfCalendar.setDate(startOfCalendar.getDate() - mondayOffset)
+                            
+                            const weeks = []
+                            const currentDate = new Date(startOfCalendar)
+                            
+                            while (currentDate <= endOfMonth || weeks.length < 6) {
+                              const week = []
+                              for (let i = 0; i < 7; i++) {
+                                week.push(new Date(currentDate))
+                                currentDate.setDate(currentDate.getDate() + 1)
+                              }
+                              weeks.push(week)
+                              if (currentDate > endOfMonth && weeks.length >= 5) break
+                            }
+                            
+                            return weeks.map((week, weekIndex) => (
+                              <div key={weekIndex} className="grid grid-cols-7">
+                                {week.map((date) => {
+                                  const dateStr = getLocalDateString(date)
+                                  const isCurrentMonth = date.getMonth() === currentMonth.getMonth()
+                                  const isToday = dateStr === getLocalDateString(new Date())
+                                  const dayOfWeek = date.getDay()
+                                  const isWorkingDay = dayOfWeek === 2 || dayOfWeek === 4 // Tuesday or Thursday
+                                  
+                                  // Check availability status for this day
+                                  const daySlots = availability.filter(a => a.date === dateStr)
+                                  const dayBookings = bookings.filter(b => b.date === dateStr)
+                                  const hasBookedSessions = dayBookings.length > 0
+                                  const hasAvailableSlots = daySlots.some(s => s.available)
+                                  
+                                  let dayClass = 'relative p-2.5 border border-gray-200/60 min-h-[100px] cursor-pointer transition-all duration-200 group overflow-hidden'
+                                  let statusClass = ''
+                                  let statusText = ''
+                                  
+                                  if (!isCurrentMonth) {
+                                    dayClass += ' text-gray-400 bg-gray-50 opacity-50'
+                                  } else if (hasBookedSessions) {
+                                    dayClass += ' bg-gradient-to-br from-blue-50/70 to-blue-100/70 hover:from-blue-100/80 hover:to-blue-200/80 hover:shadow-md border-blue-200/70'
+                                    statusClass = 'bg-blue-500/90 text-white text-xs px-1.5 py-0.5 rounded-full font-medium shadow-sm'
+                                    statusText = `${dayBookings.length} Session${dayBookings.length > 1 ? 's' : ''}`
+                                  } else if (hasAvailableSlots) {
+                                    dayClass += ' bg-gradient-to-br from-green-50/70 to-green-100/70 hover:from-green-100/80 hover:to-green-200/80 hover:shadow-md border-green-200/70'
+                                    statusClass = 'bg-green-500/90 text-white text-xs px-1.5 py-0.5 rounded-full font-medium shadow-sm'
+                                    statusText = 'Available'
+                                  } else {
+                                    dayClass += ' bg-white/50 hover:bg-gray-50/70'
+                                  }
+                                  
+                                  if (isToday) {
+                                    dayClass += ' bg-gradient-to-br from-blue-50/80 to-blue-100/80 border-blue-300/80 shadow-md ring-1 ring-blue-300/50'
+                                  }
+                                  
+                                  return (
+                                    <div
+                                      key={dateStr}
+                                      className={dayClass}
+                                      onClick={() => handleDayClick(date)}
+                                    >
+                                      {/* Day header */}
+                                      <div className="flex justify-between items-start mb-2">
+                                        <span className={`text-lg font-bold ${!isCurrentMonth ? 'text-gray-400' : 'text-stone-800'}`}>
+                                          {date.getDate()}
+                                        </span>
+                                        {statusText && isCurrentMonth && (
+                                          <span className={statusClass}>{statusText}</span>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Show booked sessions with patient names */}
+                                      {isCurrentMonth && dayBookings.length > 0 && (
+                                        <div className="space-y-1 mt-2">
+                                          {dayBookings.slice(0, 3).map((booking, idx) => (
+                                            <div key={idx} className="bg-white bg-opacity-90 rounded px-2 py-1 text-xs shadow-sm border border-blue-200">
+                                              <div className="flex items-center gap-1">
+                                                <span className="font-bold text-blue-700">{booking.time}</span>
+                                                <span className="text-stone-600 truncate">{booking.patientName || 'Patient'}</span>
+                                              </div>
+                                            </div>
+                                          ))}
+                                          {dayBookings.length > 3 && (
+                                            <div className="text-xs font-bold text-blue-600 text-center">+{dayBookings.length - 3} more</div>
+                                          )}
+                                        </div>
+                                      )}
+                                      
+                                      {/* Hover overlay */}
+                                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-200 pointer-events-none" />
+                                      
+                                      {/* Click indicator on hover */}
+                                      <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                        <div className="bg-white rounded-full p-1 shadow-lg">
+                                          <svg className="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                          </svg>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Show number of sessions/slots */}
+                                      {isWorkingDay && isCurrentMonth && daySlots.length > 0 && !dayBookings.length && (
+                                        <div className="mt-1 text-xs text-stone-600">
+                                          {daySlots.filter(s => s.eventType === 'booked').length > 0 && (
+                                            <div>Sessions: {daySlots.filter(s => s.eventType === 'booked').length}</div>
+                                          )}
+                                          {daySlots.filter(s => s.eventType === 'blocked').length > 0 && (
+                                            <div>Blocked: {daySlots.filter(s => s.eventType === 'blocked').length}</div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            ))
+                          })()}
+                        </div>
+                        )}
+                        
+                        
+                        
+                        {/* Quick Overview */}
+                        <div className="bg-gradient-to-r from-blue-50/70 to-green-50/70 rounded-lg p-3 mb-4 border border-blue-200/60 backdrop-blur-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex gap-6">
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-blue-800">
+                                  {bookings.filter(b => b.date >= new Date().toISOString().split('T')[0]).length}
+                                </div>
+                                <div className="text-xs text-blue-600">Upcoming Sessions</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-green-800">
+                                  {patients.length}
+                                </div>
+                                <div className="text-xs text-green-600">Total Patients</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-2xl font-bold text-purple-800">
+                                  {bookings.filter(b => b.date === new Date().toISOString().split('T')[0]).length}
+                                </div>
+                                <div className="text-xs text-purple-600">Today's Sessions</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm text-stone-600">
+                                🔄 Synced with Google Calendar
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
+
+
 
               </div>
             )}
@@ -1825,6 +2112,189 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* Modern Time Slot Selection Modal */}
+        {showDayDetailModal && selectedDayData && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-gray-200">
+              {/* Modal Header */}
+              <div className="bg-gradient-to-br from-stone-100 to-cream-50 border-b border-stone-200 px-6 py-5">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-2xl font-light text-stone-800 mb-1">
+                      {new Date(selectedDayData.date + 'T00:00:00').toLocaleDateString('de-DE', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </h3>
+                    <div className="flex items-center gap-4 mt-3">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span className="text-xs text-stone-600">Available</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-xs text-stone-600">Booked</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                        <span className="text-xs text-stone-600">Selected</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowDayDetailModal(false)
+                      setSelectedSlots([])
+                    }}
+                    className="text-stone-400 hover:text-stone-600 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modern Vertical Time Schedule */}
+              <div className="flex flex-col h-full">
+                {/* Time picker info */}
+                {selectedSlots.length > 0 && (
+                  <div className="px-6 py-3 bg-amber-50 border-b border-amber-200">
+                    <span className="text-sm text-amber-800 font-medium">
+                      {selectedSlots.length} slots selected • {selectedSlots[0]} - {selectedSlots[selectedSlots.length - 1]}
+                    </span>
+                  </div>
+                )}
+                
+                {/* Scrollable time slots */}
+                <div className="flex-1 max-h-[55vh] overflow-y-auto bg-white" onMouseLeave={handleSlotMouseUp}>
+                  {generateTimeSlots(selectedDayData.date).map((slot, index) => {
+                    const isSelected = selectedSlots.includes(slot.time)
+                    
+                    return (
+                      <div
+                        key={slot.time}
+                        className={`group flex items-center h-12 border-b border-stone-100 last:border-b-0 cursor-pointer transition-all duration-150 select-none ${
+                          slot.isBooked 
+                            ? 'bg-blue-50 cursor-not-allowed'
+                            : isSelected
+                              ? 'bg-amber-50 border-l-4 border-l-amber-400'
+                              : slot.isAvailable
+                                ? 'bg-emerald-50/50'
+                                : 'hover:bg-stone-50'
+                        }`}
+                        onMouseDown={() => !slot.isBooked && handleSlotMouseDown(slot.time)}
+                        onMouseEnter={() => !slot.isBooked && handleSlotMouseEnter(slot.time)}
+                        onMouseUp={handleSlotMouseUp}
+                      >
+                        {/* Time Column */}
+                        <div className="w-24 flex-shrink-0 px-4 flex items-center">
+                          <span className="font-light text-stone-700 text-base tracking-wide">
+                            {slot.time}
+                          </span>
+                        </div>
+                        
+                        {/* Status Indicator */}
+                        <div className="flex-1 px-4 flex items-center">
+                          {slot.isBooked ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span className="text-sm text-blue-700 font-medium">{slot.booking?.patientName || 'Booked'}</span>
+                            </div>
+                          ) : isSelected ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                              <span className="text-sm text-amber-700">Selected</span>
+                            </div>
+                          ) : slot.isAvailable ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                              <span className="text-sm text-emerald-700">Available</span>
+                            </div>
+                          ) : (
+                            <div className="w-1.5 h-1.5 bg-stone-300 rounded-full"></div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Modern Action Buttons */}
+                {selectedSlots.length > 0 && (
+                  <div className="px-6 py-4 bg-gradient-to-t from-stone-50 to-white border-t border-stone-200">
+                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                        <span className="text-slate-700 font-medium">
+                          {selectedSlots.length} time slot{selectedSlots.length > 1 ? 's' : ''} selected
+                        </span>
+                        <div className="hidden sm:block text-xs text-slate-500">
+                          ({selectedSlots[0]} - {selectedSlots[selectedSlots.length - 1]})
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleSetAvailability(true)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2 rounded-lg transition-colors"
+                        >
+                          Set Available
+                        </Button>
+                        <Button
+                          onClick={() => handleSetAvailability(false)}
+                          className="bg-stone-600 hover:bg-stone-700 text-white font-medium px-5 py-2 rounded-lg transition-colors"
+                        >
+                          Remove
+                        </Button>
+                        <Button
+                          onClick={() => setSelectedSlots([])}
+                          variant="outline"
+                          className="border-stone-300 text-stone-600 hover:bg-stone-100 px-4 py-2 rounded-lg transition-colors"
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Quick Actions for no selection */}
+                {selectedSlots.length === 0 && (
+                  <div className="px-6 py-4 bg-gradient-to-t from-stone-50 to-white border-t border-stone-200">
+                    <div className="text-center text-stone-500">
+                      <p className="mb-3 text-sm">Drag over time slots to select them</p>
+                      <div className="flex justify-center gap-4 text-sm">
+                        <button 
+                          onClick={() => {
+                            const workingHours = generateTimeSlots(selectedDayData.date).filter(s => {
+                              const hour = parseInt(s.time.split(':')[0])
+                              return hour >= 9 && hour <= 17
+                            }).map(s => s.time)
+                            setSelectedSlots(workingHours)
+                          }}
+                          className="text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Select Working Hours (9-17)
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const allSlots = generateTimeSlots(selectedDayData.date).map(s => s.time)
+                            setSelectedSlots(allSlots)
+                          }}
+                          className="text-purple-600 hover:text-purple-800 font-medium"
+                        >
+                          Select All Day
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )

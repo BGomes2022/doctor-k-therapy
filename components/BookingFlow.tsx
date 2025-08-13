@@ -77,7 +77,11 @@ export default function BookingFlow({ language, preSelectedPackage }: BookingFlo
       const response = await fetch('/api/medical-form/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, formData })
+        body: JSON.stringify({ 
+          userId, 
+          formData,
+          sessionPackage: selectedPackage // Include the selected package info
+        })
       })
 
       const result = await response.json()

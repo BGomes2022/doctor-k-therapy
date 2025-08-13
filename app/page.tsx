@@ -653,7 +653,7 @@ export default function TherapyWebsite() {
               },
               {
                 id: "four-sessions",
-                name: language === "en" ? "4 Sessions Package" : "Pacchetto 4 Sessioni",
+                name: language === "en" ? "4 Therapy Sessions" : "4 Sessioni di Terapia",
                 price: 350,
                 originalPrice: 400,
                 duration: language === "en" ? "Valid for 3 months" : "Valido per 3 mesi",
@@ -731,7 +731,7 @@ export default function TherapyWebsite() {
             {[
               {
                 id: "six-sessions",
-                name: language === "en" ? "6 Sessions Package" : "Pacchetto 6 Sessioni",
+                name: language === "en" ? "6 Therapy Sessions" : "6 Sessioni di Terapia",
                 price: 450,
                 originalPrice: 600,
                 duration: language === "en" ? "Valid for 3 months" : "Valido per 3 mesi",

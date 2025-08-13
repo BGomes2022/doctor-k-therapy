@@ -10,6 +10,7 @@ interface MedicalFormData {
   // Personal Information
   fullName: string
   email: string
+  emailConfirm: string
   phone: string
   dateOfBirth: string
   
@@ -47,6 +48,7 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
   const [formData, setFormData] = useState<MedicalFormData>({
     fullName: "",
     email: "",
+    emailConfirm: "",
     phone: "",
     dateOfBirth: "",
     emergencyContactName: "",
@@ -82,6 +84,8 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
     
     if (!formData.fullName.trim()) newErrors.push("Full name is required")
     if (!formData.email.trim()) newErrors.push("Email is required")
+    if (!formData.emailConfirm.trim()) newErrors.push("Email confirmation is required")
+    if (formData.email !== formData.emailConfirm) newErrors.push("Email addresses do not match")
     if (!formData.phone.trim()) newErrors.push("Phone number is required")
     if (!formData.emergencyContactName.trim()) newErrors.push("Emergency contact name is required")
     if (!formData.emergencyContactPhone.trim()) newErrors.push("Emergency contact phone is required")
@@ -163,7 +167,7 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
         <Card>
           <CardContent className="p-6">
             <h3 className="text-xl font-medium text-stone-800 mb-4">{currentContent.personalInfo}</h3>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-stone-700 mb-2">
                   {language === "en" ? "Full Name *" : "Nome Completo *"}
@@ -175,40 +179,58 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  {language === "en" ? "Email *" : "Email *"}
-                </label>
-                <Input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    {language === "en" ? "Email *" : "Email *"}
+                  </label>
+                  <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder={language === "en" ? "your.email@example.com" : "tua.email@esempio.com"}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    {language === "en" ? "Confirm Email *" : "Conferma Email *"}
+                  </label>
+                  <Input
+                    type="email"
+                    name="emailConfirm"
+                    value={formData.emailConfirm}
+                    onChange={handleChange}
+                    placeholder={language === "en" ? "Re-enter your email" : "Reinserisci la tua email"}
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  {language === "en" ? "Phone Number *" : "Numero di Telefono *"}
-                </label>
-                <Input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-stone-700 mb-2">
-                  {language === "en" ? "Date of Birth" : "Data di Nascita"}
-                </label>
-                <Input
-                  type="date"
-                  name="dateOfBirth"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                />
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    {language === "en" ? "Phone Number *" : "Numero di Telefono *"}
+                  </label>
+                  <Input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    {language === "en" ? "Date of Birth" : "Data di Nascita"}
+                  </label>
+                  <Input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>

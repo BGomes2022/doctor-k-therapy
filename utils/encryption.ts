@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 
 // Encryption configuration
-const ALGORITHM = 'aes-256-gcm'
+const ALGORITHM = 'aes-256-cbc'
 const KEY_LENGTH = 32 // 256 bits
 const IV_LENGTH = 16  // 128 bits
 const TAG_LENGTH = 16 // 128 bits
@@ -36,16 +36,13 @@ export function encryptData(plaintext: string): string {
     const key = getEncryptionKey()
     const iv = crypto.randomBytes(IV_LENGTH)
     
-    const cipher = crypto.createCipherGCM(ALGORITHM, key, iv)
-    cipher.setAAD(Buffer.from('katyusha-therapy-data', 'utf8'))
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv)
     
     let encrypted = cipher.update(plaintext, 'utf8', 'hex')
     encrypted += cipher.final('hex')
     
-    const tag = cipher.getAuthTag()
-    
-    // Combine IV + encrypted data + auth tag
-    const combined = iv.toString('hex') + ':' + encrypted + ':' + tag.toString('hex')
+    // Combine IV + encrypted data
+    const combined = iv.toString('hex') + ':' + encrypted
     
     return combined
   } catch (error) {
@@ -59,17 +56,14 @@ export function decryptData(encryptedData: string): string {
     const key = getEncryptionKey()
     const parts = encryptedData.split(':')
     
-    if (parts.length !== 3) {
+    if (parts.length !== 2) {
       throw new Error('Invalid encrypted data format')
     }
     
     const iv = Buffer.from(parts[0], 'hex')
     const encrypted = parts[1]
-    const tag = Buffer.from(parts[2], 'hex')
     
-    const decipher = crypto.createDecipherGCM(ALGORITHM, key, iv)
-    decipher.setAAD(Buffer.from('katyusha-therapy-data', 'utf8'))
-    decipher.setAuthTag(tag)
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv)
     
     let decrypted = decipher.update(encrypted, 'hex', 'utf8')
     decrypted += decipher.final('utf8')

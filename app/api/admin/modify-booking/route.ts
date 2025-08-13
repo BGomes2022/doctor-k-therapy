@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
-
-const BOOKINGS_FILE = path.join(process.cwd(), 'bookings.csv')
-
-function parseCSVLine(line: string): string[] {
-  const match = line.match(/^([^,]+),([^,]+),([^,]+),([^,]+),"(.+)",(.+)$/)
-  if (match) {
-    return [match[1], match[2], match[3], match[4], match[5], match[6]]
-  }
-  return line.split(',')
-}
+const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 export async function POST(request: NextRequest) {
   try {
-    const { bookingId, action, newDate, newTime, reason = "", message = "" } = await request.json()
+    const { eventId, action, newDate, newTime, reason = "", message = "" } = await request.json()
 
-    if (!bookingId || !action) {
+    if (!eventId || !action) {
       return NextResponse.json(
-        { error: 'Booking ID and action required' },
+        { error: 'Event ID and action required' },
         { status: 400 }
       )
+    }
+
+    // Initialize Google Calendar
+    if (!googleWorkspaceService.calendar) {
+      const authSuccess = await googleWorkspaceService.authenticate()
+      if (!authSuccess) {
+        return NextResponse.json(
+          { error: 'Failed to authenticate with Google Calendar' },
+          { status: 500 }
+        )
+      }
     }
 
     if (action === 'reschedule') {
@@ -31,71 +31,93 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const content = await fs.readFile(BOOKINGS_FILE, 'utf-8')
-      const lines = content.split('\n')
-      const header = lines[0]
-      const bookingLines = lines.slice(1).filter(line => line.trim())
-
-      // Check if new slot is available
-      const newSlotTaken = bookingLines.some(line => {
-        const [currentBookingId, , date, time] = parseCSVLine(line)
-        return currentBookingId !== bookingId && date === newDate && time === newTime
+      // Get the existing event
+      const existingEvent = await googleWorkspaceService.calendar.events.get({
+        calendarId: process.env.DOCTOR_EMAIL,
+        eventId: eventId
       })
 
-      if (newSlotTaken) {
+      if (!existingEvent.data) {
         return NextResponse.json(
-          { error: 'New time slot is already booked' },
-          { status: 409 }
+          { error: 'Event not found' },
+          { status: 404 }
         )
       }
 
-      // Update the booking
-      const updatedLines = bookingLines.map(line => {
-        const [currentBookingId, bookingToken, date, time, sessionPackage, createdAt] = parseCSVLine(line)
-        
-        if (currentBookingId === bookingId) {
-          return `${bookingId},${bookingToken},${newDate},${newTime},"${sessionPackage}",${createdAt}`
-        }
-        return line
-      })
-
-      const newContent = header + '\n' + updatedLines.join('\n') + '\n'
-      await fs.writeFile(BOOKINGS_FILE, newContent)
-
-      return NextResponse.json({
-        success: true,
-        message: 'Booking rescheduled successfully'
-      })
-
-    } else if (action === 'cancel') {
-      if (!reason) {
+      // Parse new date and time
+      const startDateTime = new Date(`${newDate}T${newTime}:00.000Z`)
+      if (isNaN(startDateTime.getTime())) {
         return NextResponse.json(
-          { error: 'Cancellation reason required' },
+          { error: 'Invalid date or time format' },
           { status: 400 }
         )
       }
 
-      const content = await fs.readFile(BOOKINGS_FILE, 'utf-8')
-      const lines = content.split('\n')
-      const header = lines[0]
-      const bookingLines = lines.slice(1).filter(line => line.trim())
+      const endDateTime = new Date(startDateTime)
+      endDateTime.setMinutes(endDateTime.getMinutes() + 50)
 
-      // Remove the booking
-      const filteredLines = bookingLines.filter(line => {
-        const [currentBookingId] = parseCSVLine(line)
-        return currentBookingId !== bookingId
+      // Update the event
+      const updatedEvent = await googleWorkspaceService.calendar.events.update({
+        calendarId: process.env.DOCTOR_EMAIL,
+        eventId: eventId,
+        resource: {
+          ...existingEvent.data,
+          start: {
+            dateTime: startDateTime.toISOString(),
+            timeZone: 'Europe/Zurich'
+          },
+          end: {
+            dateTime: endDateTime.toISOString(),
+            timeZone: 'Europe/Zurich'
+          },
+          description: existingEvent.data.description + `\n\nRescheduled: ${reason}`
+        },
+        sendUpdates: 'all' // Notify attendees
       })
 
-      const newContent = header + '\n' + filteredLines.join('\n') + '\n'
-      await fs.writeFile(BOOKINGS_FILE, newContent)
+      console.log('✅ Event rescheduled:', eventId)
 
-      // TODO: In a real app, you'd send an email to the patient here
-      console.log(`Booking ${bookingId} cancelled. Reason: ${reason}. Message: ${message}`)
+      return NextResponse.json({
+        success: true,
+        message: 'Booking rescheduled successfully',
+        event: {
+          eventId: eventId,
+          newDate: newDate,
+          newTime: newTime,
+          meetLink: updatedEvent.data.conferenceData?.entryPoints?.[0]?.uri
+        }
+      })
+
+    } else if (action === 'cancel') {
+      // Get the existing event for notification details
+      const existingEvent = await googleWorkspaceService.calendar.events.get({
+        calendarId: process.env.DOCTOR_EMAIL,
+        eventId: eventId
+      })
+
+      // Delete the event
+      await googleWorkspaceService.calendar.events.delete({
+        calendarId: process.env.DOCTOR_EMAIL,
+        eventId: eventId,
+        sendUpdates: 'all' // Notify attendees
+      })
+
+      console.log('✅ Event cancelled:', eventId)
+
+      // Send cancellation email if we have patient details
+      if (existingEvent.data && existingEvent.data.extendedProperties?.private?.patientEmail) {
+        const patientEmail = existingEvent.data.extendedProperties.private.patientEmail
+        const patientName = existingEvent.data.extendedProperties.private.patientName
+        
+        // You could implement a cancellation email function here
+        console.log(`📧 Should send cancellation email to ${patientEmail}`)
+      }
 
       return NextResponse.json({
         success: true,
         message: 'Booking cancelled successfully'
       })
+
     } else {
       return NextResponse.json(
         { error: 'Invalid action. Use "reschedule" or "cancel"' },
@@ -103,106 +125,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-  } catch (error) {
-    console.error('Booking modification error:', error)
+  } catch (error: any) {
+    console.error('Modify booking error:', error)
     return NextResponse.json(
-      { error: 'Failed to modify booking' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const { bookingId, newDate, newTime, reason = "" } = await request.json()
-
-    if (!bookingId || !newDate || !newTime) {
-      return NextResponse.json(
-        { error: 'Booking ID, new date and time required' },
-        { status: 400 }
-      )
-    }
-
-    const content = await fs.readFile(BOOKINGS_FILE, 'utf-8')
-    const lines = content.split('\n')
-    const header = lines[0]
-    const bookingLines = lines.slice(1).filter(line => line.trim())
-
-    // Check if new slot is available
-    const newSlotTaken = bookingLines.some(line => {
-      const [currentBookingId, , date, time] = parseCSVLine(line)
-      return currentBookingId !== bookingId && date === newDate && time === newTime
-    })
-
-    if (newSlotTaken) {
-      return NextResponse.json(
-        { error: 'New time slot is already booked' },
-        { status: 409 }
-      )
-    }
-
-    // Update the booking
-    const updatedLines = bookingLines.map(line => {
-      const [currentBookingId, bookingToken, date, time, sessionPackage, createdAt] = parseCSVLine(line)
-      
-      if (currentBookingId === bookingId) {
-        return `${bookingId},${bookingToken},${newDate},${newTime},"${sessionPackage}",${createdAt}`
-      }
-      return line
-    })
-
-    const newContent = header + '\n' + updatedLines.join('\n') + '\n'
-    await fs.writeFile(BOOKINGS_FILE, newContent)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Booking modified successfully'
-    })
-
-  } catch (error) {
-    console.error('Booking modification error:', error)
-    return NextResponse.json(
-      { error: 'Failed to modify booking' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const bookingId = searchParams.get('bookingId')
-
-    if (!bookingId) {
-      return NextResponse.json(
-        { error: 'Booking ID required' },
-        { status: 400 }
-      )
-    }
-
-    const content = await fs.readFile(BOOKINGS_FILE, 'utf-8')
-    const lines = content.split('\n')
-    const header = lines[0]
-    const bookingLines = lines.slice(1).filter(line => line.trim())
-
-    // Remove the booking
-    const filteredLines = bookingLines.filter(line => {
-      const [currentBookingId] = parseCSVLine(line)
-      return currentBookingId !== bookingId
-    })
-
-    const newContent = header + '\n' + filteredLines.join('\n') + '\n'
-    await fs.writeFile(BOOKINGS_FILE, newContent)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Booking cancelled successfully'
-    })
-
-  } catch (error) {
-    console.error('Booking cancellation error:', error)
-    return NextResponse.json(
-      { error: 'Failed to cancel booking' },
+      { error: 'Failed to modify booking', details: error.message },
       { status: 500 }
     )
   }

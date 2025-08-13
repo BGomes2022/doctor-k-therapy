@@ -1,202 +1,116 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { v4 as uuidv4 } from 'uuid'
-import fs from 'fs/promises'
-import path from 'path'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
-const csvHelpers = require('@/utils/csvHelpers')
-
-const BOOKINGS_FILE = path.join(process.cwd(), 'bookings.csv')
-const BOOKING_TOKENS_FILE = path.join(process.cwd(), 'booking-tokens.csv')
-
-async function ensureFiles() {
-  try {
-    await fs.access(BOOKINGS_FILE)
-  } catch {
-    await fs.writeFile(BOOKINGS_FILE, 'bookingId,bookingToken,date,time,sessionPackage,createdAt,meetLink,calendarEventId\n')
-  }
-  
-  try {
-    await fs.access(BOOKING_TOKENS_FILE)
-  } catch {
-    await fs.writeFile(BOOKING_TOKENS_FILE, 'bookingToken,userId,medicalFormData,sessionPackage,createdAt\n')
-  }
-}
-
-async function getTokenData(bookingToken: string) {
-  const fileContent = await fs.readFile(BOOKING_TOKENS_FILE, 'utf-8')
-  const lines = fileContent.split('\n')
-  
-  for (const line of lines.slice(1)) {
-    if (line.trim() && line.startsWith(bookingToken)) {
-      return line
-    }
-  }
-  return null
-}
-
-async function getPatientDataFromToken(bookingToken: string) {
-  try {
-    const tokenData = await getTokenData(bookingToken)
-    if (!tokenData) return null
-
-    // Parse CSV line: bookingToken,userId,medicalFormData,sessionPackage,createdAt
-    const parts = tokenData.split(',')
-    if (parts.length < 4) return null
-
-    const medicalDataEncrypted = parts[2].replace(/"/g, '')
-    const sessionPackageStr = parts[3].replace(/"/g, '').replace(/""/g, '"')
-    
-    // For now, we'll extract basic info from the medical form
-    // In a real app, you'd decrypt the medical data properly
-    return {
-      bookingToken: parts[0],
-      userId: parts[1],
-      sessionPackage: JSON.parse(sessionPackageStr),
-      // We'll need to add patient email/name extraction when we extend CSV structure
-      patientEmail: null, // Will be added when we extend CSV
-      patientName: null   // Will be added when we extend CSV
-    }
-  } catch (error) {
-    console.error('Error parsing token data:', error)
-    return null
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const { bookingToken, date, time, sessionPackage } = await request.json()
+    const { bookingToken, selectedDate, selectedTime } = await request.json()
 
-    if (!bookingToken || !date || !time) {
+    // Validate input
+    if (!bookingToken || !selectedDate || !selectedTime) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: bookingToken, selectedDate, selectedTime' },
         { status: 400 }
       )
     }
 
-    await ensureFiles()
-    await csvHelpers.ensureExtendedCSVStructure()
-
-    // Validate if this token can make new bookings
-    const bookingValidation = await csvHelpers.canMakeNewBooking(bookingToken)
-    if (!bookingValidation.canBook) {
+    // Get session info from booking token (Google Calendar)
+    const sessionInfo = await googleWorkspaceService.getSessionInfoFromBookingToken(bookingToken)
+    if (!sessionInfo) {
       return NextResponse.json(
-        { error: bookingValidation.reason },
-        { status: 403 }
+        { error: 'Invalid or expired booking token' },
+        { status: 404 }
       )
     }
 
-    // Check if slot is still available
-    const bookingsContent = await fs.readFile(BOOKINGS_FILE, 'utf-8')
-    const existingBookings = bookingsContent.split('\n').slice(1)
-    const slotTaken = existingBookings.some(line => {
-      if (!line.trim()) return false
-      const [, , bookingDate, bookingTime] = line.split(',')
-      return bookingDate === date && bookingTime === time
-    })
-
-    if (slotTaken) {
+    // Check if user has remaining sessions
+    if (!sessionInfo.isValid || sessionInfo.sessionsRemaining <= 0) {
       return NextResponse.json(
-        { error: 'This time slot is no longer available' },
-        { status: 409 }
+        { error: 'No remaining sessions available' },
+        { status: 400 }
       )
     }
 
-    // Create booking
-    const bookingId = uuidv4()
-    
-    // Get patient data from extended CSV structure
-    const sessionInfo = await csvHelpers.getRemainingSessionsFromToken(bookingToken)
-    const bookingHistory = await csvHelpers.getBookingHistoryForToken(bookingToken)
-    
-    // Create Google Calendar event and send confirmation email
-    let meetLink = null
-    let calendarEventId = null
-    
-    try {
-      // Use test email for development
-      const patientEmail = sessionInfo.patientEmail || 'ben.gomes28@gmail.com'
-      const patientName = sessionInfo.patientName || 'Ben Gomes (Test Patient)'
-      const sessionNumber = bookingHistory.length + 1
-      const totalSessions = sessionInfo.sessionsTotal
-      
-      // Create calendar event with Google Meet
-      const startDateTime = new Date(`${date}T${time}:00.000Z`).toISOString()
-      const endDateTime = new Date(new Date(startDateTime).getTime() + 50 * 60 * 1000).toISOString() // 50 minutes later
-      
-      const calendarResult = await googleWorkspaceService.createCalendarEvent({
-        summary: `Therapy Session - ${patientName}`,
-        description: `Therapy session with ${patientName}\nSession: ${sessionPackage?.name || 'Individual Session'}\nBooking ID: ${bookingId}`,
-        startDateTime,
-        endDateTime,
-        attendeeEmail: patientEmail,
-        bookingId
-      })
-
-      if (calendarResult.success) {
-        meetLink = calendarResult.meetLink
-        calendarEventId = calendarResult.eventId
-        console.log(`✅ Calendar event created: ${calendarEventId}`)
-        
-        // Send booking confirmation email
-        const emailResult = await googleWorkspaceService.sendBookingConfirmation({
-          patientEmail,
-          patientName,
-          appointmentDate: date,
-          appointmentTime: time,
-          meetLink,
-          bookingId,
-          sessionType: sessionPackage?.name || 'Individual Session',
-          sessionNumber,
-          totalSessions
-        })
-
-        if (emailResult.success) {
-          console.log(`✅ Confirmation email sent to ${patientEmail}`)
-        } else {
-          console.error(`❌ Failed to send confirmation email: ${emailResult.error}`)
-        }
-      } else {
-        console.error(`❌ Failed to create calendar event: ${calendarResult.error}`)
-        // Fallback: create booking without calendar integration
-        meetLink = 'https://meet.google.com/new'
-      }
-    } catch (integrationError) {
-      console.error('❌ Google integration error:', integrationError)
-      meetLink = 'https://meet.google.com/new' // Fallback
+    // Parse and validate the selected time
+    const startDateTime = new Date(`${selectedDate}T${selectedTime}:00.000Z`)
+    if (isNaN(startDateTime.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid date or time format' },
+        { status: 400 }
+      )
     }
-    
-    // Store booking using extended CSV helpers
-    const bookingSuccess = await csvHelpers.createExtendedBooking({
-      bookingId,
-      bookingToken,
-      date,
-      time,
-      sessionPackage,
-      meetLink,
-      calendarEventId
+
+    // Calculate end time based on session type
+    const sessionType = sessionInfo.sessionPackage?.sessionType || 'therapy'
+    const blockDuration = sessionType === 'consultation' ? 30 : 60 // minutes to block
+    const endDateTime = new Date(startDateTime)
+    endDateTime.setMinutes(endDateTime.getMinutes() + blockDuration)
+
+    // Calculate session number
+    const sessionNumber = sessionInfo.sessionsUsed + 1
+
+    // Create therapy session in Google Calendar
+    const calendarResult = await googleWorkspaceService.createTherapySessionBooking({
+      bookingToken: bookingToken,
+      patientEmail: sessionInfo.patientEmail,
+      patientName: sessionInfo.patientName,
+      startDateTime: startDateTime.toISOString(),
+      endDateTime: endDateTime.toISOString(),
+      sessionNumber: sessionNumber,
+      totalSessions: sessionInfo.sessionsTotal,
+      sessionPackage: sessionInfo.sessionPackage
     })
 
-    if (!bookingSuccess) {
-      throw new Error('Failed to store booking in CSV')
+    if (!calendarResult.success) {
+      console.error('Calendar booking failed:', calendarResult.error)
+      return NextResponse.json(
+        { error: 'Failed to create calendar event', details: calendarResult.error },
+        { status: 500 }
+      )
     }
 
-    // Get updated session info
-    const updatedSessionInfo = await csvHelpers.getRemainingSessionsFromToken(bookingToken)
+    // Session usage is automatically tracked by Google Calendar events count
+    console.log(`✅ Session ${sessionNumber}/${sessionInfo.sessionsTotal} booked for ${sessionInfo.patientName}`)
 
+    // Send booking confirmation email
+    const emailResult = await googleWorkspaceService.sendBookingConfirmation({
+      patientEmail: sessionInfo.patientEmail,
+      patientName: sessionInfo.patientName,
+      appointmentDate: startDateTime.toISOString(),
+      appointmentTime: selectedTime,
+      meetLink: calendarResult.meetLink,
+      bookingId: calendarResult.bookingId,
+      sessionType: sessionInfo.sessionPackage.name,
+      sessionNumber: sessionNumber,
+      totalSessions: sessionInfo.sessionsTotal
+    })
+
+    if (!emailResult.success) {
+      console.warn('Failed to send confirmation email:', emailResult.error)
+    }
+
+    // Return success response
     return NextResponse.json({
       success: true,
-      bookingId,
-      meetLink,
-      sessionNumber: sessionInfo.sessionsUsed + 1,
-      sessionsRemaining: updatedSessionInfo?.sessionsRemaining || 0,
-      totalSessions: sessionInfo.sessionsTotal,
-      message: `Session ${sessionInfo.sessionsUsed + 1}/${sessionInfo.sessionsTotal} booked successfully! Calendar invite and confirmation email sent.`
+      booking: {
+        bookingId: calendarResult.bookingId,
+        eventId: calendarResult.eventId,
+        date: selectedDate,
+        time: selectedTime,
+        duration: sessionType === 'consultation' ? '30 minutes' : '60 minutes',
+        patientName: sessionInfo.patientName,
+        patientEmail: sessionInfo.patientEmail,
+        sessionNumber: sessionNumber,
+        totalSessions: sessionInfo.sessionsTotal,
+        meetLink: calendarResult.meetLink,
+        calendarLink: calendarResult.htmlLink,
+        remainingSessions: sessionInfo.sessionsRemaining - 1
+      }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Booking creation error:', error)
     return NextResponse.json(
-      { error: 'Failed to create booking' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     )
   }

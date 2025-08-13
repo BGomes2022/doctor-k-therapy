@@ -13,6 +13,8 @@ interface SessionPackage {
   duration?: string
   description?: string
   popular?: boolean
+  sessionType?: 'consultation' | 'therapy' | 'couples'
+  blockDuration?: number // in minutes - how long to block in calendar
 }
 
 interface SessionSelectorProps {
@@ -29,36 +31,46 @@ export default function SessionSelector({ language, onSessionSelect }: SessionSe
       name: language === "en" ? "Consultation" : "Consulenza",
       price: 30,
       duration: language === "en" ? "20 minutes" : "20 minuti",
-      description: ""
+      description: "",
+      sessionType: 'consultation',
+      blockDuration: 30 // Blocks 30 minutes in calendar
     },
     {
       id: "single-session",
       name: language === "en" ? "1 Session" : "1 Sessione",
       price: 100,
       duration: language === "en" ? "50 minutes" : "50 minuti",
-      description: ""
+      description: "",
+      sessionType: 'therapy',
+      blockDuration: 60 // Blocks 60 minutes in calendar
     },
     {
       id: "four-sessions",
-      name: language === "en" ? "4 Sessions Package" : "Pacchetto 4 Sessioni",
+      name: language === "en" ? "4 Therapy Sessions" : "4 Sessioni di Terapia",
       price: 350,
       duration: language === "en" ? "Valid for 3 months" : "Valido per 3 mesi",
       description: "",
-      popular: true
+      popular: true,
+      sessionType: 'therapy',
+      blockDuration: 60 // Each session blocks 60 minutes
     },
     {
       id: "six-sessions",
-      name: language === "en" ? "6 Sessions Package" : "Pacchetto 6 Sessioni",
+      name: language === "en" ? "6 Therapy Sessions" : "6 Sessioni di Terapia",
       price: 450,
       duration: language === "en" ? "Valid for 3 months" : "Valido per 3 mesi",
-      description: ""
+      description: "",
+      sessionType: 'therapy',
+      blockDuration: 60 // Each session blocks 60 minutes
     },
     {
       id: "couples-session",
       name: language === "en" ? "Couples Session" : "Sessione di Coppia",
       price: 120,
       duration: language === "en" ? "50 minutes" : "50 minuti",
-      description: ""
+      description: "",
+      sessionType: 'couples',
+      blockDuration: 60 // Blocks 60 minutes in calendar
     }
   ]
 

@@ -1,119 +1,118 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
-import fs from 'fs/promises'
-import path from 'path'
-
-const BOOKINGS_FILE = path.join(process.cwd(), 'bookings.csv')
-const BOOKING_TOKENS_FILE = path.join(process.cwd(), 'booking-tokens.csv')
-
-async function ensureFiles() {
-  try {
-    await fs.access(BOOKINGS_FILE)
-  } catch {
-    await fs.writeFile(BOOKINGS_FILE, 'bookingId,bookingToken,date,time,sessionPackage,createdAt\n')
-  }
-  
-  try {
-    await fs.access(BOOKING_TOKENS_FILE)
-  } catch {
-    await fs.writeFile(BOOKING_TOKENS_FILE, 'bookingToken,userId,medicalFormData,sessionPackage,createdAt\n')
-  }
-}
+const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 export async function POST(request: NextRequest) {
   try {
     const { 
       patientName, 
       patientEmail, 
-      patientPhone, 
       date, 
       time, 
-      sessionType = "Single Session",
-      notes = "" 
+      sessionPackage,
+      medicalData,
+      notes 
     } = await request.json()
 
-    if (!patientName || !patientEmail || !date || !time) {
+    // Validate required fields
+    if (!patientName || !patientEmail || !date || !time || !sessionPackage) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    await ensureFiles()
-
-    // Check if slot is available
-    const bookingsContent = await fs.readFile(BOOKINGS_FILE, 'utf-8')
-    const existingBookings = bookingsContent.split('\n').slice(1)
-    const slotTaken = existingBookings.some(line => {
-      if (!line.trim()) return false
-      const match = line.match(/^([^,]+),([^,]+),([^,]+),([^,]+),"(.+)",(.+)$/)
-      if (match) {
-        const [, , , bookingDate, bookingTime] = match
-        return bookingDate === date && bookingTime === time
-      }
-      return false
-    })
-
-    if (slotTaken) {
+    // Create booking token for this manual booking
+    const bookingToken = uuidv4()
+    
+    // Parse the date and time
+    const startDateTime = new Date(`${date}T${time}:00.000Z`)
+    if (isNaN(startDateTime.getTime())) {
       return NextResponse.json(
-        { error: 'This time slot is already booked' },
-        { status: 409 }
+        { error: 'Invalid date or time format' },
+        { status: 400 }
       )
     }
 
-    // Generate IDs
-    const bookingId = uuidv4()
-    const bookingToken = uuidv4()
-    const userId = `ADMIN-${Date.now()}`
+    // Calculate end time (50 minutes later)
+    const endDateTime = new Date(startDateTime)
+    endDateTime.setMinutes(endDateTime.getMinutes() + 50)
 
-    // Create medical form data for admin booking
-    const medicalFormData = {
-      fullName: patientName,
-      email: patientEmail,
-      phone: patientPhone || '',
-      dateOfBirth: '',
-      emergencyContactName: '',
-      emergencyContactPhone: '',
-      emergencyContactRelation: '',
-      doctorName: '',
-      doctorPhone: '',
-      currentMedications: '',
-      allergies: '',
-      medicalConditions: '',
-      currentProblems: notes,
-      therapyHistory: '',
-      therapyGoals: '',
-      suicidalThoughts: '',
-      substanceUse: '',
-      dataConsent: true,
-      treatmentConsent: true
+    const sessionsTotal = googleWorkspaceService.getSessionCountFromPackage(sessionPackage)
+
+    // Create placeholder event first to store patient data
+    const placeholderResult = await googleWorkspaceService.createMedicalDataPlaceholder({
+      bookingToken,
+      patientEmail,
+      patientName,
+      sessionPackage,
+      medicalData: medicalData || {}
+    })
+
+    if (!placeholderResult.success) {
+      return NextResponse.json(
+        { error: 'Failed to store patient data', details: placeholderResult.error },
+        { status: 500 }
+      )
     }
 
-    const sessionPackage = {
-      id: sessionType.toLowerCase().replace(' ', '-'),
-      name: sessionType,
-      price: sessionType.includes('4') ? 350 : sessionType.includes('6') ? 450 : 100,
-      duration: "50 minutes"
+    // Create therapy session in Google Calendar
+    const calendarResult = await googleWorkspaceService.createTherapySessionBooking({
+      bookingToken: bookingToken,
+      patientEmail: patientEmail,
+      patientName: patientName,
+      startDateTime: startDateTime.toISOString(),
+      endDateTime: endDateTime.toISOString(),
+      sessionNumber: 1,
+      totalSessions: sessionsTotal,
+      sessionPackage: sessionPackage
+    })
+
+    if (!calendarResult.success) {
+      console.error('Manual booking calendar creation failed:', calendarResult.error)
+      return NextResponse.json(
+        { error: 'Failed to create calendar event', details: calendarResult.error },
+        { status: 500 }
+      )
     }
 
-    // Add to booking-tokens.csv
-    const tokenLine = `${bookingToken},${userId},"${JSON.stringify(medicalFormData).replace(/"/g, '""')}","${JSON.stringify(sessionPackage).replace(/"/g, '""')}",${new Date().toISOString()}\n`
-    await fs.appendFile(BOOKING_TOKENS_FILE, tokenLine)
+    // Send confirmation email
+    const emailResult = await googleWorkspaceService.sendBookingConfirmation({
+      patientEmail: patientEmail,
+      patientName: patientName,
+      appointmentDate: startDateTime.toISOString(),
+      appointmentTime: time,
+      meetLink: calendarResult.meetLink,
+      bookingId: calendarResult.bookingId,
+      sessionType: sessionPackage.name,
+      sessionNumber: 1,
+      totalSessions: sessionsTotal
+    })
 
-    // Add to bookings.csv
-    const bookingLine = `${bookingId},${bookingToken},${date},${time},"${JSON.stringify(sessionPackage)}",${new Date().toISOString()}\n`
-    await fs.appendFile(BOOKINGS_FILE, bookingLine)
+    if (!emailResult.success) {
+      console.warn('Failed to send manual booking confirmation email:', emailResult.error)
+    }
 
     return NextResponse.json({
       success: true,
-      bookingId,
-      message: 'Manual booking created successfully'
+      booking: {
+        bookingToken: bookingToken,
+        bookingId: calendarResult.bookingId,
+        eventId: calendarResult.eventId,
+        patientName: patientName,
+        patientEmail: patientEmail,
+        date: date,
+        time: time,
+        meetLink: calendarResult.meetLink,
+        calendarLink: calendarResult.htmlLink,
+        notes: notes || ''
+      }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Manual booking error:', error)
     return NextResponse.json(
-      { error: 'Failed to create manual booking' },
+      { error: 'Failed to create manual booking', details: error.message },
       { status: 500 }
     )
   }

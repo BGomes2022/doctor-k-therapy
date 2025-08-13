@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-const csvHelpers = require('@/utils/csvHelpers')
+import { getPatientByToken } from '@/utils/patientData'
+const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,37 +13,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Ensure CSV structure is up to date
-    await csvHelpers.ensureExtendedCSVStructure()
-
-    // Validate token and get session info
-    const sessionInfo = await csvHelpers.getRemainingSessionsFromToken(bookingToken)
+    // Get patient info from CSV
+    const patientResult = await getPatientByToken(bookingToken)
     
-    if (!sessionInfo) {
+    if (!patientResult.success) {
       return NextResponse.json(
         { error: 'Invalid or expired booking token' },
         { status: 404 }
       )
     }
 
-    // Get booking history for this token
-    const bookingHistory = await csvHelpers.getBookingHistoryForToken(bookingToken)
+    const patient = patientResult.patient
+
+    // Get booking history from Google Calendar (actual therapy sessions)
+    const bookingHistory = await googleWorkspaceService.getBookingHistoryForToken(bookingToken)
+    
+    // Calculate session counts
+    const sessionsUsed = bookingHistory.length
+    const sessionsTotal = getSessionCountFromPackage(patient.sessionPackage)
+    const sessionsRemaining = sessionsTotal - sessionsUsed
+    
+    // Check expiry (3 months from creation)
+    const createdAt = new Date(patient.createdAt)
+    const expiresAt = new Date(createdAt)
+    expiresAt.setMonth(expiresAt.getMonth() + 3)
+    const isExpired = new Date() > expiresAt
 
     // Return comprehensive token information
     return NextResponse.json({
       success: true,
       sessionInfo: {
-        sessionsTotal: sessionInfo.sessionsTotal,
-        sessionsUsed: sessionInfo.sessionsUsed,
-        sessionsRemaining: sessionInfo.sessionsRemaining,
-        patientEmail: sessionInfo.patientEmail,
-        patientName: sessionInfo.patientName,
-        expiresAt: sessionInfo.expiresAt.toISOString(),
-        isExpired: sessionInfo.isExpired,
-        isValid: sessionInfo.isValid
+        sessionsTotal,
+        sessionsUsed,
+        sessionsRemaining,
+        patientEmail: patient.patientEmail,
+        patientName: patient.patientName,
+        expiresAt: expiresAt.toISOString(),
+        isExpired,
+        isValid: sessionsRemaining > 0 && !isExpired,
+        sessionPackage: patient.sessionPackage
       },
       bookingHistory: bookingHistory.map(booking => ({
-        bookingId: booking.bookingId,
+        eventId: booking.eventId,
         date: booking.date,
         time: booking.time,
         sessionPackage: booking.sessionPackage,
@@ -51,7 +63,7 @@ export async function POST(request: NextRequest) {
         sessionNumber: booking.sessionNumber,
         status: booking.status
       })),
-      canBook: sessionInfo.isValid && sessionInfo.sessionsRemaining > 0
+      canBook: sessionsRemaining > 0 && !isExpired
     })
 
   } catch (error) {
@@ -61,4 +73,18 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+// Helper function to get session count from package
+function getSessionCountFromPackage(sessionPackage: any): number {
+  if (!sessionPackage) return 1
+  
+  const packageName = sessionPackage.name?.toLowerCase() || ''
+  
+  if (packageName.includes('1 session') || packageName.includes('consultation')) return 1
+  if (packageName.includes('4 session')) return 4
+  if (packageName.includes('6 session')) return 6
+  if (packageName.includes('8 session')) return 8
+  
+  return 4 // Default
 }

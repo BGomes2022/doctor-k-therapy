@@ -1,8 +1,10 @@
 const { google } = require('googleapis');
-const path = require('path');
 
-// Environment Configuration
-const SERVICE_ACCOUNT_KEY_PATH = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH;
+// OAuth2 Configuration
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
+const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN;
 const DOCTOR_EMAIL = process.env.DOCTOR_EMAIL;
 
 class GoogleWorkspaceService {
@@ -14,28 +16,35 @@ class GoogleWorkspaceService {
 
   async authenticate() {
     try {
-      // Service Account Authentication with Domain-Wide Delegation
-      this.auth = new google.auth.GoogleAuth({
-        keyFile: SERVICE_ACCOUNT_KEY_PATH,
-        scopes: [
-          'https://www.googleapis.com/auth/gmail.send',
-          'https://www.googleapis.com/auth/calendar',
-          'https://www.googleapis.com/auth/calendar.events',
-          'https://www.googleapis.com/auth/meetings.space.created'
-        ],
-        subject: DOCTOR_EMAIL // Impersonate Dr. Katiuscia
-      });
+      if (!REFRESH_TOKEN) {
+        console.error('❌ No refresh token found. Please complete OAuth2 setup first.');
+        console.log('🔗 Visit: https://doctorktherapy.com/api/auth/google');
+        return false;
+      }
 
-      const authClient = await this.auth.getClient();
+      // Create OAuth2 client
+      const authClient = new google.auth.OAuth2(
+        CLIENT_ID,
+        CLIENT_SECRET,
+        REDIRECT_URI
+      );
+
+      // Set the refresh token
+      authClient.setCredentials({
+        refresh_token: REFRESH_TOKEN
+      });
+      
+      // Store auth client
+      this.auth = authClient;
       
       // Initialize APIs
       this.gmail = google.gmail({ version: 'v1', auth: authClient });
       this.calendar = google.calendar({ version: 'v3', auth: authClient });
 
-      console.log('✅ Google Workspace authenticated successfully for:', DOCTOR_EMAIL);
+      console.log('✅ Google OAuth2 authenticated successfully for:', DOCTOR_EMAIL);
       return true;
     } catch (error) {
-      console.error('❌ Google Workspace authentication failed:', error.message);
+      console.error('❌ Google OAuth2 authentication failed:', error.message);
       return false;
     }
   }
@@ -325,7 +334,7 @@ class GoogleWorkspaceService {
                 ` : ''}
                 
                 <div class="appointment-card">
-                    <h3>📅 Your Appointment Details</h3>
+                    <h3>🗓️ Your Appointment Details</h3>
                     <div class="detail-row">
                         <span class="detail-label">Date:</span>
                         <span class="detail-value">${formattedDate}</span>
@@ -345,7 +354,7 @@ class GoogleWorkspaceService {
                 </div>
                 
                 <div class="meet-section">
-                    <h4>🎥 Join Your Online Session</h4>
+                    <h4>💬 Join Your Online Session</h4>
                     <p>Your session will be conducted via secure Google Meet. Click the button below at your appointment time:</p>
                     <a href="${meetLink}" class="meet-button">Join Therapy Session</a>
                     <p><small>Backup link: <a href="${meetLink}">${meetLink}</a></small></p>
@@ -353,7 +362,7 @@ class GoogleWorkspaceService {
                 </div>
                 
                 <div class="preparation-section">
-                    <h4>📋 Before Your Session</h4>
+                    <h4>💡 Before Your Session</h4>
                     <ul class="preparation-list">
                         <li>Test your camera and microphone beforehand</li>
                         <li>Find a quiet, private space where you won't be interrupted</li>
@@ -385,7 +394,7 @@ class GoogleWorkspaceService {
 
     return await this.sendEmail({
       to: patientEmail,
-      subject: `✅ Therapy Session Confirmed - ${formattedDate} at ${appointmentTime}`,
+      subject: `Your Therapy Session is Confirmed - ${formattedDate} at ${appointmentTime}`,
       htmlContent: htmlContent
     });
   }
@@ -429,7 +438,7 @@ class GoogleWorkspaceService {
             .content { 
                 padding: 40px 30px; 
             }
-            .package-card { 
+            .therapy-plan-card { 
                 background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
                 padding: 25px; 
                 border-radius: 12px; 
@@ -442,7 +451,7 @@ class GoogleWorkspaceService {
                 color: #065f46;
                 font-size: 24px;
             }
-            .package-price {
+            .therapy-price {
                 font-size: 32px;
                 font-weight: 300;
                 color: #059669;
@@ -496,22 +505,22 @@ class GoogleWorkspaceService {
                 
                 <p>Thank you for completing your medical form! Your payment has been processed and you're all set to book your therapy sessions.</p>
                 
-                <div class="package-card">
-                    <h3>📦 Your Package</h3>
-                    <div>${sessionPackage.name}</div>
-                    <div class="package-price">€${sessionPackage.price}</div>
+                <div class="therapy-plan-card">
+                    <h3>🌱 Your Therapy Plan</h3>
+                    <div>${sessionPackage.name.replace('Package', 'Plan')}</div>
+                    <div class="therapy-price">€${sessionPackage.price}</div>
                     <small>Valid until ${expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</small>
                 </div>
                 
                 <div class="booking-section">
-                    <h3>🎯 Schedule Your Sessions</h3>
+                    <h3>📅 Schedule Your Sessions</h3>
                     <p>Use your personal booking link below to schedule all your sessions:</p>
                     <a href="${bookingUrl}" class="booking-button">📅 Book Your Sessions</a>
                     <p><small>Link: <a href="${bookingUrl}">${bookingUrl}</a></small></p>
                 </div>
                 
                 <div class="important-info">
-                    <h4>📝 Important Information</h4>
+                    <h4>ℹ️ Important Information</h4>
                     <ul>
                         <li><strong>Availability:</strong> Sessions are available Tuesday & Thursday, 19:00-23:00</li>
                         <li><strong>Booking:</strong> You can book one session at a time</li>
@@ -535,7 +544,7 @@ class GoogleWorkspaceService {
 
     return await this.sendEmail({
       to: patientEmail,
-      subject: `🗓️ Your Personal Booking Link - ${sessionPackage.name}`,
+      subject: `Welcome - Your Personal Therapy Booking Link`,
       htmlContent: htmlContent
     });
   }
@@ -577,8 +586,8 @@ class GoogleWorkspaceService {
                 <p>This is a friendly reminder that you have a therapy session scheduled for tomorrow.</p>
                 
                 <div class="reminder-card">
-                    <h3>📅 Tomorrow: ${formattedDate}</h3>
-                    <h3>🕐 Time: ${appointmentTime}</h3>
+                    <h3>🌟 Tomorrow: ${formattedDate}</h3>
+                    <h3>⏰ Time: ${appointmentTime}</h3>
                     <a href="${meetLink}" class="meet-button">Join Session Tomorrow</a>
                 </div>
                 
@@ -604,13 +613,1143 @@ class GoogleWorkspaceService {
 
     return await this.sendEmail({
       to: patientEmail,
-      subject: `⏰ Reminder: Therapy Session Tomorrow - ${appointmentTime}`,
+      subject: `Gentle Reminder: Your Therapy Session Tomorrow at ${appointmentTime}`,
       htmlContent: htmlContent
     });
   }
 
   async getCalendarEmbedUrl() {
     return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(DOCTOR_EMAIL)}&ctz=Europe/Zurich&mode=WEEK&showTitle=0&showDate=1&showPrint=0&showTabs=0&showCalendars=0`;
+  }
+
+  // Create therapy session booking in Google Calendar
+  async createTherapySessionBooking({ 
+    bookingToken, 
+    patientEmail, 
+    patientName, 
+    startDateTime, 
+    endDateTime, 
+    sessionNumber, 
+    totalSessions,
+    sessionPackage 
+  }) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      const event = {
+        summary: `Therapy Session - ${patientName}`,
+        description: `
+Therapy Session ${sessionNumber}/${totalSessions}
+Patient: ${patientName}
+Email: ${patientEmail}
+Therapy Plan: ${sessionPackage.name.replace('Package', 'Plan')}
+Booking Token: ${bookingToken}
+
+This is a confidential therapy session.
+        `.trim(),
+        start: {
+          dateTime: startDateTime,
+          timeZone: 'Europe/Zurich',
+        },
+        end: {
+          dateTime: endDateTime,
+          timeZone: 'Europe/Zurich',
+        },
+        attendees: [
+          { email: patientEmail, responseStatus: 'needsAction' },
+          { email: DOCTOR_EMAIL, responseStatus: 'accepted' }
+        ],
+        conferenceData: {
+          createRequest: {
+            requestId: `therapy-${bookingToken}-${sessionNumber}-${Date.now()}`,
+            conferenceSolutionKey: { type: 'hangoutsMeet' },
+          },
+        },
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 24 * 60 }, // 24 hours before
+            { method: 'email', minutes: 60 }, // 1 hour before
+            { method: 'popup', minutes: 15 }, // 15 minutes before
+          ],
+        },
+        extendedProperties: {
+          private: {
+            bookingToken: bookingToken,
+            bookingId: bookingId,
+            therapySession: 'true',
+            patientEmail: patientEmail,
+            patientName: patientName,
+            sessionNumber: sessionNumber.toString(),
+            totalSessions: totalSessions.toString(),
+            sessionPackage: JSON.stringify(sessionPackage)
+          }
+        }
+      };
+
+      const result = await this.calendar.events.insert({
+        calendarId: DOCTOR_EMAIL,
+        resource: event,
+        conferenceDataVersion: 1,
+        sendUpdates: 'all',
+      });
+
+      const meetLink = result.data.conferenceData?.entryPoints?.[0]?.uri || 'https://meet.google.com/new';
+      
+      console.log('✅ Therapy session booked in calendar:', result.data.id);
+      console.log('📹 Meet link generated:', meetLink);
+
+      return {
+        success: true,
+        eventId: result.data.id,
+        meetLink: meetLink,
+        htmlLink: result.data.htmlLink,
+        bookingId: bookingId,
+        startDateTime,
+        endDateTime
+      };
+    } catch (error) {
+      console.error('❌ Therapy session booking failed:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get available time slots from NEW Google Calendar system
+  // Updated to use the new availability system with Portuguese time
+  async getAvailableTimeSlots(startDate, endDate) {
+    try {
+      // Use the new availability system
+      const availabilityResult = await this.getAvailabilityFromCalendar(90);
+      
+      if (!availabilityResult.success) {
+        throw new Error(availabilityResult.error);
+      }
+
+      const availability = availabilityResult.availability;
+      const startDateObj = new Date(startDate);
+      const endDateObj = new Date(endDate);
+      
+      // Filter availability within the requested date range and only available slots
+      const availableSlots = availability
+        .filter(slot => {
+          const slotDate = new Date(slot.date);
+          return slot.available && 
+                 slotDate >= startDateObj && 
+                 slotDate <= endDateObj;
+        })
+        .map(slot => {
+          // Convert to format expected by booking system
+          const slotStart = new Date(`${slot.date}T${slot.time}:00.000+01:00`); // Portuguese time
+          const slotEnd = new Date(slotStart);
+          slotEnd.setMinutes(slotEnd.getMinutes() + 50); // 50-minute sessions
+
+          return {
+            start: slotStart.toISOString(),
+            end: slotEnd.toISOString(),
+            date: slot.date,
+            time: slot.time,
+            timezone: 'Europe/Lisbon',
+            dayOfWeek: slot.dayOfWeek,
+            eventType: slot.eventType
+          };
+        });
+
+      console.log(`✅ Found ${availableSlots.length} available slots (NEW SYSTEM)`);
+      return { success: true, slots: availableSlots };
+      
+    } catch (error) {
+      console.error('❌ Failed to get available slots (NEW SYSTEM):', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get upcoming therapy sessions from Google Calendar
+  async getUpcomingTherapySessions(limit = 50) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      const now = new Date();
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        timeMin: now.toISOString(),
+        maxResults: limit,
+        singleEvents: true,
+        orderBy: 'startTime',
+        q: 'Therapy Session', // Search for therapy sessions
+      });
+
+      const therapySessions = result.data.items?.filter(event => 
+        event.extendedProperties?.private?.therapySession === 'true'
+      ) || [];
+
+      const sessions = therapySessions.map(event => ({
+        eventId: event.id,
+        summary: event.summary,
+        start: event.start.dateTime,
+        end: event.end.dateTime,
+        patientEmail: event.extendedProperties?.private?.patientEmail,
+        patientName: event.extendedProperties?.private?.patientName,
+        sessionNumber: parseInt(event.extendedProperties?.private?.sessionNumber || '1'),
+        totalSessions: parseInt(event.extendedProperties?.private?.totalSessions || '1'),
+        bookingToken: event.extendedProperties?.private?.bookingToken,
+        meetLink: event.conferenceData?.entryPoints?.[0]?.uri || event.hangoutLink,
+        htmlLink: event.htmlLink
+      }));
+
+      console.log(`✅ Found ${sessions.length} upcoming therapy sessions`);
+      return { success: true, sessions };
+      
+    } catch (error) {
+      console.error('❌ Failed to get therapy sessions:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get all therapy sessions (past and future) from Google Calendar
+  async getAllTherapySessions(limit = 200) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      // Get events from 3 months ago to 6 months in future
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 3);
+      
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 6);
+
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        maxResults: limit,
+        singleEvents: true,
+        orderBy: 'startTime',
+        // Remove q filter to get all events, then filter by extendedProperties
+      });
+
+      const allEvents = result.data.items || [];
+      
+      // Include therapy sessions and patient records
+      const relevantEvents = allEvents.filter(event => 
+        event.extendedProperties?.private?.therapySession === 'true' ||
+        event.extendedProperties?.private?.patientRecord === 'true'
+      );
+
+      const sessions = relevantEvents.map(event => ({
+        eventId: event.id,
+        summary: event.summary,
+        start: event.start.dateTime,
+        end: event.end.dateTime,
+        patientEmail: event.extendedProperties?.private?.patientEmail,
+        patientName: event.extendedProperties?.private?.patientName,
+        sessionNumber: parseInt(event.extendedProperties?.private?.sessionNumber || '1'),
+        totalSessions: parseInt(event.extendedProperties?.private?.totalSessions || '1'),
+        bookingToken: event.extendedProperties?.private?.bookingToken,
+        meetLink: event.conferenceData?.entryPoints?.[0]?.uri || event.hangoutLink,
+        htmlLink: event.htmlLink,
+        sessionPackage: event.extendedProperties?.private?.sessionPackage ? 
+          JSON.parse(event.extendedProperties.private.sessionPackage) : null,
+        medicalData: event.extendedProperties?.private?.medicalData ? 
+          JSON.parse(event.extendedProperties.private.medicalData) : null,
+        isPatientRecord: event.extendedProperties?.private?.patientRecord === 'true'
+      }));
+
+      console.log(`✅ Found ${sessions.length} total therapy sessions and patient records`);
+      return { success: true, sessions };
+      
+    } catch (error) {
+      console.error('❌ Failed to get all therapy sessions:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Get session info from booking token (Google Calendar only)
+  async getSessionInfoFromBookingToken(bookingToken) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      // Search for events with this booking token
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        maxResults: 100,
+        singleEvents: true,
+        orderBy: 'startTime',
+        privateExtendedProperty: `bookingToken=${bookingToken}`
+      });
+
+      const events = result.data.items || [];
+      
+      if (events.length === 0) {
+        return null; // Token not found
+      }
+
+      // Get session info from first event (they all have same booking token)
+      const firstEvent = events[0];
+      const sessionPackage = JSON.parse(firstEvent.extendedProperties?.private?.sessionPackage || '{"name":"Unknown","price":0}');
+      const totalSessions = parseInt(firstEvent.extendedProperties?.private?.totalSessions || '1');
+      
+      // Count only real therapy sessions (not placeholders)
+      const realSessions = events.filter(event => 
+        event.extendedProperties?.private?.placeholderEvent !== 'true' &&
+        event.extendedProperties?.private?.therapySession === 'true'
+      );
+      const sessionsUsed = realSessions.length; // Count only real therapy sessions
+      const sessionsRemaining = totalSessions - sessionsUsed;
+      
+      // Check expiry (3 months from creation)
+      const createdAt = new Date(firstEvent.created);
+      const expiresAt = new Date(createdAt);
+      expiresAt.setMonth(expiresAt.getMonth() + 3);
+      const isExpired = new Date() > expiresAt;
+
+      return {
+        bookingToken,
+        patientEmail: firstEvent.extendedProperties?.private?.patientEmail,
+        patientName: firstEvent.extendedProperties?.private?.patientName,
+        sessionPackage,
+        sessionsTotal: totalSessions,
+        sessionsUsed,
+        sessionsRemaining,
+        expiresAt: expiresAt.toISOString(),
+        isExpired,
+        isValid: sessionsRemaining > 0 && !isExpired
+      };
+      
+    } catch (error) {
+      console.error('❌ Failed to get session info:', error.message);
+      return null;
+    }
+  }
+
+  // Get booking history for token (Google Calendar only)
+  async getBookingHistoryForToken(bookingToken) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      // Search for all events with this booking token
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        maxResults: 100,
+        singleEvents: true,
+        orderBy: 'startTime',
+        privateExtendedProperty: `bookingToken=${bookingToken}`
+      });
+
+      const events = result.data.items || [];
+      
+      return events.map(event => ({
+        eventId: event.id,
+        date: event.start.dateTime?.split('T')[0] || '',
+        time: event.start.dateTime ? new Date(event.start.dateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
+        sessionPackage: JSON.parse(event.extendedProperties?.private?.sessionPackage || '{"name":"Unknown"}'),
+        createdAt: event.created,
+        meetLink: event.conferenceData?.entryPoints?.[0]?.uri || event.hangoutLink,
+        sessionNumber: parseInt(event.extendedProperties?.private?.sessionNumber || '1'),
+        status: event.status
+      }));
+      
+    } catch (error) {
+      console.error('❌ Failed to get booking history:', error.message);
+      return [];
+    }
+  }
+
+  // Create patient record in calendar (visible as patient, not hidden placeholder)
+  async createPatientRecord({ bookingToken, patientEmail, patientName, sessionPackage, medicalData }) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      // Create a visible patient record event (today, short duration)
+      const now = new Date();
+      const startTime = new Date(now);
+      startTime.setHours(0, 0, 0, 0); // Start of today
+      
+      const endTime = new Date(startTime);
+      endTime.setMinutes(endTime.getMinutes() + 1); // 1 minute duration
+
+      // Store medical data (you could encrypt this if needed)
+      const medicalDataString = JSON.stringify(medicalData);
+      
+      const event = {
+        summary: `👤 PATIENT: ${patientName} (${sessionPackage.name})`,
+        description: `
+PATIENT RECORD
+Medical form completed and ready for booking.
+
+Patient: ${patientName}
+Email: ${patientEmail}
+Package: ${sessionPackage.name} (${sessionPackage.price}€)
+Sessions: 0/${this.getSessionCountFromPackage(sessionPackage)}
+Token: ${bookingToken}
+
+Medical Data: ${medicalDataString}
+        `.trim(),
+        start: {
+          dateTime: startTime.toISOString(),
+          timeZone: 'Europe/Lisbon',
+        },
+        end: {
+          dateTime: endTime.toISOString(),
+          timeZone: 'Europe/Lisbon',
+        },
+        transparency: 'transparent', // Doesn't block time
+        visibility: 'private',
+        colorId: '2', // Green color for patients
+        extendedProperties: {
+          private: {
+            bookingToken: bookingToken,
+            patientRecord: 'true', // Changed from placeholderEvent
+            patientEmail: patientEmail,
+            patientName: patientName,
+            sessionPackage: JSON.stringify(sessionPackage),
+            totalSessions: this.getSessionCountFromPackage(sessionPackage).toString(),
+            medicalData: medicalDataString
+          }
+        }
+      };
+
+      const result = await this.calendar.events.insert({
+        calendarId: DOCTOR_EMAIL,
+        resource: event,
+      });
+
+      console.log('✅ Patient record created:', result.data.id);
+      return { success: true, eventId: result.data.id };
+      
+    } catch (error) {
+      console.error('❌ Failed to create patient record:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Helper to get session count from package
+  getSessionCountFromPackage(sessionPackage) {
+    if (typeof sessionPackage === 'string') {
+      try {
+        sessionPackage = JSON.parse(sessionPackage);
+      } catch (e) {
+        return 1; // Default fallback
+      }
+    }
+    
+    if (sessionPackage.id) {
+      // Use package ID for exact matching
+      switch (sessionPackage.id) {
+        case 'consultation':
+          return 1; // 1 consultation session
+        case 'single-session':
+          return 1; // 1 therapy session
+        case 'four-sessions':
+          return 4; // 4 therapy sessions
+        case 'six-sessions':
+          return 6; // 6 therapy sessions
+        case 'couples-session':
+          return 1; // 1 couples session
+        default:
+          break;
+      }
+    }
+    
+    if (sessionPackage.name) {
+      // Fallback to name parsing
+      if (sessionPackage.name.toLowerCase().includes('consultation')) {
+        return 1;
+      }
+      const match = sessionPackage.name.match(/(\d+)\s*Session/i);
+      if (match) {
+        return parseInt(match[1], 10);
+      }
+    }
+    
+    return 1; // Default fallback
+  }
+
+  // Check if patient email already exists
+  async checkExistingPatient(email) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      // Search for events with this email
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        maxResults: 100,
+        singleEvents: true,
+        orderBy: 'startTime',
+        q: email // Search by email
+      });
+
+      const events = result.data.items || [];
+      
+      // Check if any active therapy sessions or patient records exist for this email
+      const activeEvents = events.filter(event => 
+        event.extendedProperties?.private?.patientEmail === email &&
+        (event.extendedProperties?.private?.therapySession === 'true' ||
+         event.extendedProperties?.private?.placeholderEvent === 'true' ||
+         event.extendedProperties?.private?.patientRecord === 'true')
+      );
+
+      return {
+        exists: activeEvents.length > 0,
+        sessionCount: activeEvents.length
+      };
+      
+    } catch (error) {
+      console.error('❌ Failed to check existing patient:', error.message);
+      return { exists: false, error: error.message };
+    }
+  }
+
+  // Delete all test therapy sessions and placeholders
+  async deleteAllTestData() {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      // Get all therapy events (past and future)
+      const startDate = new Date();
+      startDate.setMonth(startDate.getMonth() - 6);
+      
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 6);
+
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        maxResults: 500,
+        singleEvents: true,
+        orderBy: 'startTime'
+      });
+
+      const allEvents = result.data.items || [];
+      
+      // Find test events (therapy sessions and patient records)
+      const testEvents = allEvents.filter(event => 
+        event.extendedProperties?.private?.therapySession === 'true' ||
+        event.extendedProperties?.private?.patientRecord === 'true' ||
+        event.summary?.includes('Test Patient') ||
+        event.summary?.includes('PATIENT:')
+      );
+
+      console.log(`🗑️ Found ${testEvents.length} test events to delete`);
+      
+      // Delete each test event
+      let deletedCount = 0;
+      for (const event of testEvents) {
+        try {
+          await this.calendar.events.delete({
+            calendarId: DOCTOR_EMAIL,
+            eventId: event.id
+          });
+          deletedCount++;
+          console.log(`✅ Deleted: ${event.summary} (${event.id})`);
+        } catch (error) {
+          console.warn(`⚠️ Failed to delete ${event.id}:`, error.message);
+        }
+      }
+
+      console.log(`🎉 Cleanup complete: ${deletedCount}/${testEvents.length} test events deleted`);
+      return { success: true, deleted: deletedCount, total: testEvents.length };
+      
+    } catch (error) {
+      console.error('❌ Failed to delete test data:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // ======================================
+  // NEW GOOGLE CALENDAR-ONLY AVAILABILITY SYSTEM
+  // ======================================
+
+  // Get availability from Google Calendar events
+  async getAvailabilityFromCalendar(daysAhead = 90) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + daysAhead);
+
+      // Get all events in timeframe
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        maxResults: 1000,
+        singleEvents: true,
+        orderBy: 'startTime'
+      });
+
+      const events = result.data.items || [];
+      
+      // Parse availability from calendar events
+      const availability = this.parseAvailabilityFromEvents(events);
+      
+      return { success: true, availability };
+      
+    } catch (error) {
+      console.error('❌ Failed to get availability from calendar:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Parse calendar events to determine availability - ENHANCED VERSION
+  parseAvailabilityFromEvents(events) {
+    const availability = [];
+    const now = new Date();
+    
+    // First, collect ALL therapy sessions and other events by date
+    const eventsByDate = new Map();
+    
+    events.forEach(event => {
+      const eventStart = new Date(event.start.dateTime || event.start.date);
+      const dateStr = eventStart.toISOString().split('T')[0];
+      
+      if (!eventsByDate.has(dateStr)) {
+        eventsByDate.set(dateStr, []);
+      }
+      eventsByDate.get(dateStr).push(event);
+    });
+    
+    // Generate availability for 90 days
+    for (let i = 0; i < 90; i++) {
+      const date = new Date(now);
+      date.setDate(now.getDate() + i);
+      const dayOfWeek = date.getDay();
+      const dateStr = date.toISOString().split('T')[0];
+      const dayEvents = eventsByDate.get(dateStr) || [];
+      
+      // Generate time slots for every day (00:00 to 23:30 in 30min intervals)
+      for (let hour = 0; hour < 24; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+          const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          const slotStatus = this.getSlotStatus(dayEvents, dateStr, timeStr);
+          
+          // Only add explicitly available slots or booked slots
+          if (slotStatus.eventType === 'available' || slotStatus.eventType === 'booked') {
+            availability.push({
+              date: dateStr,
+              time: timeStr,
+              dayOfWeek: date.toLocaleDateString('en-US', { weekday: 'long' }),
+              available: slotStatus.available,
+              reason: slotStatus.reason,
+              eventType: slotStatus.eventType,
+              eventId: slotStatus.eventId
+            });
+          }
+        }
+      }
+    }
+    
+    // Remove duplicates and sort
+    const uniqueAvailability = availability.filter((slot, index, self) =>
+      index === self.findIndex(s => s.date === slot.date && s.time === slot.time)
+    );
+    
+    return uniqueAvailability.sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+  }
+
+  // Check status of specific time slot
+  getSlotStatus(events, date, time) {
+    const slotDateTime = new Date(`${date}T${time}:00.000+01:00`); // Portuguese time
+    
+    for (const event of events) {
+      const eventStart = new Date(event.start.dateTime || event.start.date);
+      const eventEnd = new Date(event.end.dateTime || event.end.date);
+      
+      // Check if slot overlaps with event
+      if (slotDateTime >= eventStart && slotDateTime < eventEnd) {
+        const eventType = event.extendedProperties?.private?.availabilityType;
+        
+        switch (eventType) {
+          case 'AVAILABLE_SLOT':
+            return { 
+              available: true, 
+              reason: 'Available for booking',
+              eventType: 'available',
+              eventId: event.id 
+            };
+          case 'BLOCKED_SLOT':
+            return { 
+              available: false, 
+              reason: event.summary.replace('Dr. K - BLOCKED: ', '') || 'Blocked',
+              eventType: 'blocked',
+              eventId: event.id 
+            };
+          case 'VACATION':
+            return { 
+              available: false, 
+              reason: 'Vacation',
+              eventType: 'vacation',
+              eventId: event.id 
+            };
+          case 'MODIFIED_DAY':
+            return { 
+              available: true, 
+              reason: 'Modified working hours',
+              eventType: 'modified',
+              eventId: event.id 
+            };
+          default:
+            // Regular therapy session - check both old and new format
+            if (event.extendedProperties?.private?.therapySession === 'true' || 
+                event.summary?.includes('Therapy Session') ||
+                event.attendees?.some(a => a.email?.includes('@'))) {
+              return { 
+                available: false, 
+                reason: 'Patient Session',
+                eventType: 'booked',
+                eventId: event.id 
+              };
+            }
+        }
+      }
+    }
+    
+    // Default: not available (slots must be explicitly marked as available)
+    return { available: false, reason: 'Not available', eventType: 'default', eventId: null };
+  }
+
+  // Get extra slots from calendar events (outside normal working hours)
+  getExtraSlotsFromEvents(events) {
+    const extraSlots = [];
+    
+    events.forEach(event => {
+      if (event.extendedProperties?.private?.availabilityType === 'EXTRA_SLOT') {
+        const eventStart = new Date(event.start.dateTime);
+        const date = eventStart.toISOString().split('T')[0];
+        const time = eventStart.toTimeString().split(' ')[0].substring(0, 5);
+        
+        extraSlots.push({
+          date,
+          time,
+          dayOfWeek: eventStart.toLocaleDateString('en-US', { weekday: 'long' }),
+          available: true,
+          reason: 'Extra slot',
+          eventType: 'extra',
+          eventId: event.id
+        });
+      }
+    });
+    
+    return extraSlots;
+  }
+
+  // Block a specific time slot
+  async blockTimeSlot({ date, startTime, duration = 1, reason = 'Blocked', recurring = false }) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      const startDateTime = new Date(`${date}T${startTime}:00.000+01:00`); // Portuguese time
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setHours(endDateTime.getHours() + duration);
+
+      const event = {
+        summary: `Dr. K - BLOCKED: ${reason}`,
+        description: `Time slot blocked: ${reason}`,
+        start: {
+          dateTime: startDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        colorId: '11', // Red color
+        extendedProperties: {
+          private: {
+            availabilityType: 'BLOCKED_SLOT',
+            reason: reason,
+            createdBy: 'admin'
+          }
+        }
+      };
+
+      if (recurring) {
+        event.recurrence = ['RRULE:FREQ=WEEKLY'];
+      }
+
+      const result = await this.calendar.events.insert({
+        calendarId: DOCTOR_EMAIL,
+        resource: event
+      });
+
+      console.log(`✅ Time slot blocked: ${date} ${startTime} - ${reason}`);
+      return { success: true, eventId: result.data.id };
+      
+    } catch (error) {
+      console.error('❌ Failed to block time slot:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Unblock a specific time slot
+  async unblockTimeSlot({ date, time }) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      // Find the blocking event for this time slot
+      const startDateTime = new Date(`${date}T${time}:00.000+01:00`);
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setHours(endDateTime.getHours() + 1);
+
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        timeMin: startDateTime.toISOString(),
+        timeMax: endDateTime.toISOString(),
+        maxResults: 10
+      });
+
+      const blockingEvent = result.data.items.find(event => 
+        event.extendedProperties?.private?.availabilityType === 'BLOCKED_SLOT'
+      );
+
+      if (blockingEvent) {
+        await this.calendar.events.delete({
+          calendarId: DOCTOR_EMAIL,
+          eventId: blockingEvent.id
+        });
+
+        console.log(`✅ Time slot unblocked: ${date} ${time}`);
+        return { success: true, eventId: blockingEvent.id };
+      } else {
+        return { success: false, error: 'No blocking event found for this time slot' };
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to unblock time slot:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Block entire working day
+  async blockEntireDay({ date, reason = 'Day blocked' }) {
+    try {
+      const startDateTime = new Date(`${date}T09:00:00.000+01:00`);
+      const endDateTime = new Date(`${date}T17:00:00.000+01:00`);
+
+      const event = {
+        summary: `Dr. K - DAY BLOCKED: ${reason}`,
+        description: `Entire working day blocked: ${reason}`,
+        start: {
+          dateTime: startDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        colorId: '11', // Red color
+        extendedProperties: {
+          private: {
+            availabilityType: 'BLOCKED_SLOT',
+            reason: reason,
+            blockType: 'FULL_DAY',
+            createdBy: 'admin'
+          }
+        }
+      };
+
+      const result = await this.calendar.events.insert({
+        calendarId: DOCTOR_EMAIL,
+        resource: event
+      });
+
+      console.log(`✅ Full day blocked: ${date} - ${reason}`);
+      return { success: true, eventId: result.data.id };
+      
+    } catch (error) {
+      console.error('❌ Failed to block full day:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Block vacation period
+  async blockVacation({ startDate, endDate, reason = 'Vacation' }) {
+    try {
+      const startDateTime = new Date(`${startDate}T00:00:00.000+01:00`);
+      const endDateTime = new Date(`${endDate}T23:59:59.000+01:00`);
+
+      const event = {
+        summary: `Dr. K - VACATION: ${reason}`,
+        description: `Vacation period: ${reason}`,
+        start: {
+          date: startDate
+        },
+        end: {
+          date: endDate
+        },
+        colorId: '11', // Red color
+        extendedProperties: {
+          private: {
+            availabilityType: 'VACATION',
+            reason: reason,
+            createdBy: 'admin'
+          }
+        }
+      };
+
+      const result = await this.calendar.events.insert({
+        calendarId: DOCTOR_EMAIL,
+        resource: event
+      });
+
+      console.log(`✅ Vacation blocked: ${startDate} to ${endDate} - ${reason}`);
+      return { success: true, eventId: result.data.id };
+      
+    } catch (error) {
+      console.error('❌ Failed to block vacation:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Add extra time slot outside normal working hours
+  async addExtraTimeSlot({ date, time, reason = 'Extra availability' }) {
+    try {
+      const startDateTime = new Date(`${date}T${time}:00.000+01:00`);
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setHours(endDateTime.getHours() + 1);
+
+      const event = {
+        summary: `Dr. K - EXTRA SLOT: ${reason}`,
+        description: `Additional availability: ${reason}`,
+        start: {
+          dateTime: startDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        colorId: '10', // Green color
+        extendedProperties: {
+          private: {
+            availabilityType: 'EXTRA_SLOT',
+            reason: reason,
+            createdBy: 'admin'
+          }
+        }
+      };
+
+      const result = await this.calendar.events.insert({
+        calendarId: DOCTOR_EMAIL,
+        resource: event
+      });
+
+      console.log(`✅ Extra slot added: ${date} ${time} - ${reason}`);
+      return { success: true, eventId: result.data.id };
+      
+    } catch (error) {
+      console.error('❌ Failed to add extra slot:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Modify working hours for a specific day
+  async modifyWorkingDay({ date, startTime, endTime, reason = 'Modified hours' }) {
+    try {
+      const startDateTime = new Date(`${date}T${startTime}:00.000+01:00`);
+      const endDateTime = new Date(`${date}T${endTime}:00.000+01:00`);
+
+      const event = {
+        summary: `Dr. K - MODIFIED HOURS: ${startTime}-${endTime}`,
+        description: `Working hours modified: ${reason}`,
+        start: {
+          dateTime: startDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        colorId: '5', // Yellow color
+        extendedProperties: {
+          private: {
+            availabilityType: 'MODIFIED_DAY',
+            originalStart: '09:00',
+            originalEnd: '17:00',
+            newStart: startTime,
+            newEnd: endTime,
+            reason: reason,
+            createdBy: 'admin'
+          }
+        }
+      };
+
+      const result = await this.calendar.events.insert({
+        calendarId: DOCTOR_EMAIL,
+        resource: event
+      });
+
+      console.log(`✅ Working hours modified: ${date} ${startTime}-${endTime}`);
+      return { success: true, eventId: result.data.id };
+      
+    } catch (error) {
+      console.error('❌ Failed to modify working day:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Add availability slot (mark time as available for booking)
+  async addAvailabilitySlot({ date, startTime, duration = 0.5, reason = 'Available for booking' }) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      const startDateTime = new Date(`${date}T${startTime}:00.000+01:00`);
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setMinutes(endDateTime.getMinutes() + (duration * 60));
+
+      const event = {
+        summary: `🟢 AVAILABLE: ${startTime}`,
+        description: `Available slot: ${reason}`,
+        start: {
+          dateTime: startDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: 'Europe/Lisbon'
+        },
+        colorId: '11', // Light green color
+        extendedProperties: {
+          private: {
+            availabilityType: 'AVAILABLE_SLOT',
+            slotDuration: duration.toString(),
+            reason: reason,
+            createdBy: 'admin'
+          }
+        }
+      };
+
+      const response = await this.calendar.events.insert({
+        calendarId: DOCTOR_EMAIL,
+        resource: event
+      });
+
+      console.log(`✅ Availability slot created: ${date} ${startTime} (${duration}h)`);
+      return { 
+        success: true, 
+        eventId: response.data.id,
+        message: `Available slot created for ${date} at ${startTime}`
+      };
+
+    } catch (error) {
+      console.error('❌ Failed to add availability slot:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Remove availability slot
+  async removeAvailabilitySlot({ date, time }) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      // Find the availability event for this time slot
+      const startDateTime = new Date(`${date}T${time}:00.000+01:00`);
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setHours(endDateTime.getHours() + 1);
+
+      const result = await this.calendar.events.list({
+        calendarId: DOCTOR_EMAIL,
+        timeMin: startDateTime.toISOString(),
+        timeMax: endDateTime.toISOString(),
+        maxResults: 10
+      });
+
+      const availabilityEvent = result.data.items.find(event => 
+        event.extendedProperties?.private?.availabilityType === 'AVAILABLE_SLOT'
+      );
+
+      if (availabilityEvent) {
+        await this.calendar.events.delete({
+          calendarId: DOCTOR_EMAIL,
+          eventId: availabilityEvent.id
+        });
+
+        console.log(`✅ Availability slot removed: ${date} ${time}`);
+        return { 
+          success: true, 
+          eventId: availabilityEvent.id,
+          message: `Availability removed for ${date} at ${time}`
+        };
+      } else {
+        console.log(`⚠️ No availability slot found for ${date} ${time}`);
+        return { 
+          success: true, 
+          message: `No availability slot found for ${date} at ${time} (already not available)`
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to remove availability slot:', error.message);
+      return { success: false, error: error.message };
+    }
   }
 }
 
