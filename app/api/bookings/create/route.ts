@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getPatientByToken } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 export async function POST(request: NextRequest) {
@@ -13,13 +14,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get session info from booking token (Google Calendar)
-    const sessionInfo = await googleWorkspaceService.getSessionInfoFromBookingToken(bookingToken)
-    if (!sessionInfo) {
+    // Get patient info from JSON storage (not Google Calendar)
+    const patientResult = await getPatientByToken(bookingToken)
+    if (!patientResult.success) {
       return NextResponse.json(
         { error: 'Invalid or expired booking token' },
         { status: 404 }
       )
+    }
+
+    const patient = patientResult.patient
+
+    // Get booking history to calculate sessions used
+    const bookingHistory = await googleWorkspaceService.getBookingHistoryForToken(bookingToken)
+    const sessionsUsed = bookingHistory.length
+    const sessionsTotal = patient.sessionInfo?.sessionsTotal || 1
+    const sessionsRemaining = sessionsTotal - sessionsUsed
+
+    // Create sessionInfo object for compatibility
+    const sessionInfo = {
+      patientEmail: patient.basicInfo?.email,
+      patientName: patient.basicInfo?.fullName,
+      sessionsTotal: sessionsTotal,
+      sessionsUsed: sessionsUsed,
+      sessionsRemaining: sessionsRemaining,
+      isValid: sessionsRemaining > 0,
+      sessionPackage: patient.sessionInfo || { name: 'Therapy Session', sessionType: 'therapy' }
     }
 
     // Check if user has remaining sessions

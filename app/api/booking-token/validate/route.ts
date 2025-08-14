@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get patient info from CSV
+    // Get patient info from JSON storage
     const patientResult = await getPatientByToken(bookingToken)
     
     if (!patientResult.success) {
@@ -30,14 +30,13 @@ export async function POST(request: NextRequest) {
     
     // Calculate session counts
     const sessionsUsed = bookingHistory.length
-    const sessionsTotal = getSessionCountFromPackage(patient.sessionPackage)
+    const sessionsTotal = patient.sessionInfo?.sessionsTotal || 1
     const sessionsRemaining = sessionsTotal - sessionsUsed
     
-    // Check expiry (3 months from creation)
-    const createdAt = new Date(patient.createdAt)
-    const expiresAt = new Date(createdAt)
-    expiresAt.setMonth(expiresAt.getMonth() + 3)
-    const isExpired = new Date() > expiresAt
+    // Check expiry from JSON data (already calculated)
+    const validUntilStr = patient.sessionInfo?.validUntil || patient.basicInfo?.createdAt
+    const validUntil = validUntilStr ? new Date(validUntilStr) : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 3 months from now
+    const isExpired = new Date() > validUntil
 
     // Return comprehensive token information
     return NextResponse.json({
@@ -46,12 +45,12 @@ export async function POST(request: NextRequest) {
         sessionsTotal,
         sessionsUsed,
         sessionsRemaining,
-        patientEmail: patient.patientEmail,
-        patientName: patient.patientName,
-        expiresAt: expiresAt.toISOString(),
+        patientEmail: patient.basicInfo?.email || 'Unknown',
+        patientName: patient.basicInfo?.fullName || 'Unknown',
+        expiresAt: validUntil.toISOString(),
         isExpired,
         isValid: sessionsRemaining > 0 && !isExpired,
-        sessionPackage: patient.sessionPackage
+        sessionPackage: patient.sessionInfo
       },
       bookingHistory: bookingHistory.map(booking => ({
         eventId: booking.eventId,
@@ -75,16 +74,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper function to get session count from package
-function getSessionCountFromPackage(sessionPackage: any): number {
-  if (!sessionPackage) return 1
-  
-  const packageName = sessionPackage.name?.toLowerCase() || ''
-  
-  if (packageName.includes('1 session') || packageName.includes('consultation')) return 1
-  if (packageName.includes('4 session')) return 4
-  if (packageName.includes('6 session')) return 6
-  if (packageName.includes('8 session')) return 8
-  
-  return 4 // Default
-}
+// Note: Session counts are now stored directly in JSON patient.sessionInfo.sessionsTotal
