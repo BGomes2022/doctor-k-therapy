@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { savePatientData, checkPatientExists } from '@/utils/jsonPatientStorage'
+import { savePatientData, checkPatientExists, addPackageToExistingPatient } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 
@@ -45,10 +45,44 @@ export async function POST(request: NextRequest) {
     // Check if email already has active patient record
     const existingCheck = await checkPatientExists(formData.email)
     if (existingCheck.exists) {
-      return NextResponse.json(
-        { error: 'This email address is already registered. Please use your existing booking link or contact support.' },
-        { status: 409 }
-      )
+      console.log(`🔄 Existing patient found: ${existingCheck.patient.patientName}`)
+      console.log(`📦 Adding new package: ${sessionPackage?.name}`)
+      
+      // UPGRADE SYSTEM: Add new package to existing patient instead of error
+      const upgradeResult = await addPackageToExistingPatient(existingCheck.patient, sessionPackage)
+      
+      if (!upgradeResult.success) {
+        return NextResponse.json(
+          { error: 'Failed to upgrade package: ' + upgradeResult.error },
+          { status: 500 }
+        )
+      }
+      
+      // Send upgrade email with existing booking token
+      try {
+        await sendBookingLinkEmail(
+          formData.email,
+          upgradeResult.bookingToken,
+          existingCheck.patient.patientName,
+          sessionPackage
+        )
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Package upgraded successfully! Check your email for updated booking information.',
+          bookingToken: upgradeResult.bookingToken,
+          upgraded: true
+        })
+        
+      } catch (emailError) {
+        console.error('Upgrade email sending failed:', emailError)
+        return NextResponse.json({
+          success: true,
+          message: 'Package upgraded successfully. Updated booking information will be sent shortly.',
+          bookingToken: upgradeResult.bookingToken,
+          upgraded: true
+        })
+      }
     }
     
     // Use the session package from request or default

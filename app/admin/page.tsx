@@ -85,7 +85,10 @@ export default function AdminDashboard() {
   })
   const [cancelData, setCancelData] = useState({
     reason: "",
-    message: ""
+    message: "",
+    suggestAlternative: false,
+    alternativeDate: "",
+    alternativeTime: ""
   })
   const [editingNotes, setEditingNotes] = useState<string | null>(null)
   const [notesContent, setNotesContent] = useState("")
@@ -733,7 +736,10 @@ export default function AdminDashboard() {
     setSelectedBooking(booking)
     setCancelData({
       reason: "",
-      message: ""
+      message: "",
+      suggestAlternative: false,
+      alternativeDate: "",
+      alternativeTime: ""
     })
     setShowCancelModal(true)
     setOpenMenuBookingId(null)
@@ -784,10 +790,12 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bookingId: selectedBooking.bookingId,
+          eventId: selectedBooking.bookingId,
           action: 'cancel',
           reason: cancelData.reason,
-          message: cancelData.message
+          message: cancelData.message,
+          newDate: cancelData.suggestAlternative ? cancelData.alternativeDate : null,
+          newTime: cancelData.suggestAlternative ? cancelData.alternativeTime : null
         })
       })
 
@@ -1862,6 +1870,55 @@ export default function AdminDashboard() {
                     onChange={(e) => setCancelData(prev => ({...prev, message: e.target.value}))}
                   />
                 </div>
+                
+                {/* Alternative Suggestion Section */}
+                <div className="border-t pt-4">
+                  <label className="flex items-center space-x-2 mb-3">
+                    <input
+                      type="checkbox"
+                      checked={cancelData.suggestAlternative}
+                      onChange={(e) => setCancelData(prev => ({...prev, suggestAlternative: e.target.checked}))}
+                      className="rounded"
+                    />
+                    <span className="text-sm font-medium text-stone-700">
+                      Suggest alternative appointment time
+                    </span>
+                  </label>
+                  
+                  {cancelData.suggestAlternative && (
+                    <div className="space-y-3 ml-6">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-stone-700 mb-1">
+                            Alternative Date
+                          </label>
+                          <input
+                            type="date"
+                            value={cancelData.alternativeDate}
+                            onChange={(e) => setCancelData(prev => ({...prev, alternativeDate: e.target.value}))}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full p-2 border border-stone-300 rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-stone-700 mb-1">
+                            Alternative Time
+                          </label>
+                          <input
+                            type="time"
+                            value={cancelData.alternativeTime}
+                            onChange={(e) => setCancelData(prev => ({...prev, alternativeTime: e.target.value}))}
+                            className="w-full p-2 border border-stone-300 rounded-md text-sm"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-stone-500">
+                        💡 Patient will receive email with "Yes/No" buttons for the suggested time
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
                 <div className="flex gap-3 pt-4">
                   <Button
                     onClick={submitCancel}

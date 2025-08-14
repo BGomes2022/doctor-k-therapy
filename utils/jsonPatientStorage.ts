@@ -299,6 +299,126 @@ export async function checkPatientExists(email: string): Promise<{ exists: boole
   }
 }
 
+// Update patient session count (for cancel/credit)
+export async function updatePatientSessions(
+  bookingToken: string,
+  sessionDelta: number // +1 for credit, -1 for use
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log(`🔄 Updating sessions for patient: ${bookingToken}, delta: ${sessionDelta}`)
+    
+    // Load current patients data
+    const patientsBasicInfo = await loadJsonFile<PatientBasicInfo[]>(PATIENTS_FILE, [])
+    
+    // Find the patient to update
+    const patientIndex = patientsBasicInfo.findIndex(p => p.bookingToken === bookingToken)
+    
+    if (patientIndex === -1) {
+      throw new Error('Patient not found in storage')
+    }
+    
+    const currentPatient = patientsBasicInfo[patientIndex]
+    
+    // Update session counts
+    const currentUsed = currentPatient.sessionInfo.sessionsUsed || 0
+    const newUsed = Math.max(0, currentUsed + sessionDelta)
+    const newRemaining = currentPatient.sessionInfo.sessionsTotal - newUsed
+    
+    console.log(`📊 Session update: Used ${currentUsed} → ${newUsed}, Remaining: ${newRemaining}`)
+    
+    // Update the patient record
+    patientsBasicInfo[patientIndex] = {
+      ...currentPatient,
+      sessionInfo: {
+        ...currentPatient.sessionInfo,
+        sessionsUsed: newUsed,
+        // sessionsRemaining is calculated dynamically
+      },
+      lastActivity: new Date().toISOString()
+    }
+    
+    // Save updated patients list
+    await saveJsonFile(PATIENTS_FILE, patientsBasicInfo)
+    
+    console.log(`✅ Session count updated for ${bookingToken}`)
+    
+    return { success: true }
+    
+  } catch (error: any) {
+    console.error('❌ Failed to update patient sessions:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Add package to existing patient (UPGRADE SYSTEM)
+export async function addPackageToExistingPatient(
+  existingPatient: any, 
+  newSessionPackage: any
+): Promise<{ success: boolean; bookingToken: string; error?: string }> {
+  try {
+    console.log(`🔄 Adding package to existing patient: ${existingPatient.patientName}`)
+    console.log(`📦 New package: ${newSessionPackage.name}`)
+    
+    // Load current patients data
+    const patientsBasicInfo = await loadJsonFile<PatientBasicInfo[]>(PATIENTS_FILE, [])
+    
+    // Find the patient to update
+    const patientIndex = patientsBasicInfo.findIndex(p => p.basicInfo.email === existingPatient.patientEmail)
+    
+    if (patientIndex === -1) {
+      throw new Error('Patient not found in storage')
+    }
+    
+    const currentPatient = patientsBasicInfo[patientIndex]
+    
+    // Calculate new session totals
+    const currentSessions = currentPatient.sessionInfo.sessionsTotal
+    const newSessions = getCorrectSessionCount(newSessionPackage)
+    const totalSessions = currentSessions + newSessions
+    
+    console.log(`📊 Session calculation: ${currentSessions} + ${newSessions} = ${totalSessions}`)
+    
+    // Update patient's session info with combined packages
+    const updatedSessionInfo = {
+      ...currentPatient.sessionInfo,
+      packageName: `${currentPatient.sessionInfo.packageName} + ${newSessionPackage.name}`,
+      price: currentPatient.sessionInfo.price + newSessionPackage.price,
+      sessionsTotal: totalSessions,
+      // Keep existing sessions used count
+      validUntil: new Date(Date.now() + 3 * 30 * 24 * 60 * 60 * 1000).toISOString() // Extend by 3 months
+    }
+    
+    // Update the patient record
+    patientsBasicInfo[patientIndex] = {
+      ...currentPatient,
+      sessionInfo: updatedSessionInfo,
+      lastActivity: new Date().toISOString()
+    }
+    
+    // Save updated patients list
+    await saveJsonFile(PATIENTS_FILE, patientsBasicInfo)
+    
+    console.log(`✅ Package upgrade successful for ${existingPatient.patientName}`)
+    console.log(`📈 New session total: ${totalSessions}`)
+    
+    return {
+      success: true,
+      bookingToken: currentPatient.bookingToken // Return existing booking token
+    }
+    
+  } catch (error: any) {
+    console.error('❌ Failed to add package to existing patient:', error)
+    return {
+      success: false,
+      bookingToken: '',
+      error: error.message
+    }
+  }
+}
+
 // Get patient by booking token
 export async function getPatientByToken(bookingToken: string): Promise<{ success: boolean; patient?: any; error?: string }> {
   try {

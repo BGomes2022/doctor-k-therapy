@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -42,9 +42,10 @@ interface MedicalFormProps {
   language: "en" | "it"
   userId: string
   onSubmit: (formData: MedicalFormData) => void
+  selectedPackage?: any // Add package info for upgrade
 }
 
-export default function MedicalForm({ language, userId, onSubmit }: MedicalFormProps) {
+export default function MedicalForm({ language, userId, onSubmit, selectedPackage }: MedicalFormProps) {
   const [formData, setFormData] = useState<MedicalFormData>({
     fullName: "",
     email: "",
@@ -70,6 +71,58 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
+  
+  // Upgrade system states
+  const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'found' | 'not-found'>('idle')
+  const [showUpgradeOption, setShowUpgradeOption] = useState(false)
+  const [isUpgrading, setIsUpgrading] = useState(false)
+  const [formCollapsed, setFormCollapsed] = useState(false)
+
+  // Debounced email check function
+  const checkEmailExists = useCallback(async (email: string) => {
+    if (!email || email.length < 5) {
+      setEmailCheckStatus('idle')
+      setShowUpgradeOption(false)
+      return
+    }
+
+    setEmailCheckStatus('checking')
+    
+    try {
+      const response = await fetch('/api/check-email-exists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success && result.exists) {
+        setEmailCheckStatus('found')
+        setShowUpgradeOption(true)
+        setFormCollapsed(true)
+      } else {
+        setEmailCheckStatus('not-found')
+        setShowUpgradeOption(false)
+        setFormCollapsed(false)
+      }
+    } catch (error) {
+      console.error('Email check failed:', error)
+      setEmailCheckStatus('idle')
+      setShowUpgradeOption(false)
+    }
+  }, [])
+
+  // Debounce effect for email checking
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.email) {
+        checkEmailExists(formData.email)
+      }
+    }, 500) // 500ms debounce
+
+    return () => clearTimeout(timer)
+  }, [formData.email, checkEmailExists])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
@@ -77,6 +130,51 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }))
+  }
+
+  // Handle upgrade for existing patients
+  const handleUpgrade = async () => {
+    setIsUpgrading(true)
+    
+    try {
+      const response = await fetch('/api/medical-form/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId, 
+          formData: { email: formData.email }, // Only email for upgrade
+          sessionPackage: selectedPackage
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert(language === "en" 
+          ? "✅ Sessions added successfully! Check your email for updated booking information." 
+          : "✅ Sessioni aggiunte con successo! Controlla la tua email per informazioni aggiornate."
+        )
+        // Navigate to success page or close modal
+        window.location.href = '/'
+      } else {
+        throw new Error(result.error || 'Upgrade failed')
+      }
+    } catch (error) {
+      console.error('Upgrade error:', error)
+      alert(language === "en" 
+        ? "Upgrade failed. Please try again." 
+        : "Aggiornamento fallito. Riprova."
+      )
+    }
+    
+    setIsUpgrading(false)
+  }
+
+  // Handle creating new account (expand form again)
+  const handleCreateNewAccount = () => {
+    setShowUpgradeOption(false)
+    setFormCollapsed(false)
+    setEmailCheckStatus('not-found')
   }
 
   const validateForm = () => {
@@ -100,6 +198,11 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Don't submit if form is collapsed (upgrade option is shown)
+    if (formCollapsed) {
+      return
+    }
     
     if (!validateForm()) {
       return
@@ -207,7 +310,74 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
                   />
                 </div>
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
+
+              {/* Email Status & Upgrade Option */}
+              {emailCheckStatus === 'checking' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-blue-700 text-sm">
+                      {language === "en" ? "Checking email..." : "Controllo email..."}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {showUpgradeOption && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                  <div className="text-center space-y-4">
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="text-green-600 text-xl">✅</span>
+                      <span className="text-green-800 font-medium">
+                        {language === "en" ? "Existing account found" : "Account esistente trovato"}
+                      </span>
+                    </div>
+                    
+                    <p className="text-green-700">
+                      {language === "en" 
+                        ? `Your ${selectedPackage?.name || 'sessions'} will be added to your existing account.`
+                        : `Le tue ${selectedPackage?.name || 'sessioni'} saranno aggiunte al tuo account esistente.`
+                      }
+                    </p>
+                    
+                    <p className="text-green-600 text-sm">
+                      {language === "en" 
+                        ? "📧 Confirmation will be sent to this email address"
+                        : "📧 La conferma sarà inviata a questo indirizzo email"
+                      }
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button
+                        type="button"
+                        onClick={handleUpgrade}
+                        disabled={isUpgrading}
+                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2"
+                      >
+                        {isUpgrading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            {language === "en" ? "Adding..." : "Aggiungendo..."}
+                          </>
+                        ) : (
+                          language === "en" ? "Yes, add sessions" : "Sì, aggiungi sessioni"
+                        )}
+                      </Button>
+                      
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCreateNewAccount}
+                        className="border-green-300 text-green-700 hover:bg-green-50"
+                      >
+                        {language === "en" ? "No, create new account" : "No, crea nuovo account"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className={`grid md:grid-cols-2 gap-4 transition-all duration-300 ${formCollapsed ? 'opacity-30 pointer-events-none max-h-0 overflow-hidden' : 'opacity-100 max-h-none'}`}>
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-2">
                     {language === "en" ? "Phone Number *" : "Numero di Telefono *"}
@@ -237,7 +407,7 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
         </Card>
 
         {/* Emergency Contact */}
-        <Card>
+        <Card className={`transition-all duration-300 ${formCollapsed ? 'opacity-30 pointer-events-none max-h-0 overflow-hidden' : 'opacity-100 max-h-none'}`}>
           <CardContent className="p-6">
             <h3 className="text-xl font-medium text-stone-800 mb-4">{currentContent.emergencyContact}</h3>
             <div className="grid md:grid-cols-3 gap-4">
@@ -280,7 +450,7 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
         </Card>
 
         {/* Medical Information */}
-        <Card>
+        <Card className={`transition-all duration-300 ${formCollapsed ? 'opacity-30 pointer-events-none max-h-0 overflow-hidden' : 'opacity-100 max-h-none'}`}>
           <CardContent className="p-6">
             <h3 className="text-xl font-medium text-stone-800 mb-4">{currentContent.medicalInfo}</h3>
             <div className="space-y-4">
@@ -337,7 +507,7 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
         </Card>
 
         {/* Mental Health Information */}
-        <Card>
+        <Card className={`transition-all duration-300 ${formCollapsed ? 'opacity-30 pointer-events-none max-h-0 overflow-hidden' : 'opacity-100 max-h-none'}`}>
           <CardContent className="p-6">
             <h3 className="text-xl font-medium text-stone-800 mb-4">{currentContent.mentalHealthInfo}</h3>
             <div className="space-y-4">
@@ -386,7 +556,7 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
         </Card>
 
         {/* Consent */}
-        <Card>
+        <Card className={`transition-all duration-300 ${formCollapsed ? 'opacity-30 pointer-events-none max-h-0 overflow-hidden' : 'opacity-100 max-h-none'}`}>
           <CardContent className="p-6">
             <h3 className="text-xl font-medium text-stone-800 mb-4">{currentContent.consent}</h3>
             <div className="space-y-4">
@@ -424,7 +594,7 @@ export default function MedicalForm({ language, userId, onSubmit }: MedicalFormP
           </CardContent>
         </Card>
 
-        <div className="text-center">
+        <div className={`text-center transition-all duration-300 ${formCollapsed ? 'opacity-30 pointer-events-none max-h-0 overflow-hidden' : 'opacity-100 max-h-none'}`}>
           <Button
             type="submit"
             disabled={isSubmitting}

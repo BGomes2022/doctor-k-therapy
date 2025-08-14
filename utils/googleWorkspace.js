@@ -1751,6 +1751,125 @@ Medical Data: ${medicalDataString}
       return { success: false, error: error.message };
     }
   }
+
+  // Send cancellation email with alternative suggestion
+  async sendCancellationEmail({ patientEmail, patientName, bookingToken, originalDate, originalTime, reason, message, alternativeDate, alternativeTime }) {
+    try {
+      console.log(`📧 Sending cancellation email to ${patientEmail}`)
+      
+      const bookingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/booking/${bookingToken}`;
+      const hasAlternative = alternativeDate && alternativeTime;
+      
+      const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <meta charset="utf-8">
+          <style>
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
+              .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 40px 30px; text-align: center; }
+              .header h1 { margin: 0; font-size: 28px; font-weight: 300; }
+              .content { padding: 40px 30px; }
+              .cancellation-box { background: #fef2f2; border: 2px solid #fca5a5; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center; }
+              .alternative-box { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 2px solid #3b82f6; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center; }
+              .button { display: inline-block; padding: 15px 30px; margin: 10px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; text-align: center; }
+              .button-confirm { background: #059669; color: white; }
+              .button-decline { background: #dc2626; color: white; }
+              .button-book { background: #3b82f6; color: white; }
+              .footer { background: #f3f4f6; padding: 30px; text-align: center; font-size: 14px; color: #6b7280; }
+              .logo { font-size: 20px; font-weight: bold; color: #374151; margin-bottom: 10px; }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="header">
+                  <h1>⚠️ Appointment Cancelled</h1>
+              </div>
+              
+              <div class="content">
+                  <p>Dear ${patientName},</p>
+                  
+                  <div class="cancellation-box">
+                      <h3 style="color: #dc2626; margin-top: 0;">Your appointment has been cancelled</h3>
+                      <p><strong>Original appointment:</strong><br>
+                      📅 ${originalDate} at ${originalTime}</p>
+                      <p><strong>Reason:</strong> ${reason}</p>
+                      ${message ? `<p><em>"${message}"</em></p>` : ''}
+                  </div>
+                  
+                  <p><strong>📈 Good news:</strong> Your session has been automatically credited back to your account. You can use it to book a new appointment.</p>
+                  
+                  ${hasAlternative ? `
+                  <div class="alternative-box">
+                      <h3 style="color: #3b82f6; margin-top: 0;">📅 Alternative Suggestion</h3>
+                      <p><strong>New proposed time:</strong><br>
+                      📅 ${new Date(`${alternativeDate}T${alternativeTime}`).toLocaleDateString()} at ${new Date(`${alternativeDate}T${alternativeTime}`).toLocaleTimeString()}</p>
+                      
+                      <p>Would this alternative work for you?</p>
+                      
+                      <div style="margin: 20px 0;">
+                          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/confirm-alternative?token=${bookingToken}&date=${alternativeDate}&time=${alternativeTime}&email=${encodeURIComponent(patientEmail)}&name=${encodeURIComponent(patientName)}" class="button button-confirm">
+                              ✅ Yes, this time works
+                          </a>
+                          <a href="${bookingUrl}" class="button button-decline">
+                              ❌ No, choose different time
+                          </a>
+                      </div>
+                  </div>
+                  ` : `
+                  <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+                      <h4 style="margin-top: 0; color: #374151;">📅 Book a New Appointment</h4>
+                      <p>Please use your personal booking link to schedule a new session:</p>
+                      <a href="${bookingUrl}" class="button button-book">
+                          📅 Book New Appointment
+                      </a>
+                  </div>
+                  `}
+                  
+                  <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                      <h4 style="margin-top: 0; color: #374151;">💡 Important</h4>
+                      <ul style="margin: 0; padding-left: 20px;">
+                          <li>Your session credit is valid for 3 months</li>
+                          <li>You can book any available time slot</li>
+                          <li>No additional payment required</li>
+                      </ul>
+                  </div>
+                  
+                  <p>I sincerely apologize for any inconvenience this cancellation may cause. I'm committed to providing you with the best possible care and look forward to our rescheduled session.</p>
+                  
+                  <p>If you have any questions or concerns, please don't hesitate to reach out.</p>
+                  
+                  <p>Warm regards,<br><strong>Dr. Katiuscia</strong><br>Licensed Therapist</p>
+              </div>
+              
+              <div class="footer">
+                  <div class="logo">Dr. Katiuscia</div>
+                  <p>Licensed Therapist • Confidential & Secure Service</p>
+                  <p><small>This is an automated notification. Please keep this email for your records.</small></p>
+              </div>
+          </div>
+      </body>
+      </html>
+      `;
+
+      const mailOptions = {
+        from: process.env.DOCTOR_EMAIL,
+        to: patientEmail,
+        subject: `⚠️ Appointment Cancelled - ${hasAlternative ? 'Alternative Suggested' : 'Please Reschedule'} | Dr. Katiuscia`,
+        html: htmlContent
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('✅ Cancellation email sent successfully:', info.messageId);
+      
+      return { success: true, messageId: info.messageId };
+      
+    } catch (error) {
+      console.error('❌ Failed to send cancellation email:', error);
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 // Export singleton instance

@@ -88,6 +88,15 @@ export default function BookingFlow({ language, preSelectedPackage }: BookingFlo
 
       if (result.success) {
         setBookingToken(result.bookingToken)
+        
+        // Show upgrade message if this was a package upgrade
+        if (result.upgraded) {
+          alert(language === "en" 
+            ? "✅ Package upgraded successfully! Your sessions have been added to your existing account." 
+            : "✅ Pacchetto aggiornato con successo! Le tue sessioni sono state aggiunte al tuo account esistente."
+          )
+        }
+        
         setCurrentStep("success")
       } else {
         throw new Error(result.error || 'Form submission failed')
@@ -347,6 +356,7 @@ export default function BookingFlow({ language, preSelectedPackage }: BookingFlo
             language={language}
             userId={userId}
             onSubmit={handleMedicalFormSubmit}
+            selectedPackage={selectedPackage}
           />
         )}
 

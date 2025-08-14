@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAllPatients, updatePatientSessions } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
+
+// Helper function to credit session back to patient
+async function creditSessionToPatient(bookingToken: string) {
+  try {
+    console.log(`💰 Crediting session back to patient: ${bookingToken}`)
+    
+    // Credit 1 session back (delta = -1 to reduce sessionsUsed)
+    const result = await updatePatientSessions(bookingToken, -1)
+    
+    if (result.success) {
+      console.log(`✅ Session successfully credited back to ${bookingToken}`)
+      return true
+    } else {
+      console.error(`❌ Failed to credit session: ${result.error}`)
+      return false
+    }
+  } catch (error) {
+    console.error('❌ Error crediting session:', error)
+    return false
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { eventId, action, newDate, newTime, reason = "", message = "" } = await request.json()
+    const { eventId, action, newDate, newTime, reason = "", message = "", bookingToken = "" } = await request.json()
 
     if (!eventId || !action) {
       return NextResponse.json(
@@ -95,27 +117,64 @@ export async function POST(request: NextRequest) {
         eventId: eventId
       })
 
+      if (!existingEvent.data) {
+        return NextResponse.json(
+          { error: 'Event not found' },
+          { status: 404 }
+        )
+      }
+
+      // Extract patient details from event
+      const patientEmail = existingEvent.data.extendedProperties?.private?.patientEmail
+      const patientName = existingEvent.data.extendedProperties?.private?.patientName
+      const eventBookingToken = existingEvent.data.extendedProperties?.private?.bookingToken || bookingToken
+
+      // Credit session back to patient BEFORE deleting event
+      if (eventBookingToken) {
+        const creditSuccess = await creditSessionToPatient(eventBookingToken)
+        if (!creditSuccess) {
+          console.warn('⚠️ Failed to credit session, but continuing with cancellation')
+        }
+      }
+
       // Delete the event
       await googleWorkspaceService.calendar.events.delete({
         calendarId: process.env.DOCTOR_EMAIL,
         eventId: eventId,
-        sendUpdates: 'all' // Notify attendees
+        sendUpdates: 'all' // Notify attendees via Google Calendar
       })
 
       console.log('✅ Event cancelled:', eventId)
 
-      // Send cancellation email if we have patient details
-      if (existingEvent.data && existingEvent.data.extendedProperties?.private?.patientEmail) {
-        const patientEmail = existingEvent.data.extendedProperties.private.patientEmail
-        const patientName = existingEvent.data.extendedProperties.private.patientName
-        
-        // You could implement a cancellation email function here
-        console.log(`📧 Should send cancellation email to ${patientEmail}`)
+      // Send enhanced cancellation email with alternatives
+      if (patientEmail && patientName) {
+        try {
+          const emailResult = await googleWorkspaceService.sendCancellationEmail({
+            patientEmail,
+            patientName,
+            bookingToken: eventBookingToken,
+            originalDate: existingEvent.data.start?.dateTime ? new Date(existingEvent.data.start.dateTime).toLocaleDateString() : 'Unknown',
+            originalTime: existingEvent.data.start?.dateTime ? new Date(existingEvent.data.start.dateTime).toLocaleTimeString() : 'Unknown',
+            reason: reason || 'Schedule conflict',
+            message: message || 'I apologize for any inconvenience this may cause.',
+            alternativeDate: newDate,
+            alternativeTime: newTime
+          })
+          
+          if (emailResult.success) {
+            console.log(`✅ Cancellation email sent to ${patientEmail}`)
+          } else {
+            console.error(`❌ Failed to send cancellation email: ${emailResult.error}`)
+          }
+        } catch (emailError) {
+          console.error('❌ Error sending cancellation email:', emailError)
+        }
       }
 
       return NextResponse.json({
         success: true,
-        message: 'Booking cancelled successfully'
+        message: 'Booking cancelled successfully and session credited back to patient',
+        sessionCredited: !!eventBookingToken
       })
 
     } else {
