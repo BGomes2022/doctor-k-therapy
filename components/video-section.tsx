@@ -19,6 +19,8 @@ export default function VideoSection({ language }: VideoSectionProps) {
         "Building empathy and understanding",
         "Creating safe spaces for healing",
       ],
+      videoId: "N4ZYIHht4ZE",
+      videoTitle: "4 Things not to say to a depressed person"
     },
     it: {
       title: "Un Messaggio Personale",
@@ -31,6 +33,8 @@ export default function VideoSection({ language }: VideoSectionProps) {
         "Costruire empatia e comprensione",
         "Creare spazi sicuri per la guarigione",
       ],
+      videoId: "OVttVmzSgTM",
+      videoTitle: "4 cose da NON dire a una persona depressa"
     },
   }
 
@@ -51,8 +55,8 @@ export default function VideoSection({ language }: VideoSectionProps) {
               <CardContent className="p-0">
                 <div className="relative" style={{ aspectRatio: "9/16" }}>
                   <iframe
-                    src="https://www.youtube.com/embed/N4ZYIHht4ZE"
-                    title="4 Things not to say to a depressed person"
+                    src={`https://www.youtube.com/embed/${currentContent.videoId}`}
+                    title={currentContent.videoTitle}
                     className="w-full h-full"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -66,7 +70,7 @@ export default function VideoSection({ language }: VideoSectionProps) {
           {/* Text Content */}
           <div className="space-y-6">
             <div>
-              <h3 className="text-2xl font-light text-stone-800 mb-4">"4 Things not to say to a depressed person"</h3>
+              <h3 className="text-2xl font-light text-stone-800 mb-4">"{currentContent.videoTitle}"</h3>
               <p className="text-lg text-stone-600 leading-relaxed font-light">{currentContent.description}</p>
             </div>
 
