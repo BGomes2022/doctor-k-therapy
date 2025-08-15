@@ -1,23 +1,29 @@
 import { NextResponse } from 'next/server'
-import { getAllPatients } from '@/utils/jsonPatientStorage'
+import { loadJsonFile, ensureDirectoryExists } from '@/utils/jsonPatientStorage'
+import path from 'path'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
+
+const DATA_DIR = path.join(process.cwd(), 'data')
+const PATIENTS_FILE = path.join(DATA_DIR, 'patients.json')
 
 export async function GET() {
   try {
-    // Get patients from encrypted CSV file
-    const patientsResult = await getAllPatients()
+    await ensureDirectoryExists(DATA_DIR)
+    
+    // Direkt aus patients.json lesen - keine Transformation
+    const patientsData = await loadJsonFile<any[]>(PATIENTS_FILE, [])
     let patients: any[] = []
     
-    if (patientsResult.success) {
-      patients = patientsResult.patients.map((patient: any) => ({
+    if (patientsData.length > 0) {
+      patients = patientsData.map((patient: any) => ({
         bookingToken: patient.bookingToken,
-        userId: patient.userId,
-        patientEmail: patient.patientEmail,
-        patientName: patient.patientName,
-        sessionPackage: patient.sessionPackage,
-        sessionsTotal: getSessionCountFromPackage(patient.sessionPackage),
+        userId: patient.id,
+        patientEmail: patient.basicInfo?.email || 'Unknown',
+        patientName: patient.basicInfo?.fullName || 'Unknown',
+        sessionPackage: patient.sessionInfo,
+        sessionsTotal: patient.sessionInfo?.sessionsTotal || 1,
         sessionsUsed: 0, // Will be updated from calendar sessions
-        sessionsRemaining: getSessionCountFromPackage(patient.sessionPackage),
+        sessionsRemaining: patient.sessionInfo?.sessionsTotal || 1,
         createdAt: patient.createdAt,
         medicalFormData: patient.medicalFormData,
         therapistNotes: '' // Initialize empty therapist notes
@@ -30,11 +36,12 @@ export async function GET() {
     const sessionsResult = await googleWorkspaceService.getAllTherapySessions()
     let bookings = []
     
+    console.log('🔍 DEBUG - Google Calendar Response:', JSON.stringify(sessionsResult, null, 2))
+    
     if (sessionsResult.success) {
-      // Filter only real therapy sessions (not patient records)
-      const realSessions = sessionsResult.sessions.filter((session: any) => 
-        session.extendedProperties?.private?.therapySession === 'true'
-      )
+      // Don't filter - show ALL sessions for debugging
+      const realSessions = sessionsResult.sessions || []
+      console.log(`📅 Found ${realSessions.length} total sessions from Google Calendar`)
       
       // Transform calendar events to booking format
       bookings = realSessions.map((session: any) => ({
@@ -81,16 +88,4 @@ export async function GET() {
   }
 }
 
-// Helper function to get session count from package
-function getSessionCountFromPackage(sessionPackage: any): number {
-  if (!sessionPackage) return 1
-  
-  const packageName = sessionPackage.name?.toLowerCase() || ''
-  
-  if (packageName.includes('1 session') || packageName.includes('consultation')) return 1
-  if (packageName.includes('4 session')) return 4
-  if (packageName.includes('6 session')) return 6
-  if (packageName.includes('8 session')) return 8
-  
-  return 4 // Default
-}
+// Session counts are now stored directly in JSON patient.sessionInfo.sessionsTotal

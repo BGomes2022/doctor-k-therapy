@@ -361,32 +361,20 @@ export async function addPackageToExistingPatient(
   newSessionPackage: any
 ): Promise<{ success: boolean; bookingToken: string; error?: string }> {
   try {
-    // Get email from the existing patient object
-    const patientEmail = existingPatient.basicInfo?.email || existingPatient.patientEmail
-    
-    if (!patientEmail) {
-      throw new Error('Patient email is missing - cannot find patient to upgrade')
-    }
-    
-    console.log(`📧 Looking for patient with email: ${patientEmail}`)
+    console.log(`🔄 Adding package to existing patient: ${existingPatient.patientName}`)
+    console.log(`📦 New package: ${newSessionPackage.name}`)
     
     // Load current patients data
     const patientsBasicInfo = await loadJsonFile<PatientBasicInfo[]>(PATIENTS_FILE, [])
     
-    // Find the patient to update by email
-    const patientIndex = patientsBasicInfo.findIndex(p => p.basicInfo.email === patientEmail)
+    // Find the patient to update
+    const patientIndex = patientsBasicInfo.findIndex(p => p.basicInfo.email === existingPatient.patientEmail)
     
     if (patientIndex === -1) {
       throw new Error('Patient not found in storage')
     }
     
     const currentPatient = patientsBasicInfo[patientIndex]
-    
-    // Use the patient name from the stored data
-    const patientName = currentPatient.basicInfo.fullName
-    
-    console.log(`🔄 Adding package to existing patient: ${patientName}`)
-    console.log(`📦 New package: ${newSessionPackage.name}`)
     
     // Calculate new session totals
     const currentSessions = currentPatient.sessionInfo.sessionsTotal
@@ -415,7 +403,7 @@ export async function addPackageToExistingPatient(
     // Save updated patients list
     await saveJsonFile(PATIENTS_FILE, patientsBasicInfo)
     
-    console.log(`✅ Package upgrade successful for ${patientName}`)
+    console.log(`✅ Package upgrade successful for ${existingPatient.patientName}`)
     console.log(`📈 New session total: ${totalSessions}`)
     
     return {

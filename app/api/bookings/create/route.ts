@@ -28,8 +28,16 @@ export async function POST(request: NextRequest) {
     // Get booking history to calculate sessions used
     const bookingHistory = await googleWorkspaceService.getBookingHistoryForToken(bookingToken)
     const sessionsUsed = bookingHistory.length
-    const sessionsTotal = patient.sessionInfo?.sessionsTotal || 1
+    // IMPORTANT: Use sessionsTotal from patient.sessionInfo which includes ALL purchased sessions (including upgrades)
+    const sessionsTotal = patient.sessionInfo?.sessionsTotal || patient.sessionPackage?.sessionsTotal || 1
     const sessionsRemaining = sessionsTotal - sessionsUsed
+    
+    console.log('🔍 Session calculation:', {
+      sessionsTotal: sessionsTotal,
+      sessionsUsed: sessionsUsed,
+      sessionsRemaining: sessionsRemaining,
+      patientSessionInfo: patient.sessionInfo
+    })
 
     // Create sessionInfo object for compatibility
     const sessionInfo = {
@@ -69,6 +77,12 @@ export async function POST(request: NextRequest) {
     const sessionNumber = sessionInfo.sessionsUsed + 1
 
     // Create therapy session in Google Calendar
+    console.log('🔍 DEBUG - Sending to Google Calendar:', {
+      patientEmail: sessionInfo.patientEmail,
+      patientName: sessionInfo.patientName,
+      sessionPackage: sessionInfo.sessionPackage
+    })
+    
     const calendarResult = await googleWorkspaceService.createTherapySessionBooking({
       bookingToken: bookingToken,
       patientEmail: sessionInfo.patientEmail,

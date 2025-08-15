@@ -649,7 +649,7 @@ class GoogleWorkspaceService {
 Therapy Session ${sessionNumber}/${totalSessions}
 Patient: ${patientName}
 Email: ${patientEmail}
-Therapy Plan: ${sessionPackage.name.replace('Package', 'Plan')}
+Therapy Plan: ${sessionPackage?.name?.replace('Package', 'Plan') || 'Therapy Session'}
 Booking Token: ${bookingToken}
 
 This is a confidential therapy session.
@@ -1784,7 +1784,7 @@ Medical Data: ${medicalDataString}
       <body>
           <div class="container">
               <div class="header">
-                  <h1>⚠️ Appointment Cancelled</h1>
+                  <h1>Appointment Update</h1>
               </div>
               
               <div class="content">
@@ -1828,9 +1828,10 @@ Medical Data: ${medicalDataString}
                   `}
                   
                   <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-                      <h4 style="margin-top: 0; color: #374151;">💡 Important</h4>
+                      <h4 style="margin-top: 0; color: #374151;">💡 Session Credit Information</h4>
                       <ul style="margin: 0; padding-left: 20px;">
-                          <li>Your session credit is valid for 3 months</li>
+                          <li><strong>Your session has been automatically credited back to your account</strong></li>
+                          <li>Session credit is valid for 3 months</li>
                           <li>You can book any available time slot</li>
                           <li>No additional payment required</li>
                       </ul>
@@ -1856,14 +1857,18 @@ Medical Data: ${medicalDataString}
       const mailOptions = {
         from: process.env.DOCTOR_EMAIL,
         to: patientEmail,
-        subject: `⚠️ Appointment Cancelled - ${hasAlternative ? 'Alternative Suggested' : 'Please Reschedule'} | Dr. Katiuscia`,
+        subject: `Appointment Update - ${hasAlternative ? 'Alternative Suggested' : 'Reschedule Needed'} | Dr. Katiuscia`,
         html: htmlContent
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Cancellation email sent successfully:', info.messageId);
+      // Use the existing sendEmail function instead of transporter
+      const result = await this.sendEmail({
+        to: patientEmail,
+        subject: `Appointment Update - ${hasAlternative ? 'Alternative Suggested' : 'Reschedule Needed'} | Dr. Katiuscia`,
+        htmlContent: htmlContent
+      });
       
-      return { success: true, messageId: info.messageId };
+      return result;
       
     } catch (error) {
       console.error('❌ Failed to send cancellation email:', error);

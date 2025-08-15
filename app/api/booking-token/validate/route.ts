@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     const patient = patientResult.patient
+    console.log('🔍 DEBUG Patient Object:', JSON.stringify(patient, null, 2))
 
     // Get booking history from Google Calendar (actual therapy sessions)
     const bookingHistory = await googleWorkspaceService.getBookingHistoryForToken(bookingToken)

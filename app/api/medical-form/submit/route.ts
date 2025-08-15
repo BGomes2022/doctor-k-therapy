@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     // Check if email already has active patient record
     const existingCheck = await checkPatientExists(formData.email)
     if (existingCheck.exists) {
-      console.log(`🔄 Existing patient found: ${existingCheck.patient.patientName}`)
+      console.log(`🔄 Existing patient found: ${existingCheck.patient.basicInfo?.fullName}`)
       console.log(`📦 Adding new package: ${sessionPackage?.name}`)
       
       // UPGRADE SYSTEM: Add new package to existing patient instead of error
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         await sendBookingLinkEmail(
           formData.email,
           upgradeResult.bookingToken,
-          existingCheck.patient.patientName,
+          existingCheck.patient.basicInfo?.fullName || formData.fullName,
           sessionPackage
         )
         

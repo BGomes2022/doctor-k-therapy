@@ -780,8 +780,11 @@ export default function AdminDashboard() {
   }
 
   const submitCancel = async () => {
+    console.log('🔍 DEBUG - submitCancel called:', { selectedBooking: selectedBooking?.bookingId, cancelData })
+    
     if (!selectedBooking || !cancelData.reason) {
-      console.log('Please provide a cancellation reason')
+      console.log('❌ Missing data - selectedBooking:', selectedBooking?.bookingId, 'reason:', cancelData.reason)
+      alert('Please provide a cancellation reason')
       return
     }
 
@@ -1451,24 +1454,6 @@ export default function AdminDashboard() {
                     <p className="text-sm text-stone-600">Your schedule integrated with Google Calendar</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      onClick={() => setShowVacationModal(true)}
-                      variant="outline"
-                      size="sm"
-                      className="border-orange-200 text-orange-700 hover:bg-orange-50"
-                    >
-                      <Calendar className="h-4 w-4 mr-1" />
-                      Plan Vacation
-                    </Button>
-                    <Button
-                      onClick={() => setShowRecurringModal(true)}
-                      variant="outline"
-                      size="sm"
-                      className="border-purple-200 text-purple-700 hover:bg-purple-50"
-                    >
-                      <Clock className="h-4 w-4 mr-1" />
-                      Recurring Rules
-                    </Button>
                     <Button
                       onClick={() => window.open('https://calendar.google.com/calendar/u/0/r?cid=dr.k@doctorktherapy.com', '_blank')}
                       className="bg-stone-600 hover:bg-stone-700 text-white"

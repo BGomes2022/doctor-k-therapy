@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, Globe } from "lucide-react"
 
 interface TimeSlot {
   time: string
@@ -43,6 +44,8 @@ export default function CalendarBooking({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [userTimezone, setUserTimezone] = useState<string>("")
+  const [timezoneOffset, setTimezoneOffset] = useState<number>(0)
 
   const texts = {
     en: {
@@ -58,7 +61,9 @@ export default function CalendarBooking({
       duration: "50 minutes",
       previousWeek: "Previous week",
       nextWeek: "Next week",
-      noAvailableTimes: "No available times in this period"
+      noAvailableTimes: "No available times in this period",
+      timezoneInfo: "Times shown in your local timezone",
+      originalTime: "Portugal time"
     },
     it: {
       title: "Seleziona l'orario del tuo appuntamento",
@@ -73,11 +78,25 @@ export default function CalendarBooking({
       duration: "50 minuti",
       previousWeek: "Settimana precedente",
       nextWeek: "Settimana successiva",
-      noAvailableTimes: "Nessun orario disponibile in questo periodo"
+      noAvailableTimes: "Nessun orario disponibile in questo periodo",
+      timezoneInfo: "Orari mostrati nel tuo fuso orario locale",
+      originalTime: "Ora del Portogallo"
     }
   }
 
   const t = texts[language]
+
+  useEffect(() => {
+    // Detect user's timezone
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    setUserTimezone(tz)
+    
+    // Calculate timezone offset from Portugal (WET/WEST)
+    const userDate = new Date()
+    const portugalDate = new Date(userDate.toLocaleString("en-US", {timeZone: "Europe/Lisbon"}))
+    const offset = (userDate.getTime() - portugalDate.getTime()) / (1000 * 60 * 60)
+    setTimezoneOffset(Math.round(offset))
+  }, [])
 
   useEffect(() => {
     fetchAvailableTimes()
@@ -174,8 +193,45 @@ export default function CalendarBooking({
     })
   }
 
-  const formatTime = (timeStr: string) => {
-    return timeStr
+  const formatTime = (timeStr: string, showOriginal: boolean = false) => {
+    // If no timezone offset, return original time
+    if (timezoneOffset === 0) {
+      return timeStr
+    }
+    
+    // Parse the Portugal time (HH:MM format)
+    const [hours, minutes] = timeStr.split(':').map(Number)
+    
+    // Create a date object for today
+    const date = new Date()
+    date.setHours(hours, minutes, 0, 0)
+    
+    // Add timezone offset to get user's local time
+    date.setHours(date.getHours() + timezoneOffset)
+    
+    // Format the local time
+    const localHours = date.getHours()
+    const localMinutes = date.getMinutes()
+    const localTimeStr = `${localHours.toString().padStart(2, '0')}:${localMinutes.toString().padStart(2, '0')}`
+    
+    if (showOriginal) {
+      return `${localTimeStr} (${timeStr} ${t.originalTime})`
+    }
+    
+    return localTimeStr
+  }
+
+  const getTimezoneAbbreviation = () => {
+    try {
+      const date = new Date()
+      const timeStr = date.toLocaleTimeString('en-US', { 
+        timeZoneName: 'short',
+        timeZone: userTimezone 
+      })
+      return timeStr.split(' ').pop() || userTimezone
+    } catch {
+      return userTimezone
+    }
   }
 
   // Check if user has remaining sessions
@@ -197,6 +253,17 @@ export default function CalendarBooking({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">{t.title}</h2>
+        
+        {/* Timezone indicator */}
+        {userTimezone && timezoneOffset !== 0 && (
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Globe className="h-4 w-4 text-blue-600" />
+            <Badge variant="secondary" className="text-sm">
+              {t.timezoneInfo}: {userTimezone} ({getTimezoneAbbreviation()})
+            </Badge>
+          </div>
+        )}
+        
         {sessionInfo && (
           <p className="text-gray-600">
             {t.sessionInfo.replace('{{current}}', (sessionInfo.current + 1).toString()).replace('{{total}}', sessionInfo.total.toString())}
@@ -299,9 +366,17 @@ export default function CalendarBooking({
                             setSelectedDate(dateInfo.date)
                             setSelectedTime(slot.time)
                           }}
-                          className="justify-center"
+                          className="justify-center relative"
+                          title={timezoneOffset !== 0 ? `${slot.time} ${t.originalTime}` : ''}
                         >
-                          {formatTime(slot.time)}
+                          <span className="text-sm">
+                            {formatTime(slot.time)}
+                            {timezoneOffset !== 0 && (
+                              <span className="text-xs opacity-60 ml-1">
+                                PT
+                              </span>
+                            )}
+                          </span>
                         </Button>
                       ))}
                     </div>
@@ -319,7 +394,7 @@ export default function CalendarBooking({
                   <CheckCircle className="h-5 w-5 text-green-600" />
                   <div>
                     <p className="font-medium text-green-900">
-                      {formatDate(selectedDate)} at {formatTime(selectedTime)}
+                      {formatDate(selectedDate)} at {formatTime(selectedTime, true)}
                     </p>
                     <p className="text-sm text-green-700">{t.duration}</p>
                   </div>

@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
-export default function ConfirmAlternativePage() {
+function ConfirmAlternativeContent() {
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
@@ -154,5 +154,13 @@ export default function ConfirmAlternativePage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function ConfirmAlternativePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ConfirmAlternativeContent />
+    </Suspense>
   )
 }

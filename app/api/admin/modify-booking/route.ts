@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAllPatients, updatePatientSessions } from '@/utils/jsonPatientStorage'
+import { updatePatientSessions, loadJsonFile, ensureDirectoryExists } from '@/utils/jsonPatientStorage'
+import path from 'path'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
+
+const DATA_DIR = path.join(process.cwd(), 'data')
+const PATIENTS_FILE = path.join(DATA_DIR, 'patients.json')
 
 // Helper function to credit session back to patient
 async function creditSessionToPatient(bookingToken: string) {

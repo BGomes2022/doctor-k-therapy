@@ -17,10 +17,13 @@ import {
   Calendar,
   Menu,
   X,
+  ChevronDown,
+  HeartHandshake,
+  Phone,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import VideoSection from "@/components/video-section"
 import BookingModal from "@/components/BookingModal"
 
@@ -29,6 +32,23 @@ export default function TherapyWebsite() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [bookingModalOpen, setBookingModalOpen] = useState(false)
   const [selectedPackage, setSelectedPackage] = useState(null)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [emergencyModalOpen, setEmergencyModalOpen] = useState(false)
+  const moreMenuRef = useRef(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+        setMoreMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const content = {
     en: {
@@ -37,7 +57,57 @@ export default function TherapyWebsite() {
         services: "Services",
         pricing: "Pricing",
         contact: "Contact",
+        more: "More",
         bookNow: "Book Now",
+      },
+      emergency: {
+        title: "Get Help Right Now",
+        subtitle: "If you are in crisis or immediate danger, please contact:",
+        usa: {
+          title: "🇺🇸 United States",
+          emergency: "Emergency: 911",
+          suicide: "Suicide & Crisis Lifeline: 988",
+          crisis: "Crisis Text Line: Text HOME to 741741",
+          veterans: "Veterans Crisis Line: 1-800-273-8255"
+        },
+        canada: {
+          title: "🇨🇦 Canada",
+          emergency: "Emergency: 911",
+          suicide: "Talk Suicide Canada: 1-833-456-4566",
+          crisis: "Crisis Text Line: Text TALK to 686868",
+          kids: "Kids Help Phone: 1-800-668-6868"
+        },
+        uk: {
+          title: "🇬🇧 United Kingdom",
+          emergency: "Emergency: 999 or 112",
+          suicide: "Samaritans: 116 123",
+          crisis: "Crisis Text Line: Text SHOUT to 85258",
+          nhs: "NHS Mental Health: 111 (select option 2)"
+        },
+        australia: {
+          title: "🇦🇺 Australia",
+          emergency: "Emergency: 000",
+          suicide: "Lifeline: 13 11 14",
+          beyondblue: "Beyond Blue: 1300 22 4636",
+          kids: "Kids Helpline: 1800 55 1800"
+        },
+        eu: {
+          title: "🇪🇺 European Union",
+          emergency: "Emergency: 112 (all EU countries)",
+          suicide: "European Lifeline: 116 123",
+          germany: "🇩🇪 Germany - Telefonseelsorge: 0800-111 0 111",
+          france: "🇫🇷 France - Numéro National: 3114",
+          spain: "🇪🇸 Spain - Teléfono de la Esperanza: 717 003 717",
+          netherlands: "🇳🇱 Netherlands - 113 Zelfmoordpreventie: 0800-0113"
+        },
+        italy: {
+          title: "🇮🇹 Italy",
+          emergency: "Emergenza: 112",
+          suicide: "Telefono Amico: 02 2327 2327",
+          samaritans: "Samaritans Onlus: 06 77208977",
+          helpline: "Telefono Azzurro: 19696"
+        },
+        disclaimer: "This is not a substitute for emergency medical care. If you are having a medical emergency, call your local emergency number immediately."
       },
       hero: {
         badge: "Online sessions in English & Italian 🇬🇧 🇮🇹",
@@ -176,7 +246,57 @@ export default function TherapyWebsite() {
         services: "Servizi",
         pricing: "Prezzi",
         contact: "Contatti",
+        more: "Altro",
         bookNow: "Prenota Ora",
+      },
+      emergency: {
+        title: "Ottieni Aiuto Subito",
+        subtitle: "Se sei in crisi o in pericolo immediato, contatta:",
+        usa: {
+          title: "🇺🇸 Stati Uniti",
+          emergency: "Emergenza: 911",
+          suicide: "Linea Suicidio e Crisi: 988",
+          crisis: "Linea SMS Crisi: Invia HOME a 741741",
+          veterans: "Linea Crisi Veterani: 1-800-273-8255"
+        },
+        canada: {
+          title: "🇨🇦 Canada",
+          emergency: "Emergenza: 911",
+          suicide: "Talk Suicide Canada: 1-833-456-4566",
+          crisis: "Linea SMS Crisi: Invia TALK a 686868",
+          kids: "Telefono Aiuto Bambini: 1-800-668-6868"
+        },
+        uk: {
+          title: "🇬🇧 Regno Unito",
+          emergency: "Emergenza: 999 o 112",
+          suicide: "Samaritans: 116 123",
+          crisis: "Linea SMS Crisi: Invia SHOUT a 85258",
+          nhs: "NHS Salute Mentale: 111 (seleziona opzione 2)"
+        },
+        australia: {
+          title: "🇦🇺 Australia",
+          emergency: "Emergenza: 000",
+          suicide: "Lifeline: 13 11 14",
+          beyondblue: "Beyond Blue: 1300 22 4636",
+          kids: "Telefono Aiuto Bambini: 1800 55 1800"
+        },
+        eu: {
+          title: "🇪🇺 Unione Europea",
+          emergency: "Emergenza: 112 (tutti i paesi UE)",
+          suicide: "Linea Europea: 116 123",
+          germany: "🇩🇪 Germania - Telefonseelsorge: 0800-111 0 111",
+          france: "🇫🇷 Francia - Numero Nazionale: 3114",
+          spain: "🇪🇸 Spagna - Teléfono de la Esperanza: 717 003 717",
+          netherlands: "🇳🇱 Paesi Bassi - 113 Zelfmoordpreventie: 0800-0113"
+        },
+        italy: {
+          title: "🇮🇹 Italia",
+          emergency: "Emergenza: 112",
+          suicide: "Telefono Amico: 02 2327 2327",
+          samaritans: "Samaritans Onlus: 06 77208977",
+          helpline: "Telefono Azzurro: 19696"
+        },
+        disclaimer: "Questo non sostituisce le cure mediche di emergenza. Se hai un'emergenza medica, chiama immediatamente il tuo numero di emergenza locale."
       },
       hero: {
         badge: "Sessioni online in Inglese e Italiano 🇬🇧 🇮🇹",
@@ -367,6 +487,35 @@ export default function TherapyWebsite() {
             <Link href="#contact" className="text-stone-500 hover:text-stone-700 transition-colors font-light">
               {currentContent.nav.contact}
             </Link>
+            {/* More Dropdown */}
+            <div className="relative" ref={moreMenuRef}>
+              <button
+                onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                className="flex items-center text-stone-500 hover:text-stone-700 transition-colors font-light"
+              >
+                {currentContent.nav.more}
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </button>
+              {moreMenuOpen && (
+                <div className="absolute top-full mt-2 right-0 bg-white shadow-lg rounded-lg border border-cream-200 w-64 py-2">
+                  <button
+                    onClick={() => {
+                      setEmergencyModalOpen(true)
+                      setMoreMenuOpen(false)
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-cream-50 transition-colors flex items-center space-x-3"
+                  >
+                    <HeartHandshake className="h-5 w-5 text-red-500" />
+                    <div>
+                      <div className="font-medium text-stone-700">{currentContent.emergency.title}</div>
+                      <div className="text-sm text-stone-500 mt-0.5">
+                        {language === "en" ? "Emergency contacts" : "Contatti di emergenza"}
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
             {/* Desktop Language Switcher */}
             <Button
               onClick={() => setLanguage(language === "en" ? "it" : "en")}
@@ -445,6 +594,16 @@ export default function TherapyWebsite() {
               >
                 {currentContent.nav.contact}
               </Link>
+              <button
+                onClick={() => {
+                  setEmergencyModalOpen(true)
+                  setMobileMenuOpen(false)
+                }}
+                className="w-full text-left flex items-center space-x-3 text-stone-600 hover:text-stone-800 transition-colors font-light py-2"
+              >
+                <HeartHandshake className="h-5 w-5 text-red-500" />
+                <span>{currentContent.emergency.title}</span>
+              </button>
               <div className="pt-4 border-t border-cream-200">
                 <Link href="#pricing" onClick={() => setMobileMenuOpen(false)}>
                   <Button
@@ -1013,6 +1172,200 @@ export default function TherapyWebsite() {
         language={language}
         preSelectedPackage={selectedPackage}
       />
+
+      {/* Emergency Help Modal */}
+      {emergencyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-cream-200">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center space-x-3">
+                  <HeartHandshake className="h-8 w-8 text-red-500" />
+                  <div>
+                    <h2 className="text-2xl font-light text-stone-800">{currentContent.emergency.title}</h2>
+                    <p className="text-sm text-stone-600 mt-1">
+                      {language === "en" ? "Get Help Right Now" : "Ottieni Aiuto Subito"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEmergencyModalOpen(false)}
+                  className="text-stone-400 hover:text-stone-600 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800 font-medium">{currentContent.emergency.subtitle}</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* USA */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.usa.title}</h3>
+                  <div className="space-y-2 pl-4">
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.usa.emergency}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.usa.suicide}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.usa.crisis}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.usa.veterans}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Canada */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.canada.title}</h3>
+                  <div className="space-y-2 pl-4">
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.canada.emergency}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.canada.suicide}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.canada.crisis}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.canada.kids}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* UK */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.uk.title}</h3>
+                  <div className="space-y-2 pl-4">
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.uk.emergency}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.uk.suicide}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.uk.crisis}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.uk.nhs}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Australia */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.australia.title}</h3>
+                  <div className="space-y-2 pl-4">
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.australia.emergency}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.australia.suicide}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.australia.beyondblue}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.australia.kids}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Italy */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.italy.title}</h3>
+                  <div className="space-y-2 pl-4">
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.italy.emergency}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.italy.suicide}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.italy.samaritans}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.italy.helpline}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* EU */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.eu.title}</h3>
+                  <div className="space-y-2 pl-4">
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.emergency}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.suicide}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.germany}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.france}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.spain}</span>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
+                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.netherlands}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-amber-800 text-sm">{currentContent.emergency.disclaimer}</p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-cream-200">
+              <Button
+                onClick={() => setEmergencyModalOpen(false)}
+                className="w-full bg-stone-600 hover:bg-stone-700 text-white font-light py-3 rounded-full"
+              >
+                {language === "en" ? "Close" : "Chiudi"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
