@@ -1,35 +1,31 @@
 import { NextResponse } from 'next/server'
-import { loadJsonFile, ensureDirectoryExists } from '@/utils/jsonPatientStorage'
-import path from 'path'
+import { getAllPatients } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/googleWorkspace')
-
-const DATA_DIR = path.join(process.cwd(), 'data')
-const PATIENTS_FILE = path.join(DATA_DIR, 'patients.json')
 
 export async function GET() {
   try {
-    await ensureDirectoryExists(DATA_DIR)
-    
-    // Direkt aus patients.json lesen - keine Transformation
-    const patientsData = await loadJsonFile<any[]>(PATIENTS_FILE, [])
+    // Use the proper getAllPatients function that decrypts medical data
+    const patientsResult = await getAllPatients()
     let patients: any[] = []
     
-    if (patientsData.length > 0) {
-      patients = patientsData.map((patient: any) => ({
+    if (patientsResult.success) {
+      patients = patientsResult.patients.map((patient: any) => ({
         bookingToken: patient.bookingToken,
-        userId: patient.id,
-        patientEmail: patient.basicInfo?.email || 'Unknown',
-        patientName: patient.basicInfo?.fullName || 'Unknown',
-        sessionPackage: patient.sessionInfo,
-        sessionsTotal: patient.sessionInfo?.sessionsTotal || 1,
+        userId: patient.userId,
+        patientEmail: patient.patientEmail || 'Unknown',
+        patientName: patient.patientName || 'Unknown',
+        sessionPackage: patient.sessionPackage,
+        sessionsTotal: patient.sessionsTotal || 1,
         sessionsUsed: 0, // Will be updated from calendar sessions
-        sessionsRemaining: patient.sessionInfo?.sessionsTotal || 1,
+        sessionsRemaining: patient.sessionsRemaining || 1,
         createdAt: patient.createdAt,
-        medicalFormData: patient.medicalFormData,
-        therapistNotes: '' // Initialize empty therapist notes
+        medicalFormData: patient.medicalFormData, // Now properly decrypted!
+        therapistNotes: patient.therapistNotes || ''
       }))
       
-      console.log(`📋 Loaded ${patients.length} patients from CSV`)
+      console.log(`📋 Loaded ${patients.length} patients with decrypted medical data`)
+    } else {
+      console.error('❌ Failed to load patients:', patientsResult.error)
     }
     
     // Get actual therapy sessions from Google Calendar (only real bookings)

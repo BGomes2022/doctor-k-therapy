@@ -129,7 +129,6 @@ For privacy concerns or data requests:
 
 **Dr. Katiuscia Mercogliano**
 Email: privacy@doctorktherapy.com
-Address: [Professional Address]
 
 **Data Protection Officer:** privacy@doctorktherapy.com
 
@@ -259,7 +258,6 @@ Per questioni di privacy o richieste di dati:
 
 **Dott.ssa Katiuscia Mercogliano**
 Email: privacy@doctorktherapy.com
-Indirizzo: [Indirizzo Professionale]
 
 **Responsabile della Protezione dei Dati:** privacy@doctorktherapy.com
 

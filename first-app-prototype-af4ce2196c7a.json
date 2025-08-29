@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "first-app-prototype",
+  "private_key_id": "af4ce2196c7af62c1f3dcaed24105eb44c828b5b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCi/KS+iwjLxMXx\ngW593nqQJBj+8fK8Lz3RXZ5ewVyg6XCtRTPzG1NDrDTnyVspJbp3BtGuSk+wb1by\n5PwPLW9HOw3yMkqOCl1+IJTHMFgDNiTH8u0T3bAJMqrKT14oa8JSiE4RE70wqI8J\nPtmS0KcG4Em+gy4bJnbijDheqq4EndiKPH3dTIPf8shwD0wI6mdbw0brGj+lCwYQ\nbrCoIcXYCqgS4npPInpiJnJ2JNBYy+9f5zfvlmpYAwrQZ747BPoeL9V6IwBdVyHz\nbT4t+gdT+tWtKhfaGUZDuEhpE2pFbxJyt8oMwRFJR4WactoGtRJqKlF+vYJcCpDI\nUePQeUt9AgMBAAECggEAD9AwUbZem5qTU+upYzfvL0X5UN77nIt+1W3eXDYpfQk5\nH+6LbEZV7UZreaOdHyBkd4DnXiAinC0pQ/a4h+ZyGfieUUXU2vQhfwe9N5g2qdUa\ne3XTz64eEr5iOK+7pHNUDrrfzCNcozhvbEe3R1nMIswnC39hvUudlDxjibfIm3Tn\nVUA+44pLd7RLO3dMi0lP4O22fZYyixKcx3AZq5fohGz49cEFGSyf6vsiPSw4aAd3\nLVD4C1BBkSJP8k908HG+H6g1yFgVKQOewNstbEQJyorwLD0MyeRa30wJnBxXh5oB\ncPEN09Hj7UJ44w4qaVK+5uQ5sVsfNYBbM/xYNSDMpwKBgQDdmKQNUVIjoEtTZ0rz\nSvIOXfttX3p5IDV4M63DsoXFGofirjCg75nxJ6r/PIhXEgyaWSfE6319Eo2Bq0H+\n0X+KnfHTwQqSnUjM33nwHuOiLyzaoIsWl9ou3tgClyw/IyrszeNi6RfrGDoYtIVN\nDvNw6agE/M2pecqP1rRpKQSBwwKBgQC8SpG7BKxerbJ9wqvTxsXfrM/dcEymuM4S\nUbeFMudY1pLhTiY6zBF10X/Zjmw83+0AAPbqHfP41KcIkQLAM4YY3Phbhe3VE4vQ\nuHrkmOw9TVvAV2/1ccn7PtU+tTgMHW72hTmWl5BHLfTXEMN6q2pBWmBqcDrAE/hF\nNnrTodbpvwKBgAPMEMuVoCWyInhMZdFjcGBkpeFK6ItYzPHBWPHohjhJaxisSXMI\niAfE2T5EaEWtrn+alX7fViglgD0/lQLrzhau/CzXuvmmLlAsaCeAMABgdJFOfPOn\nKHrzIJpywrRWQu8J3CKeweUqZhx0Q3B9mBhQOKvVNST5TEpIsJC4vjYHAoGAUg6p\nXfiWahiGrhn1qjB5MZZtbFKxhQMLA57LPOhHPEce8cOOE5e1kEQB1L0l3I22Codh\nE/yDw5BhTvFrYnnR2eoK7k/6qx5+kzKilBc09S5Oaw9wAmZZoP3sDw0I5Pa60gKT\na1aYEP0tM8DhgAdOIjcRx7ErWWQakYdBlhN0xp8CgYAqIvE9qrhcjDjXPsSKrMIr\n8okvZSWe02xdwtF7K0sUQGjVJ7cYCT885RmyJgyjbkKFzaQNVXnkV/p8Wqoy3s9I\nGnYKVTl6Y+Hl0M+JGKqGGxB3EoB3wjg79KSqytC0FwN5gQaICajd01/Xuw/xxmUj\ncj5uOI7t8TWweyRt2qR0cw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "therapy-email-service@first-app-prototype.iam.gserviceaccount.com",
+  "client_id": "100621811734084982492",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/therapy-email-service%40first-app-prototype.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

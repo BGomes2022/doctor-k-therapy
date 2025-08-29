@@ -304,6 +304,10 @@ export default function BookingFlow({ language, preSelectedPackage }: BookingFlo
                     <span className="font-medium mr-2">📋</span>
                     <span>{language === "en" ? "Professional therapy session with Dr. Katiuscia" : "Sessione di terapia professionale con Dr. Katiuscia"}</span>
                   </div>
+                  <div className="flex items-center text-amber-700 font-semibold mt-4 pt-3 border-t border-stone-200">
+                    <span className="font-medium mr-2">⚠️</span>
+                    <span>{language === "en" ? "No Refunds" : "Nessun Rimborso"}</span>
+                  </div>
                 </div>
               </div>
 

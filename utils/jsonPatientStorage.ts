@@ -1,7 +1,7 @@
 // utils/jsonPatientStorage.ts - KOMPLETT NEUE JSON-BASIERTE IMPLEMENTIERUNG
 import { promises as fs } from 'fs'
 import path from 'path'
-import { generateSecureToken, encryptMedicalData, decryptMedicalData, createDataSignature, verifyDataSignature } from './encryption'
+import { generateSecureToken, encryptMedicalData, decryptMedicalData, createDataSignature, verifyDataSignature, encryptData, decryptData } from './encryption'
 import crypto from 'crypto'
 
 // Typen für bessere Code-Qualität definieren
@@ -171,7 +171,7 @@ export async function getAllPatients(): Promise<{ success: boolean; patients: an
     await ensureDirectoryExists(DATA_DIR)
     
     // Direkt aus patients.json lesen - keine Transformation, keine komplexe Logik
-    const patients = await loadJsonFile<any[]>(PATIENTS_FILE, [])
+    const patientsBasicInfo = await loadJsonFile<any[]>(PATIENTS_FILE, [])
     
     console.log(`📋 Lade ${patientsBasicInfo.length} Patienten aus JSON...`)
     
@@ -214,11 +214,13 @@ export async function getAllPatients(): Promise<{ success: boolean; patients: an
           }
           
           // Therapist Notes prüfen
-          const notesFilePath = path.join(NOTES_DIR, `${patient.bookingToken}.json`)
+          const notesFilePath = path.join(NOTES_DIR, `${patient.id}.json`)
           let therapistNotes = ''
           try {
-            const notesFile = await loadJsonFile(notesFilePath, { notes: [], lastUpdated: '' })
-            therapistNotes = notesFile.notes?.map((note: any) => note.content).join('\n\n') || ''
+            const notesFile = await loadJsonFile(notesFilePath, null)
+            if (notesFile && notesFile.notes) {
+              therapistNotes = decryptData(notesFile.notes)
+            }
           } catch {
             // Keine Notes vorhanden
           }
@@ -538,4 +540,89 @@ function getCorrectSessionCount(sessionPackage: any): number {
 function generateDataHash(data: any): string {
   // Einfacher Hash für Datenintegrität
   return crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex')
+}
+
+// Save therapist notes for a patient
+export async function saveTherapistNotes(bookingToken: string, notes: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log(`💾 Saving therapist notes for token: ${bookingToken}`)
+    
+    // Load current patients data
+    const patientsBasicInfo = await loadJsonFile<PatientBasicInfo[]>(PATIENTS_FILE, [])
+    
+    // Find the patient by booking token
+    const patientIndex = patientsBasicInfo.findIndex(p => p.bookingToken === bookingToken)
+    
+    if (patientIndex === -1) {
+      console.log(`❌ Patient not found with token: ${bookingToken}`)
+      return { success: false, error: 'Patient not found' }
+    }
+    
+    const patient = patientsBasicInfo[patientIndex]
+    const notesFilePath = path.join(NOTES_DIR, `${patient.id}.json`)
+    
+    // Ensure notes directory exists
+    await ensureDirectoryExists(NOTES_DIR)
+    
+    // Encrypt and save notes
+    const encryptedNotes = encryptData(notes || '')
+    const notesData = {
+      patientId: patient.id,
+      bookingToken: bookingToken,
+      notes: encryptedNotes,
+      lastUpdated: new Date().toISOString()
+    }
+    
+    await saveJsonFile(notesFilePath, notesData)
+    
+    console.log(`✅ Therapist notes saved for ${patient.basicInfo.fullName}`)
+    return { success: true }
+    
+  } catch (error: any) {
+    console.error('❌ Failed to save therapist notes:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// Get therapist notes for a patient
+export async function getTherapistNotes(bookingToken: string): Promise<{ success: boolean; notes?: string; error?: string }> {
+  try {
+    console.log(`📖 Getting therapist notes for token: ${bookingToken}`)
+    
+    // Load current patients data
+    const patientsBasicInfo = await loadJsonFile<PatientBasicInfo[]>(PATIENTS_FILE, [])
+    
+    // Find the patient by booking token
+    const patient = patientsBasicInfo.find(p => p.bookingToken === bookingToken)
+    
+    if (!patient) {
+      console.log(`❌ Patient not found with token: ${bookingToken}`)
+      return { success: true, notes: '' } // Return empty notes for non-existing patient
+    }
+    
+    const notesFilePath = path.join(NOTES_DIR, `${patient.id}.json`)
+    
+    try {
+      // Try to load notes file
+      const notesData = await loadJsonFile(notesFilePath, null)
+      
+      if (notesData && notesData.notes) {
+        // Decrypt notes
+        const decryptedNotes = decryptData(notesData.notes)
+        console.log(`✅ Therapist notes loaded for ${patient.basicInfo.fullName}`)
+        return { success: true, notes: decryptedNotes }
+      } else {
+        console.log(`📄 No notes found for ${patient.basicInfo.fullName}`)
+        return { success: true, notes: '' }
+      }
+    } catch (fileError) {
+      // Notes file doesn't exist yet
+      console.log(`📄 Notes file not found for ${patient.basicInfo.fullName}, using empty notes`)
+      return { success: true, notes: '' }
+    }
+    
+  } catch (error: any) {
+    console.error('❌ Failed to get therapist notes:', error)
+    return { success: false, error: error.message, notes: '' }
+  }
 }

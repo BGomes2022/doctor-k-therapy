@@ -4,7 +4,24 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, Globe } from "lucide-react"
+import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, Globe, MapPin } from "lucide-react"
+import { 
+  getUserTimezone, 
+  saveUserTimezone, 
+  convertToUserTime,
+  formatTimeForDisplay,
+  getTimezoneAbbreviation,
+  getFriendlyTimezoneName,
+  COMMON_TIMEZONES,
+  THERAPIST_TIMEZONE
+} from "@/utils/timezone"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface TimeSlot {
   time: string
@@ -45,7 +62,7 @@ export default function CalendarBooking({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [userTimezone, setUserTimezone] = useState<string>("")
-  const [timezoneOffset, setTimezoneOffset] = useState<number>(0)
+  const [showTimezoneSelector, setShowTimezoneSelector] = useState(false)
 
   const texts = {
     en: {
@@ -87,15 +104,9 @@ export default function CalendarBooking({
   const t = texts[language]
 
   useEffect(() => {
-    // Detect user's timezone
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    // Get user's timezone (from cookie or auto-detect)
+    const tz = getUserTimezone()
     setUserTimezone(tz)
-    
-    // Calculate timezone offset from Portugal (WET/WEST)
-    const userDate = new Date()
-    const portugalDate = new Date(userDate.toLocaleString("en-US", {timeZone: "Europe/Lisbon"}))
-    const offset = (userDate.getTime() - portugalDate.getTime()) / (1000 * 60 * 60)
-    setTimezoneOffset(Math.round(offset))
   }, [])
 
   useEffect(() => {
@@ -254,13 +265,54 @@ export default function CalendarBooking({
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">{t.title}</h2>
         
-        {/* Timezone indicator */}
-        {userTimezone && timezoneOffset !== 0 && (
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Globe className="h-4 w-4 text-blue-600" />
-            <Badge variant="secondary" className="text-sm">
-              {t.timezoneInfo}: {userTimezone} ({getTimezoneAbbreviation()})
-            </Badge>
+        {/* Timezone indicator with change option */}
+        {userTimezone && (
+          <div className="mb-4">
+            {!showTimezoneSelector ? (
+              <div className="flex items-center justify-center gap-2">
+                <MapPin className="h-4 w-4 text-blue-600" />
+                <span className="text-sm text-gray-600">
+                  Your timezone: <strong>{getFriendlyTimezoneName(userTimezone)}</strong> ({getTimezoneAbbreviation(userTimezone)})
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTimezoneSelector(true)}
+                  className="text-blue-600 hover:text-blue-700"
+                >
+                  Change
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <Select
+                  value={userTimezone}
+                  onValueChange={(value) => {
+                    setUserTimezone(value)
+                    saveUserTimezone(value)
+                    setShowTimezoneSelector(false)
+                  }}
+                >
+                  <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder="Select your timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMMON_TIMEZONES.map((tz) => (
+                      <SelectItem key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowTimezoneSelector(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
           </div>
         )}
         
@@ -366,16 +418,17 @@ export default function CalendarBooking({
                             setSelectedDate(dateInfo.date)
                             setSelectedTime(slot.time)
                           }}
-                          className="justify-center relative"
-                          title={timezoneOffset !== 0 ? `${slot.time} ${t.originalTime}` : ''}
+                          className="justify-center relative flex flex-col py-2"
                         >
-                          <span className="text-sm">
-                            {formatTime(slot.time)}
-                            {timezoneOffset !== 0 && (
-                              <span className="text-xs opacity-60 ml-1">
-                                PT
-                              </span>
-                            )}
+                          <span className="text-sm font-medium">
+                            {(() => {
+                              // Convert Portugal time to user's timezone
+                              const [hours, minutes] = slot.time.split(':').map(Number)
+                              const portugalTime = new Date(dateInfo.date)
+                              portugalTime.setHours(hours, minutes, 0, 0)
+                              const userTime = convertToUserTime(portugalTime, userTimezone)
+                              return formatTimeForDisplay(userTime, userTimezone)
+                            })()}
                           </span>
                         </Button>
                       ))}
@@ -394,7 +447,13 @@ export default function CalendarBooking({
                   <CheckCircle className="h-5 w-5 text-green-600" />
                   <div>
                     <p className="font-medium text-green-900">
-                      {formatDate(selectedDate)} at {formatTime(selectedTime, true)}
+                      {formatDate(selectedDate)} at {(() => {
+                        const [hours, minutes] = selectedTime.split(':').map(Number)
+                        const portugalTime = new Date(selectedDate)
+                        portugalTime.setHours(hours, minutes, 0, 0)
+                        const userTime = convertToUserTime(portugalTime, userTimezone)
+                        return formatTimeForDisplay(userTime, userTimezone)
+                      })()}
                     </p>
                     <p className="text-sm text-green-700">{t.duration}</p>
                   </div>

@@ -24,7 +24,7 @@ If you do not agree to these terms, please do not use our services.
           title: "2. Description of Services",
           content: `
 **Online Therapy Services Include:**
-• Individual psychotherapy sessions via secure video conferencing
+• Individual psychology sessions via secure video conferencing
 • Mental health consultations and assessments
 • Treatment planning and therapeutic interventions
 • Crisis support (within business hours)
@@ -34,6 +34,7 @@ If you do not agree to these terms, please do not use our services.
 • Emergency psychiatric services
 • 24/7 crisis intervention
 • Medication prescription or management
+• Psychological or personality testing
 • Services to individuals under 18 years of age
 • Court-ordered evaluations or testimony
           `
@@ -191,7 +192,7 @@ Se non accettate questi termini, vi preghiamo di non utilizzare i nostri servizi
           title: "2. Descrizione dei Servizi",
           content: `
 **I Servizi di Terapia Online Includono:**
-• Sessioni di psicoterapia individuale tramite videoconferenza sicura
+• Sessioni di psicologia individuale tramite videoconferenza sicura
 • Consultazioni e valutazioni di salute mentale
 • Pianificazione del trattamento e interventi terapeutici
 • Supporto per crisi (durante l'orario lavorativo)

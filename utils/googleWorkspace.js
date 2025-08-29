@@ -103,11 +103,11 @@ class GoogleWorkspaceService {
         description: description,
         start: {
           dateTime: startDateTime,
-          timeZone: 'Europe/Zurich',
+          timeZone: 'Europe/Lisbon',
         },
         end: {
           dateTime: endDateTime,
-          timeZone: 'Europe/Zurich',
+          timeZone: 'Europe/Lisbon',
         },
         attendees: [
           { email: attendeeEmail, responseStatus: 'needsAction' },
@@ -656,11 +656,11 @@ This is a confidential therapy session.
         `.trim(),
         start: {
           dateTime: startDateTime,
-          timeZone: 'Europe/Zurich',
+          timeZone: 'Europe/Lisbon',
         },
         end: {
           dateTime: endDateTime,
-          timeZone: 'Europe/Zurich',
+          timeZone: 'Europe/Lisbon',
         },
         attendees: [
           { email: patientEmail, responseStatus: 'needsAction' },

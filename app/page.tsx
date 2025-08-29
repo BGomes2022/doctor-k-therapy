@@ -20,12 +20,16 @@ import {
   ChevronDown,
   HeartHandshake,
   Phone,
+  AlertTriangle,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect, useRef } from "react"
 import VideoSection from "@/components/video-section"
 import BookingModal from "@/components/BookingModal"
+import TestimonialsCarousel from "@/components/TestimonialsCarousel"
+import PaymentMethods from "@/components/PaymentMethods"
+import EmergencyModal from "@/components/EmergencyModal"
 
 export default function TherapyWebsite() {
   const [language, setLanguage] = useState<"en" | "it">("en")
@@ -145,12 +149,17 @@ export default function TherapyWebsite() {
         slogan: "See, feel and change for a better life.",
         sloganSubtext: "My approach with every patient",
         text1:
-          "I'm Dr. Katiuscia Mercogliano, and I've been walking alongside people through their most difficult moments for over 18 years across three countries.",
+          "Welcome. I'm Dr. Katiuscia Mercogliano, a licensed psychologist, bilingual in English and Italian, specializing in adult psychology, relationships, and trauma recovery. I hold a Ph.D in Psychology and a Master's Degree in Psychotherapy with a focus on Transactional Analysis (TA).",
         text2:
-          "My approach combines psychodynamic therapy, trauma-informed care, ACT, and EMDR techniques – but what matters most is that I want you to feel seen, safe, and strong again.",
+          "I am internationally certified in Anxiety Treatment, Trauma-Informed ACT, and Somatic Therapy, and I have also worked as a Forensic Psychologist, serving as an expert witness in legal cases. For over 18 years, across three countries, I've walked alongside people during some of the most difficult moments of their lives.",
         text3:
-          "Whether you're struggling with trauma, depression, anxiety, or relationship challenges, you don't have to face it alone. Together, we'll find your path to healing.",
-        badges: ["PhD in Psychology", "18+ Years Experience", "Trauma-Informed", "EMDR Training Completed"],
+          "Together, we explore and identify life's deep emotional patterns that can keep us stuck in cycles of addiction, depression, or anxiety. Using a psychodynamic and personalized approach, we address past traumas, emotional triggers, and unconscious patterns, helping you understand and change maladaptive behaviors.",
+        text4:
+          "You'll learn practical tools to recognize emotional triggers and unhealthy relationship dynamics, manage anxiety, and most importantly, develop the independence and boundaries needed to maintain a healthy mental and emotional life.",
+        text5:
+          "I'm deeply passionate about supporting individuals, couples, parents, and young adults in redefining boundaries, rebalancing roles, and building greater self-awareness. Trauma isn't just a painful memory or hidden truth, it's the moment we felt unsafe and alone, and where insecurity began to shape our future choices. We'll go there together. To see, to feel, and to decide whether it's time to change a pattern that no longer belongs to you.",
+        badges: ["PhD in Psychology", "18+ Years Experience", "Trauma-Informed", "International Certifications"],
+        viewCertifications: "View All Certifications",
       },
       pricing: {
         title: "Investment in Your Healing",
@@ -193,9 +202,9 @@ export default function TherapyWebsite() {
         title: "Common Questions",
         items: [
           {
-            question: "Is this really private?",
+            question: "Is my privacy protected?",
             answer:
-              "Absolutely. All sessions are completely confidential and conducted through secure, encrypted platforms.",
+              "Absolutely. Your confidentiality is a top priority. Every session is conducted through secure, encrypted platforms to keep your information safe and private.",
           },
           {
             question: "How do online sessions work?",
@@ -205,7 +214,7 @@ export default function TherapyWebsite() {
           {
             question: "What if I feel nervous?",
             answer:
-              "It's completely normal to feel nervous. We'll go at your pace, and I'll help you feel comfortable from the very first session.",
+              "Feeling nervous is completely natural. We'll take things at your pace, and I'll do my best to help you feel at ease from the very first session.",
           },
         ],
       },
@@ -213,7 +222,7 @@ export default function TherapyWebsite() {
         title: "Get in Touch",
         subtitle: "Have questions? I'm here to help.",
         info: "Contact Information",
-        email: "hello@drkatyushagrey.com",
+        email: "hello@doctorktherapy.com",
         worldwide: "Online sessions worldwide",
         emergency:
           "Important: This is not an emergency contact. If you're in crisis, please contact your local emergency services or crisis hotline.",
@@ -407,7 +416,7 @@ export default function TherapyWebsite() {
         title: "Mettiti in Contatto",
         subtitle: "Hai domande? Sono qui per aiutarti.",
         info: "Informazioni di Contatto",
-        email: "hello@drkatyushagrey.com",
+        email: "hello@doctorktherapy.com",
         worldwide: "Sessioni online in tutto il mondo",
         emergency:
           "Importante: Questo non è un contatto di emergenza. Se sei in crisi, contatta i servizi di emergenza locali o la linea di crisi.",
@@ -659,13 +668,13 @@ export default function TherapyWebsite() {
               </div>
             </div>
             <div className="relative">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl" style={{ maxHeight: '500px' }}>
                 <Image
-                  src="/images/kat-Hero2.jpeg"
+                  src="/images/WhatsApp Image 2025-08-17 at 17.47.21.jpeg"
                   alt="Dr. Katiuscia Mercogliano"
                   width={600}
-                  height={600}
-                  className="w-full h-auto object-cover object-bottom"
+                  height={500}
+                  className="w-full h-full object-cover object-center"
                 />
               </div>
             </div>
@@ -673,28 +682,8 @@ export default function TherapyWebsite() {
         </div>
       </section>
 
-      {/* Testimonials Section - Moved before Services */}
-      <section className="py-16 px-4 bg-gradient-to-b from-white via-cream-50/20 to-cream-100/30 relative">
-        <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-light text-stone-800 mb-4">{currentContent.testimonials.title}</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {currentContent.testimonials.items.map((testimonial, index) => (
-              <Card key={index} className="bg-white/90 border-cream-200 backdrop-blur-sm">
-                <CardContent className="p-6 text-center">
-                  <div className="flex justify-center mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-stone-700 italic">"{testimonial}"</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Testimonials Carousel - After Hero */}
+      <TestimonialsCarousel />
 
       {/* Video Section */}
       <VideoSection language={language} />
@@ -747,36 +736,40 @@ export default function TherapyWebsite() {
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 md:p-12 shadow-xl border border-cream-200">
             <div className="space-y-6 text-lg text-stone-700 leading-relaxed">
               <p>{currentContent.about.text1}</p>
-
-              <div className="text-center py-6">
-                <p className="text-2xl font-light text-stone-600 italic">"{currentContent.about.slogan}"</p>
-                <p className="text-sm text-stone-500 mt-2">{currentContent.about.sloganSubtext}</p>
-              </div>
-
               <p>{currentContent.about.text2}</p>
               <p>{currentContent.about.text3}</p>
+              <p>{currentContent.about.text4}</p>
+              <p>{currentContent.about.text5}</p>
             </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              {currentContent.about.badges.map((badge, index) => (
-                <Badge
-                  key={index}
-                  className={`${index % 2 === 0 ? "bg-cream-100 border-cream-200" : "bg-stone-100 border-stone-200"} text-stone-700`}
-                >
-                  {badge}
-                </Badge>
-              ))}
+            <div className="mt-8 flex flex-wrap gap-3 items-center justify-between">
+              <div className="flex flex-wrap gap-3">
+                {currentContent.about.badges.map((badge, index) => (
+                  <Badge
+                    key={index}
+                    className={`${index % 2 === 0 ? "bg-cream-100 border-cream-200" : "bg-stone-100 border-stone-200"} text-stone-700`}
+                  >
+                    {badge}
+                  </Badge>
+                ))}
+              </div>
+              <Button 
+                variant="outline" 
+                className="border-cream-300 text-stone-700 hover:bg-cream-50"
+              >
+                {currentContent.about.viewCertifications}
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-gradient-to-b from-white via-cream-50/30 to-cream-100/20 px-4 relative overflow-hidden">
+      <section id="pricing" className="py-12 bg-gradient-to-b from-white via-cream-50/30 to-cream-100/20 px-4 relative overflow-hidden">
         {/* Animated background decoration */}
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-orange-100/20 to-transparent rounded-full blur-3xl animate-float-delay"></div>
         <div className="absolute top-1/3 left-0 w-64 h-64 bg-gradient-to-br from-amber-100/15 to-transparent rounded-full blur-3xl animate-pulse-slow"></div>
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <h2 className="text-4xl font-extralight text-stone-700 mb-6 tracking-wide">
               {currentContent.pricing.title}
             </h2>
@@ -786,7 +779,7 @@ export default function TherapyWebsite() {
           </div>
 
           {/* First Row - Main Services */}
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div className="grid md:grid-cols-3 gap-6 mb-6">
             {[
               {
                 id: "consultation",
@@ -840,7 +833,7 @@ export default function TherapyWebsite() {
                   }`}
                   onClick={() => setSelectedPackage(pkg)}
                 >
-                  <CardContent className="p-8 text-center relative z-10 flex flex-col h-full">
+                  <CardContent className="p-6 text-center relative z-10 flex flex-col h-full">
                   
                   {pkg.icon && (
                     <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -848,13 +841,13 @@ export default function TherapyWebsite() {
                     </div>
                   )}
                   
-                  <h3 className="text-xl font-semibold text-stone-800 mb-3">{pkg.name}</h3>
+                  <h3 className="text-lg font-semibold text-stone-800 mb-2">{pkg.name}</h3>
                   
                   <div className="mb-4">
                     {pkg.originalPrice && (
                       <div className="text-lg text-stone-400 line-through mb-1">€{pkg.originalPrice}</div>
                     )}
-                    <div className="text-5xl font-light text-stone-700 mb-1">€{pkg.price}</div>
+                    <div className="text-3xl font-light text-stone-700 mb-1">€{pkg.price}</div>
                     {pkg.savings && (
                       <div className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
                         {pkg.savings}
@@ -862,18 +855,18 @@ export default function TherapyWebsite() {
                     )}
                   </div>
                   
-                  <p className="text-stone-600 mb-3 font-medium">{pkg.duration}</p>
-                  <p className="text-stone-500 text-sm mb-6 leading-relaxed flex-grow">{pkg.description}</p>
+                  <p className="text-stone-600 mb-2 text-sm">{pkg.duration}</p>
+                  <p className="text-stone-500 text-xs mb-4 leading-relaxed flex-grow">{pkg.description}</p>
                   
                   <Button
-                    className="w-full bg-gradient-to-r from-stone-600 to-stone-700 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl shadow-lg font-medium transform transition-all duration-300 hover:scale-105 hover:shadow-xl py-3 mt-auto"
+                    className="w-full bg-gradient-to-r from-stone-600 to-stone-700 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl shadow-lg font-medium transform transition-all duration-300 hover:scale-105 hover:shadow-xl py-2 text-sm mt-auto"
                     onClick={(e) => {
                       e.stopPropagation()
                       setSelectedPackage(pkg)
                       setBookingModalOpen(true)
                     }}
                   >
-                    <Calendar className="mr-2 h-5 w-5" />
+                    <Calendar className="mr-1 h-4 w-4" />
                     {language === "en" ? "Book Now" : "Prenota Ora"}
                   </Button>
                   </CardContent>
@@ -886,7 +879,7 @@ export default function TherapyWebsite() {
           </div>
 
           {/* Second Row - Additional Services */}
-          <div className="grid md:grid-cols-2 gap-8 mb-12 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 mb-8 max-w-4xl mx-auto">
             {[
               {
                 id: "six-sessions",
@@ -918,20 +911,20 @@ export default function TherapyWebsite() {
                 className="group bg-gradient-to-br from-white via-white to-stone-50/50 border-2 hover:shadow-2xl transition-all duration-500 backdrop-blur-sm hover:-translate-y-2 cursor-pointer relative overflow-hidden border-stone-200 hover:border-amber-300 hover:shadow-amber-100/50 flex flex-col h-full"
                 onClick={() => setSelectedPackage(pkg)}
               >
-                <CardContent className="p-8 text-center relative z-10 flex flex-col h-full">
+                <CardContent className="p-6 text-center relative z-10 flex flex-col h-full">
                   {pkg.icon && (
                     <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
                       {pkg.icon}
                     </div>
                   )}
                   
-                  <h3 className="text-xl font-semibold text-stone-800 mb-3">{pkg.name}</h3>
+                  <h3 className="text-lg font-semibold text-stone-800 mb-2">{pkg.name}</h3>
                   
                   <div className="mb-4">
                     {pkg.originalPrice && (
                       <div className="text-lg text-stone-400 line-through mb-1">€{pkg.originalPrice}</div>
                     )}
-                    <div className="text-5xl font-light text-stone-700 mb-1">€{pkg.price}</div>
+                    <div className="text-3xl font-light text-stone-700 mb-1">€{pkg.price}</div>
                     {pkg.savings && (
                       <div className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
                         {pkg.savings}
@@ -939,18 +932,18 @@ export default function TherapyWebsite() {
                     )}
                   </div>
                   
-                  <p className="text-stone-600 mb-3 font-medium">{pkg.duration}</p>
-                  <p className="text-stone-500 text-sm mb-6 leading-relaxed flex-grow">{pkg.description}</p>
+                  <p className="text-stone-600 mb-2 text-sm">{pkg.duration}</p>
+                  <p className="text-stone-500 text-xs mb-4 leading-relaxed flex-grow">{pkg.description}</p>
                   
                   <Button
-                    className="w-full bg-gradient-to-r from-stone-600 to-stone-700 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl shadow-lg font-medium transform transition-all duration-300 hover:scale-105 hover:shadow-xl py-3 mt-auto"
+                    className="w-full bg-gradient-to-r from-stone-600 to-stone-700 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl shadow-lg font-medium transform transition-all duration-300 hover:scale-105 hover:shadow-xl py-2 text-sm mt-auto"
                     onClick={(e) => {
                       e.stopPropagation()
                       setSelectedPackage(pkg)
                       setBookingModalOpen(true)
                     }}
                   >
-                    <Calendar className="mr-2 h-5 w-5" />
+                    <Calendar className="mr-1 h-4 w-4" />
                     {language === "en" ? "Book Now" : "Prenota Ora"}
                   </Button>
                 </CardContent>
@@ -961,42 +954,41 @@ export default function TherapyWebsite() {
             ))}
           </div>
 
-          {/* Quality Guarantee & Quick Testimonial */}
-          <div className="bg-gradient-to-r from-stone-50 to-amber-50/50 rounded-2xl p-8 mb-12 border border-stone-200/50 shadow-lg">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="text-center md:text-left">
-                <div className="text-3xl mb-4"></div>
-                <h3 className="text-2xl font-semibold text-stone-800 mb-3">
-                  {language === "en" ? "Quality Guarantee" : "Garanzia di Qualità"}
-                </h3>
-                <p className="text-stone-600 leading-relaxed">
-                  {language === "en" 
-                    ? "If you're not satisfied with your first session, we'll provide a full refund. Your mental health journey is our priority."
-                    : "Se non sei soddisfatto della tua prima sessione, ti rimborseremo completamente. Il tuo percorso di salute mentale è la nostra priorità."}
-                </p>
-              </div>
-              <div className="text-center md:text-right">
-                <div className="bg-white/80 rounded-xl p-6 shadow-md">
-                  <div className="flex justify-center md:justify-end mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-yellow-400 text-xl">★</span>
-                    ))}
-                  </div>
-                  <p className="text-stone-700 italic text-sm mb-2">
-                    "{language === "en" 
-                      ? "Dr. Katiuscia helped me transform my anxiety into confidence. Highly recommended!"
-                      : "La Dott.ssa Katiuscia mi ha aiutato a trasformare la mia ansia in fiducia. Altamente raccomandato!"}"
-                  </p>
-                  <p className="text-stone-500 text-xs">
-                    {language === "en" ? "- Sarah M., verified patient" : "- Sarah M., paziente verificata"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
 
         </div>
+
+        {/* Payment Methods Strip */}
+        <div className="text-center py-8 border-t border-stone-200/50">
+          <p className="text-sm text-stone-500 mb-4 font-light">
+            {language === "en" ? "Secure Payment Methods" : "Metodi di Pagamento Sicuri"}
+          </p>
+          <div className="flex justify-center items-center gap-8 max-w-md mx-auto">
+            <img 
+              src="/images/Visa_Inc._logo.svg" 
+              alt="Visa"
+              className="h-6 opacity-70 hover:opacity-100 transition-opacity"
+            />
+            <img 
+              src="/images/mastercard-3.svg" 
+              alt="Mastercard"
+              className="h-10 opacity-70 hover:opacity-100 transition-opacity"
+            />
+            <img 
+              src="/images/674400.png" 
+              alt="Bank Transfer"
+              className="h-10 opacity-70 hover:opacity-100 transition-opacity"
+            />
+            <img 
+              src="/images/PayPal.svg.png" 
+              alt="PayPal"
+              className="h-6 opacity-70 hover:opacity-100 transition-opacity"
+            />
+          </div>
+        </div>
       </section>
+
+      {/* Payment Methods Section */}
+      <PaymentMethods language={language} />
 
       {/* FAQ Section */}
       <section className="py-16 px-4 bg-gradient-to-b from-cream-50/30 via-white to-cream-100/20 relative">
@@ -1016,6 +1008,31 @@ export default function TherapyWebsite() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Homepage Disclaimer */}
+      <section className="py-8 px-4 bg-amber-50/30">
+        <div className="container mx-auto max-w-4xl">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-amber-200">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-stone-700">
+                <p>
+                  {language === "en" 
+                    ? "Online therapy is not appropriate in all situations or for all kinds of problems. If you are experiencing suicidal thoughts or are in a crisis, it's important that you seek help immediately. If you are in a crisis or any other person may be in danger - don't use this site."
+                    : "La terapia online non è appropriata in tutte le situazioni o per tutti i tipi di problemi. Se stai vivendo pensieri suicidi o sei in una situazione di crisi, è importante che tu cerchi aiuto immediatamente. Se sei in crisi o qualsiasi altra persona potrebbe essere in pericolo - non utilizzare questo sito."}
+                </p>
+                <a 
+                  href="#emergency-help" 
+                  className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-800 font-medium mt-2"
+                >
+                  {language === "en" ? "Get help right now" : "Ottieni aiuto subito"}
+                  <ChevronRight className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1174,198 +1191,11 @@ export default function TherapyWebsite() {
       />
 
       {/* Emergency Help Modal */}
-      {emergencyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-cream-200">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center space-x-3">
-                  <HeartHandshake className="h-8 w-8 text-red-500" />
-                  <div>
-                    <h2 className="text-2xl font-light text-stone-800">{currentContent.emergency.title}</h2>
-                    <p className="text-sm text-stone-600 mt-1">
-                      {language === "en" ? "Get Help Right Now" : "Ottieni Aiuto Subito"}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setEmergencyModalOpen(false)}
-                  className="text-stone-400 hover:text-stone-600 transition-colors"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800 font-medium">{currentContent.emergency.subtitle}</p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* USA */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.usa.title}</h3>
-                  <div className="space-y-2 pl-4">
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.usa.emergency}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.usa.suicide}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.usa.crisis}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.usa.veterans}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Canada */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.canada.title}</h3>
-                  <div className="space-y-2 pl-4">
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.canada.emergency}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.canada.suicide}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.canada.crisis}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.canada.kids}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* UK */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.uk.title}</h3>
-                  <div className="space-y-2 pl-4">
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.uk.emergency}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.uk.suicide}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.uk.crisis}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.uk.nhs}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Australia */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.australia.title}</h3>
-                  <div className="space-y-2 pl-4">
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.australia.emergency}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.australia.suicide}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.australia.beyondblue}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.australia.kids}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Italy */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.italy.title}</h3>
-                  <div className="space-y-2 pl-4">
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.italy.emergency}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.italy.suicide}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.italy.samaritans}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.italy.helpline}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* EU */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-medium text-stone-700">{currentContent.emergency.eu.title}</h3>
-                  <div className="space-y-2 pl-4">
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.emergency}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.suicide}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.germany}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.france}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.spain}</span>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Phone className="h-4 w-4 text-stone-500 mt-0.5" />
-                      <span className="text-stone-700 text-sm">{currentContent.emergency.eu.netherlands}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <p className="text-amber-800 text-sm">{currentContent.emergency.disclaimer}</p>
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-cream-200">
-              <Button
-                onClick={() => setEmergencyModalOpen(false)}
-                className="w-full bg-stone-600 hover:bg-stone-700 text-white font-light py-3 rounded-full"
-              >
-                {language === "en" ? "Close" : "Chiudi"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EmergencyModal 
+        isOpen={emergencyModalOpen}
+        onClose={() => setEmergencyModalOpen(false)}
+        language={language}
+      />
     </div>
   )
 }
