@@ -138,19 +138,6 @@ export default function PayPalCheckout({
           </PayPalScriptProvider>
         )}
 
-        {/* Temporary skip button for testing */}
-        <div className="mt-4 text-center">
-          <button 
-            onClick={() => onPaymentSuccess({ 
-              id: 'TEST-PAYMENT', 
-              sessionPackage,
-              userId: 'TEST-USER-' + Date.now()
-            })}
-            className="text-sm text-stone-500 underline hover:text-stone-700"
-          >
-            {language === "en" ? "Skip payment (testing only)" : "Salta pagamento (solo test)"}
-          </button>
-        </div>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-stone-500">
