@@ -154,3 +154,26 @@ html {
       rgba(251, 191, 36, 0.03) 20px
     );
 }
+
+/* FORCE HIDE Next.js Dev Tools completely */
+div[data-nextjs-dev-indicator],
+div[data-nextjs-segment-control],
+div[data-testid="nextjs-dev-indicator"],
+div[style*="position: fixed"][style*="bottom"][style*="right"][style*="z-index: 2147483647"],
+[data-nextjs-dev-indicator],
+[data-nextjs-segment-control] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide any floating panels that appear in bottom right */
+div[style*="position: fixed"][style*="bottom: 0"][style*="right: 0"]:not([class]) {
+  display: none !important;
+}
+
+/* Nuclear option - hide all fixed elements in bottom right corner that are not part of our app */
+div[style*="position: fixed"]:not([class]):not([id]) {
+  display: none !important;
+}
