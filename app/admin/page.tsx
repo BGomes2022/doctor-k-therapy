@@ -2418,33 +2418,29 @@ export default function AdminDashboard() {
                                 duration: selectedSlots.length * 30 // Each slot is 30 minutes
                               })
                               setShowAssignPatientModal(true)
+                              setShowDayDetailModal(false) // Close the calendar modal immediately
                             } else {
                               alert('Please select at least one slot for patient booking')
                             }
                           }}
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-lg transition-colors flex items-center gap-2"
+                          className="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
                         >
-                          <User className="w-4 h-4" />
+                          <span className="text-lg">📹</span>
                           Book for Patient
                         </Button>
                         <Button
                           onClick={() => handleSetAvailability(true)}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2 rounded-lg transition-colors"
+                          className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium px-6 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
                         >
+                          <span className="text-lg">✅</span>
                           Set Available
                         </Button>
                         <Button
-                          onClick={() => handleSetAvailability(false)}
-                          className="bg-stone-600 hover:bg-stone-700 text-white font-medium px-5 py-2 rounded-lg transition-colors"
-                        >
-                          Block
-                        </Button>
-                        <Button
                           onClick={() => setSelectedSlots([])}
-                          variant="outline"
-                          className="border-stone-300 text-stone-600 hover:bg-stone-100 px-4 py-2 rounded-lg transition-colors"
+                          className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-medium px-6 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
                         >
-                          Clear
+                          <span className="text-lg">🗑️</span>
+                          Clear Selection
                         </Button>
                       </div>
                     </div>
