@@ -873,6 +873,7 @@ export default function AdminDashboard() {
           patientEmail: patient.medicalFormData?.email || patient.patientEmail,
           date: selectedSlot.date,
           time: selectedSlot.time,
+          duration: selectedSlot.duration || 50, // Default 50 minutes, or custom duration
           sessionPackage: patient.sessionPackage,
           medicalData: patient.medicalFormData
         })

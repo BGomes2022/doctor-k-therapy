@@ -9,7 +9,8 @@ export async function POST(request: NextRequest) {
       patientName, 
       patientEmail, 
       date, 
-      time, 
+      time,
+      duration = 50, // Support custom duration, default 50 minutes
       sessionPackage,
       medicalData 
     } = await request.json()
@@ -31,9 +32,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate end time (50 minutes later)
+    // Calculate end time based on duration
     const endDateTime = new Date(startDateTime)
-    endDateTime.setMinutes(endDateTime.getMinutes() + 50)
+    endDateTime.setMinutes(endDateTime.getMinutes() + duration)
 
     const sessionsTotal = googleWorkspaceService.getSessionCountFromPackage(sessionPackage)
 
@@ -75,6 +76,10 @@ export async function POST(request: NextRequest) {
       console.warn('Failed to send invitation email:', emailResult.error)
     }
 
+    // The Google Calendar event already blocks the time
+    // The availability will be automatically updated when fetchAvailability() is called
+    // because it checks for existing bookings in Google Calendar
+
     return NextResponse.json({
       success: true,
       booking: {
@@ -84,6 +89,7 @@ export async function POST(request: NextRequest) {
         patientEmail: patientEmail,
         date: date,
         time: time,
+        duration: duration,
         meetLink: calendarResult.meetLink,
         calendarLink: calendarResult.htmlLink
       }
