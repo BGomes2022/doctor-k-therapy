@@ -399,6 +399,165 @@ class GoogleWorkspaceService {
     });
   }
 
+  async sendVideoSessionInvitation({ patientEmail, patientName, appointmentDate, appointmentTime, meetLink, bookingId, sessionType, sessionNumber, totalSessions, isFirstSession }) {
+    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                color: #374151; 
+                line-height: 1.6; 
+                margin: 0; 
+                padding: 0;
+                background-color: #f9fafb;
+            }
+            .container { 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background-color: white;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .header { 
+                background: linear-gradient(135deg, #2c5530 0%, #4a7c4e 100%); 
+                color: white; 
+                padding: 40px 30px; 
+                text-align: center; 
+            }
+            .header h1 {
+                margin: 0 0 10px 0;
+                font-size: 28px;
+                font-weight: 300;
+            }
+            .content { 
+                padding: 40px 30px; 
+            }
+            .invitation-card { 
+                background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
+                padding: 25px; 
+                border-radius: 12px; 
+                margin: 25px 0; 
+                border-left: 6px solid #2c5530; 
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+            .video-section { 
+                background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
+                padding: 25px; 
+                border-radius: 12px; 
+                margin: 25px 0; 
+                text-align: center;
+                border: 2px solid #3b82f6;
+            }
+            .meet-button { 
+                display: inline-block; 
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+                color: white; 
+                padding: 15px 35px; 
+                text-decoration: none; 
+                border-radius: 8px; 
+                margin: 15px 0;
+                font-weight: 600;
+                font-size: 16px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .preparation-box {
+                background: #f8fafc;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+            }
+            .footer {
+                text-align: center;
+                padding: 30px;
+                background: #f3f4f6;
+                color: #6b7280;
+                font-size: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>📅 Video Session Invitation</h1>
+                <p>Your therapy appointment has been scheduled</p>
+            </div>
+            
+            <div class="content">
+                <p>Dear ${patientName},</p>
+                
+                <p>Your video therapy session has been scheduled. Please find the details below:</p>
+                
+                <div class="invitation-card">
+                    <h3>📍 Appointment Details</h3>
+                    <p><strong>Date:</strong> ${formattedDate}</p>
+                    <p><strong>Time:</strong> ${appointmentTime} (Lisbon Time)</p>
+                    <p><strong>Duration:</strong> 50 minutes</p>
+                    <p><strong>Session Type:</strong> ${sessionType}</p>
+                    ${sessionNumber ? `<p><strong>Session:</strong> ${sessionNumber} of ${totalSessions}</p>` : ''}
+                </div>
+                
+                <div class="video-section">
+                    <h3>🎥 Join Your Video Session</h3>
+                    <p>Click the button below at your appointment time to join the secure video call:</p>
+                    <a href="${meetLink}" class="meet-button">Join Video Session</a>
+                    <p style="font-size: 12px; color: #6b7280;">Link will be active 15 minutes before your appointment</p>
+                </div>
+                
+                ${isFirstSession ? `
+                <div class="preparation-box">
+                    <h4>📋 Preparing for Your First Session</h4>
+                    <ul style="text-align: left;">
+                        <li>Test your camera and microphone in advance</li>
+                        <li>Choose a quiet, private space</li>
+                        <li>Ensure stable internet connection</li>
+                        <li>Have water and tissues nearby</li>
+                        <li>Prepare any questions or topics you'd like to discuss</li>
+                        <li>Join 5 minutes early to settle in</li>
+                    </ul>
+                </div>
+                ` : ''}
+                
+                <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
+                    <h4 style="margin-top: 0; color: #dc2626;">⚠️ Cancellation Policy</h4>
+                    <p>Please provide at least 24 hours notice if you need to cancel or reschedule. Late cancellations may be charged.</p>
+                </div>
+                
+                <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h4 style="margin-top: 0; color: #0369a1;">💡 Technical Support</h4>
+                    <p>If you experience technical difficulties, please contact us immediately:</p>
+                    <p>Email: support@doctorktherapy.com</p>
+                </div>
+                
+                <p style="margin-top: 30px;">I look forward to our session together.</p>
+                <p>Warm regards,<br><strong>Dr. Katiuscia</strong></p>
+            </div>
+            
+            <div class="footer">
+                <p><strong>Dr. Katiuscia - Professional Therapy Services</strong></p>
+                <p>This email contains confidential information. Please do not forward.</p>
+                <p>🔒 All sessions are conducted through secure, HIPAA-compliant video platform</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return await this.sendEmail({
+      to: patientEmail,
+      subject: `Video Session Invitation - ${formattedDate} at ${appointmentTime}`,
+      htmlContent: htmlContent
+    });
+  }
+
   async sendBookingLinkEmail({ patientEmail, patientName, bookingToken, sessionPackage }) {
     const bookingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/booking/${bookingToken}`;
     const expiryDate = new Date();

@@ -116,6 +116,10 @@ export default function AdminDashboard() {
       price: 0
     }
   })
+  const [showAssignPatientModal, setShowAssignPatientModal] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState<{date: string, time: string} | null>(null)
+  const [selectedPatientForSlot, setSelectedPatientForSlot] = useState<string>("")
+  const [assignmentLoading, setAssignmentLoading] = useState(false)
 
   // Load data when user is authenticated
   useEffect(() => {
@@ -360,12 +364,23 @@ export default function AdminDashboard() {
     return slots
   }
 
-  // Handle slot selection with drag and drop
+  // Handle slot selection - open patient assignment modal for available slots
   const handleSlotMouseDown = (time: string) => {
-    setIsDragging(true)
-    setDragStartSlot(time)
-    setDragEndSlot(time)
-    setSelectedSlots([time])
+    // Check if slot is available (not blocked)
+    const daySlots = getDaySlots(selectedDate || '')
+    const slot = daySlots.find(s => s.time === time)
+    
+    if (slot && slot.isAvailable && !slot.isBooked) {
+      // Open patient assignment modal for available slots
+      setSelectedSlot({ date: selectedDate || '', time })
+      setShowAssignPatientModal(true)
+    } else {
+      // Original drag behavior for blocking/unblocking
+      setIsDragging(true)
+      setDragStartSlot(time)
+      setDragEndSlot(time)
+      setSelectedSlots([time])
+    }
   }
 
   const handleSlotMouseEnter = (time: string) => {
@@ -846,6 +861,56 @@ export default function AdminDashboard() {
   const handleCancelNotes = () => {
     setEditingNotes(null)
     setNotesContent("")
+  }
+
+  const handleAssignSlotToPatient = async () => {
+    if (!selectedSlot || !selectedPatientForSlot) return
+    
+    setAssignmentLoading(true)
+    try {
+      const patient = patients.find(p => p.bookingToken === selectedPatientForSlot)
+      if (!patient) {
+        alert('Please select a patient')
+        return
+      }
+      
+      const response = await fetch('/api/admin/assign-appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientId: patient.bookingToken,
+          patientName: patient.medicalFormData?.fullName || patient.patientName,
+          patientEmail: patient.medicalFormData?.email || patient.patientEmail,
+          date: selectedSlot.date,
+          time: selectedSlot.time,
+          sessionPackage: patient.sessionPackage,
+          medicalData: patient.medicalFormData
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Close modal and refresh
+        setShowAssignPatientModal(false)
+        setSelectedPatientForSlot("")
+        setSelectedSlot(null)
+        
+        // Refresh data
+        fetchData()
+        fetchAvailability()
+        
+        // Show success message
+        alert(`Appointment assigned successfully! Invitation sent to ${patient.medicalFormData?.email || patient.patientEmail}`)
+      } else {
+        alert('Failed to assign appointment: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error assigning appointment:', error)
+      alert('Error assigning appointment')
+    } finally {
+      setAssignmentLoading(false)
+    }
   }
 
   const handleCreateNewPatient = async () => {
@@ -2141,6 +2206,77 @@ export default function AdminDashboard() {
                 </Button>
                 <Button
                   onClick={() => setShowNewPatientModal(false)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Patient Assignment Modal */}
+        {showAssignPatientModal && selectedSlot && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full">
+              <div className="p-6 border-b border-stone-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-stone-800">Assign Appointment</h3>
+                  <button
+                    onClick={() => {
+                      setShowAssignPatientModal(false)
+                      setSelectedPatientForSlot("")
+                    }}
+                    className="text-stone-400 hover:text-stone-600"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                <p className="text-sm text-stone-600 mt-2">
+                  {selectedSlot.date} at {selectedSlot.time}
+                </p>
+              </div>
+              
+              <div className="p-6">
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  Select Patient
+                </label>
+                <select
+                  className="w-full p-3 border border-stone-300 rounded-md focus:ring-2 focus:ring-stone-500"
+                  value={selectedPatientForSlot}
+                  onChange={(e) => setSelectedPatientForSlot(e.target.value)}
+                >
+                  <option value="">Choose a patient...</option>
+                  {patients.map((patient) => (
+                    <option key={patient.bookingToken} value={patient.bookingToken}>
+                      {patient.medicalFormData?.fullName || patient.patientName} - {patient.medicalFormData?.email || patient.patientEmail}
+                    </option>
+                  ))}
+                </select>
+                
+                {selectedPatientForSlot && (
+                  <div className="mt-4 p-4 bg-stone-50 rounded-lg">
+                    <p className="text-sm text-stone-600">
+                      <strong>Note:</strong> An invitation email with the video session link will be automatically sent to the patient.
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-6 border-t border-stone-200 flex gap-3">
+                <Button
+                  onClick={handleAssignSlotToPatient}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={!selectedPatientForSlot || assignmentLoading}
+                >
+                  {assignmentLoading ? 'Assigning...' : 'Assign & Send Invitation'}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowAssignPatientModal(false)
+                    setSelectedPatientForSlot("")
+                  }}
                   variant="outline"
                   className="flex-1"
                 >
