@@ -138,10 +138,13 @@ export default function AdminDashboard() {
       if (data.success) {
         setBookings(data.bookings || [])
         setPatients(data.patients || [])
+        return { bookings: data.bookings || [], patients: data.patients || [] }
       }
+      return { bookings: [], patients: [] }
     } catch (error) {
       console.error('Error fetching data:', error)
       setError('Failed to load data')
+      return { bookings: [], patients: [] }
     } finally {
       setLoading(false)
     }
@@ -150,11 +153,12 @@ export default function AdminDashboard() {
   // Wait for a specific booking to appear in the data
   const waitForBookingToAppear = async (date: string, time: string, maxRetries = 5) => {
     for (let i = 0; i < maxRetries; i++) {
-      await fetchData()
+      // Fetch fresh data and use the returned values directly
+      const freshData = await fetchData()
       await fetchAvailability()
       
-      // Check if the booking now appears
-      const hasBooking = bookings.some(b => b.date === date && b.time === time)
+      // Check if the booking now appears in the FRESH data
+      const hasBooking = freshData.bookings.some(b => b.date === date && b.time === time)
       if (hasBooking) {
         console.log(`✅ Booking appeared after ${i + 1} attempts`)
         return true
@@ -915,13 +919,12 @@ export default function AdminDashboard() {
         // Show success message
         alert(`Appointment assigned successfully! Invitation sent to ${patient.medicalFormData?.email || patient.patientEmail}`)
         
-        // Wait for booking to appear with retry logic
-        console.log('🔄 Waiting for booking to sync with Google Calendar...')
-        const bookingAppeared = await waitForBookingToAppear(selectedSlot.date, selectedSlot.time)
-        
-        if (!bookingAppeared) {
-          alert('✅ Appointment created successfully! Note: If the slot doesn\'t appear as booked immediately, please refresh the page.')
-        }
+        // Simple approach: wait 3 seconds then refresh once
+        setTimeout(async () => {
+          console.log('🔄 Refreshing booking data...')
+          await fetchData()
+          await fetchAvailability()
+        }, 3000)
         
       } else {
         alert('Failed to assign appointment: ' + (result.error || 'Unknown error'))
