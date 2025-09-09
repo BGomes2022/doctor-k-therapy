@@ -1,4 +1,5 @@
-import { format, utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz'
+import { format } from 'date-fns'
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz'
 
 // Dr. K's timezone (Portugal)
 export const THERAPIST_TIMEZONE = 'Europe/Lisbon'
