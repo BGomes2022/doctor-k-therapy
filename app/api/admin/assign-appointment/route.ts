@@ -58,18 +58,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send video session invitation email
-    const emailResult = await googleWorkspaceService.sendVideoSessionInvitation({
+    // Send simple appointment confirmation email (no session package details)
+    const emailResult = await googleWorkspaceService.sendSimpleAppointmentConfirmation({
       patientEmail: patientEmail,
       patientName: patientName,
       appointmentDate: startDateTime.toISOString(),
       appointmentTime: time,
       meetLink: calendarResult.meetLink,
-      bookingId: calendarResult.bookingId,
-      sessionType: sessionPackage?.name || 'Therapy Session',
-      sessionNumber: 1,
-      totalSessions: sessionsTotal,
-      isFirstSession: true
+      isManualBooking: true
     })
 
     if (!emailResult.success) {

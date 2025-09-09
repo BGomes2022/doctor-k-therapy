@@ -558,6 +558,191 @@ class GoogleWorkspaceService {
     });
   }
 
+  async sendSimpleAppointmentConfirmation({ patientEmail, patientName, appointmentDate, appointmentTime, meetLink, isManualBooking = true }) {
+    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                color: #374151; 
+                line-height: 1.6; 
+                margin: 0; 
+                padding: 0;
+                background-color: #f9fafb;
+            }
+            .container { 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background-color: white;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .header { 
+                background: linear-gradient(135deg, #2c5530 0%, #4a7c4e 100%); 
+                color: white; 
+                padding: 40px 30px; 
+                text-align: center; 
+            }
+            .header h1 {
+                margin: 0 0 10px 0;
+                font-size: 28px;
+                font-weight: 300;
+            }
+            .practice-logo {
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 5px;
+            }
+            .content { 
+                padding: 40px 30px; 
+            }
+            .appointment-card { 
+                background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
+                padding: 30px; 
+                border-radius: 15px; 
+                margin: 25px 0; 
+                border-left: 6px solid #2c5530; 
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }
+            .meet-button { 
+                display: inline-block; 
+                background: linear-gradient(135deg, #2c5530 0%, #4a7c4e 100%); 
+                color: white; 
+                padding: 18px 40px; 
+                text-decoration: none; 
+                border-radius: 10px; 
+                margin: 20px 0;
+                font-weight: 600;
+                font-size: 18px;
+                box-shadow: 0 4px 10px rgba(44, 85, 48, 0.3);
+                transition: all 0.2s;
+            }
+            .info-box {
+                background: #f8fafc;
+                padding: 20px;
+                border-radius: 10px;
+                margin: 20px 0;
+                border-left: 4px solid #2c5530;
+            }
+            .footer {
+                text-align: center;
+                padding: 30px;
+                background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+                color: #6b7280;
+                font-size: 12px;
+                border-top: 1px solid #e5e7eb;
+            }
+            .contact-info {
+                background: #f0f9ff;
+                padding: 25px;
+                border-radius: 10px;
+                margin: 20px 0;
+                border: 2px solid #0ea5e9;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="practice-logo">Dr. Katiuscia Mercogliano</div>
+                <p style="margin: 0; opacity: 0.9;">Professional Therapy Services</p>
+                <h1 style="margin-top: 20px;">📅 Appointment Confirmed</h1>
+                <p>Your therapy session is scheduled</p>
+            </div>
+            
+            <div class="content">
+                <p>Dear ${patientName},</p>
+                
+                <p>Your appointment has been successfully scheduled. I look forward to our session together.</p>
+                
+                <div class="appointment-card">
+                    <h3 style="color: #2c5530; margin-top: 0;">📍 Your Appointment</h3>
+                    <div style="font-size: 20px; margin: 15px 0;">
+                        <strong>${formattedDate}</strong>
+                    </div>
+                    <div style="font-size: 18px; color: #4a7c4e; margin: 10px 0;">
+                        <strong>${appointmentTime}</strong> (Lisbon Time)
+                    </div>
+                    <div style="margin: 20px 0; color: #6b7280;">
+                        Duration: 50 minutes • Video Session
+                    </div>
+                    
+                    <a href="${meetLink}" class="meet-button">
+                        🎥 Join Video Session
+                    </a>
+                    
+                    <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">
+                        The meeting room will be available 15 minutes before your appointment
+                    </p>
+                </div>
+                
+                <div class="info-box">
+                    <h4 style="margin-top: 0; color: #2c5530;">📋 Session Preparation</h4>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Find a quiet, private space</li>
+                        <li>Test your camera and microphone</li>
+                        <li>Ensure stable internet connection</li>
+                        <li>Have water and tissues nearby</li>
+                        <li>Join 5 minutes early</li>
+                    </ul>
+                </div>
+                
+                <div class="contact-info">
+                    <h4 style="margin-top: 0; color: #0369a1;">📞 Need to Reschedule?</h4>
+                    <p>If you need to reschedule or have any questions, please contact me at least 24 hours in advance:</p>
+                    <p style="margin: 10px 0;">
+                        📧 <strong>Email:</strong> ${process.env.DOCTOR_EMAIL || 'contact@doctorktherapy.com'}
+                    </p>
+                </div>
+                
+                <div style="background: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
+                    <h4 style="margin-top: 0; color: #dc2626;">⚠️ Important Notes</h4>
+                    <p style="margin-bottom: 0;">
+                        • Cancellations with less than 24 hours notice may be charged<br>
+                        • All sessions are confidential and conducted in a secure environment<br>
+                        • Technical support is available if needed
+                    </p>
+                </div>
+                
+                <p style="margin-top: 30px;">I'm looking forward to our session together. If you have any questions beforehand, please don't hesitate to reach out.</p>
+                
+                <p style="margin-top: 20px;">
+                    Warm regards,<br>
+                    <strong>Dr. Katiuscia Mercogliano</strong><br>
+                    <small>Licensed Clinical Psychologist</small>
+                </p>
+            </div>
+            
+            <div class="footer">
+                <div style="font-weight: 600; margin-bottom: 10px;">Dr. Katiuscia Mercogliano</div>
+                <p style="margin: 5px 0;">Professional Therapy Services</p>
+                <p style="margin: 5px 0;">🔒 All communications are confidential and HIPAA compliant</p>
+                <p style="margin: 10px 0; font-size: 10px;">
+                    This appointment confirmation was sent automatically. Please save this email for your records.
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return await this.sendEmail({
+      to: patientEmail,
+      subject: `Appointment Confirmed - ${formattedDate} at ${appointmentTime}`,
+      htmlContent: htmlContent
+    });
+  }
+
   async deleteCalendarEvent(eventId) {
     try {
       if (!this.calendar) {
