@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
+    const adminMode = searchParams.get('adminMode') === 'true' // Admin mode flag
 
     // Default to next 4 weeks if no dates provided
     const now = new Date()
@@ -21,8 +22,8 @@ export async function GET(request: NextRequest) {
     const startISO = new Date(`${queryStartDate}T00:00:00.000Z`).toISOString()
     const endISO = new Date(`${queryEndDate}T23:59:59.999Z`).toISOString()
 
-    // Get available slots from Google Calendar
-    const result = await googleWorkspaceService.getAvailableTimeSlots(startISO, endISO)
+    // Get available slots - disable intelligent filtering for admin mode
+    const result = await googleWorkspaceService.getAvailableTimeSlots(startISO, endISO, !adminMode)
 
     if (!result.success) {
       return NextResponse.json(
@@ -112,31 +113,14 @@ export async function POST(request: NextRequest) {
 
     console.log(`📊 Found ${result.slots.length} total available slots`)
     
-    // Filter slots based on required duration
-    // For each slot, check if the next required duration is also available
-    const filteredSlots = result.slots.filter((slot: any, index: number) => {
-      const slotTime = new Date(`${slot.date}T${slot.time}:00`)
-      const endTime = new Date(slotTime.getTime() + blockDuration * 60 * 1000)
-      
-      // Check if we have enough consecutive available slots
-      if (blockDuration === 30) {
-        // For 30-min consultation, just need this slot
-        return true
+    // Filter slots based on session type using the new intelligent filtering
+    const filteredSlots = result.slots.filter((slot: any) => {
+      if (sessionPackageType === 'consultation') {
+        // For consultations (30min), check if slot can accommodate consultation
+        return slot.canAccommodateConsultation !== false
       } else {
-        // For 60-min session, need this slot AND the next 30-min slot
-        const nextSlotTime = `${slotTime.getHours().toString().padStart(2, '0')}:30`
-        const nextSlotExists = result.slots.some((s: any) => 
-          s.date === slot.date && s.time === nextSlotTime && s.available
-        )
-        
-        // Only show slots on the hour if next 30-min is also available
-        return slot.time.endsWith(':00') && (nextSlotExists || 
-          // Or check if the full hour is within available time
-          result.slots.some((s: any) => {
-            const sTime = new Date(`${s.date}T${s.time}:00`)
-            return sTime.getTime() === slotTime.getTime() + 30 * 60 * 1000
-          })
-        )
+        // For therapy (50min), check if slot can accommodate therapy session
+        return slot.canAccommodateTherapy !== false
       }
     })
 

@@ -1208,7 +1208,7 @@ This is a confidential therapy session.
 
   // Get available time slots from NEW Google Calendar system
   // Updated to use the new availability system with Portuguese time
-  async getAvailableTimeSlots(startDate, endDate) {
+  async getAvailableTimeSlots(startDate, endDate, useIntelligentFiltering = true) {
     try {
       // Use the new availability system
       const availabilityResult = await this.getAvailabilityFromCalendar(90);
@@ -1246,13 +1246,80 @@ This is a confidential therapy session.
           };
         });
 
-      console.log(`✅ Found ${availableSlots.length} available slots (NEW SYSTEM)`);
-      return { success: true, slots: availableSlots };
+      // Apply intelligent slot filtering only for patient bookings
+      if (useIntelligentFiltering) {
+        const intelligentSlots = this.applyIntelligentSlotFiltering(availableSlots);
+        console.log(`✅ Found ${availableSlots.length} raw slots, filtered to ${intelligentSlots.length} bookable slots (PATIENT MODE)`);
+        return { success: true, slots: intelligentSlots };
+      } else {
+        console.log(`✅ Found ${availableSlots.length} raw available slots (ADMIN MODE)`);
+        return { success: true, slots: availableSlots };
+      }
       
     } catch (error) {
-      console.error('❌ Failed to get available slots (NEW SYSTEM):', error.message);
+      console.error('❌ Failed to get available slots:', error.message);
       return { success: false, error: error.message };
     }
+  }
+
+  // Apply intelligent slot filtering based on existing bookings and session types
+  applyIntelligentSlotFiltering(slots) {
+    const filteredSlots = [];
+    
+    // Group slots by date for easier processing
+    const slotsByDate = slots.reduce((acc, slot) => {
+      if (!acc[slot.date]) acc[slot.date] = [];
+      acc[slot.date].push(slot);
+      return acc;
+    }, {});
+
+    Object.keys(slotsByDate).forEach(date => {
+      const daySlots = slotsByDate[date].sort((a, b) => a.time.localeCompare(b.time));
+      
+      // For each available slot, check if it can accommodate different session types
+      daySlots.forEach(slot => {
+        const slotTime = new Date(`${slot.date}T${slot.time}:00`);
+        
+        // Check if this slot can accommodate a 50-minute session (therapy)
+        const canAccommodateTherapy = this.canSlotAccommodateSession(daySlots, slot, 50);
+        
+        // Check if this slot can accommodate a 30-minute session (consultation)  
+        const canAccommodateConsultation = this.canSlotAccommodateSession(daySlots, slot, 30);
+        
+        // Only include slots that can accommodate at least one session type
+        if (canAccommodateTherapy || canAccommodateConsultation) {
+          filteredSlots.push({
+            ...slot,
+            canAccommodateTherapy,
+            canAccommodateConsultation
+          });
+        }
+      });
+    });
+
+    return filteredSlots;
+  }
+
+  // Check if a slot can accommodate a session of given duration
+  canSlotAccommodateSession(daySlots, slot, durationMinutes) {
+    const slotTime = new Date(`${slot.date}T${slot.time}:00`);
+    const requiredEndTime = new Date(slotTime.getTime() + durationMinutes * 60 * 1000);
+    
+    // Check if we have consecutive available 30-min slots to cover the full duration
+    const slotsNeeded = Math.ceil(durationMinutes / 30);
+    
+    for (let i = 0; i < slotsNeeded; i++) {
+      const checkTime = new Date(slotTime.getTime() + i * 30 * 60 * 1000);
+      const checkTimeStr = `${checkTime.getHours().toString().padStart(2, '0')}:${checkTime.getMinutes().toString().padStart(2, '0')}`;
+      
+      // Find if this time slot exists and is available
+      const hasSlot = daySlots.find(s => s.time === checkTimeStr && s.available);
+      if (!hasSlot) {
+        return false; // Required slot is not available
+      }
+    }
+    
+    return true; // All required slots are available
   }
 
   // Get upcoming therapy sessions from Google Calendar
