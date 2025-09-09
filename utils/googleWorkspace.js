@@ -558,6 +558,147 @@ class GoogleWorkspaceService {
     });
   }
 
+  async deleteCalendarEvent(eventId) {
+    try {
+      if (!this.calendar) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      await this.calendar.events.delete({
+        calendarId: 'primary',
+        eventId: eventId
+      });
+
+      console.log('✅ Calendar event deleted successfully:', eventId);
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Failed to delete calendar event:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async sendCancellationEmail({ patientEmail, patientName, appointmentDate, appointmentTime, reason }) {
+    const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                color: #374151; 
+                line-height: 1.6; 
+                margin: 0; 
+                padding: 0;
+                background-color: #f9fafb;
+            }
+            .container { 
+                max-width: 600px; 
+                margin: 0 auto; 
+                background-color: white;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .header { 
+                background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); 
+                color: white; 
+                padding: 40px 30px; 
+                text-align: center; 
+            }
+            .header h1 {
+                margin: 0 0 10px 0;
+                font-size: 28px;
+                font-weight: 300;
+            }
+            .content { 
+                padding: 40px 30px; 
+            }
+            .cancellation-card { 
+                background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
+                padding: 25px; 
+                border-radius: 12px; 
+                margin: 25px 0; 
+                border-left: 6px solid #dc2626; 
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+            .reschedule-section { 
+                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); 
+                padding: 25px; 
+                border-radius: 12px; 
+                margin: 25px 0; 
+                text-align: center;
+                border: 2px solid #0ea5e9;
+            }
+            .footer {
+                text-align: center;
+                padding: 30px;
+                background: #f3f4f6;
+                color: #6b7280;
+                font-size: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>❌ Appointment Cancelled</h1>
+                <p>Your therapy session has been cancelled</p>
+            </div>
+            
+            <div class="content">
+                <p>Dear ${patientName},</p>
+                
+                <p>I'm writing to inform you that your scheduled therapy session has been cancelled.</p>
+                
+                <div class="cancellation-card">
+                    <h3>📅 Cancelled Appointment</h3>
+                    <p><strong>Date:</strong> ${formattedDate}</p>
+                    <p><strong>Time:</strong> ${appointmentTime} (Lisbon Time)</p>
+                    <p><strong>Reason:</strong> ${reason}</p>
+                </div>
+                
+                <div class="reschedule-section">
+                    <h3>💬 Let's Reschedule</h3>
+                    <p>I apologize for any inconvenience this may cause. I'd be happy to help you reschedule your session at a time that works better for both of us.</p>
+                    <p><strong>Please contact me to arrange a new appointment:</strong></p>
+                    <p>📧 Email: ${process.env.DOCTOR_EMAIL}</p>
+                    <p>📞 Phone: Available upon request</p>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h4 style="margin-top: 0; color: #374151;">💰 Refund Information</h4>
+                    <p>If you have made any payment for this session, please contact me to arrange a refund or credit towards your next appointment.</p>
+                </div>
+                
+                <p style="margin-top: 30px;">Thank you for your understanding, and I look forward to hearing from you soon.</p>
+                <p>Best regards,<br><strong>Dr. Katiuscia</strong></p>
+            </div>
+            
+            <div class="footer">
+                <p><strong>Dr. Katiuscia - Professional Therapy Services</strong></p>
+                <p>This email contains confidential information. Please do not forward.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return await this.sendEmail({
+      to: patientEmail,
+      subject: `Appointment Cancelled - ${formattedDate} at ${appointmentTime}`,
+      htmlContent: htmlContent
+    });
+  }
+
   async sendBookingLinkEmail({ patientEmail, patientName, bookingToken, sessionPackage }) {
     const bookingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/booking/${bookingToken}`;
     const expiryDate = new Date();

@@ -853,6 +853,44 @@ export default function AdminDashboard() {
     setNotesContent("")
   }
 
+  const handleCancelAppointment = async (booking: any) => {
+    if (!booking) return
+    
+    try {
+      setLoading(true)
+      
+      const response = await fetch('/api/admin/cancel-appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: booking.bookingId,
+          eventId: booking.eventId,
+          patientName: booking.patientName,
+          patientEmail: booking.patientEmail,
+          date: booking.date,
+          time: booking.time
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Refresh data
+        fetchData()
+        fetchAvailability()
+        
+        alert(`Appointment cancelled successfully! Cancellation email sent to ${booking.patientEmail}`)
+      } else {
+        alert('Failed to cancel appointment: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error cancelling appointment:', error)
+      alert('Error cancelling appointment')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleAssignSlotToPatient = async () => {
     if (!selectedSlot || !selectedPatientForSlot) return
     
@@ -2368,9 +2406,23 @@ export default function AdminDashboard() {
                         {/* Status Indicator */}
                         <div className="flex-1 px-4 flex items-center">
                           {slot.isBooked ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              <span className="text-sm text-blue-700 font-medium">{slot.booking?.patientName || 'Booked'}</span>
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <span className="text-sm text-blue-700 font-medium">{slot.booking?.patientName || 'Booked'}</span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (confirm(`Cancel appointment for ${slot.booking?.patientName || 'patient'} at ${slot.time}?`)) {
+                                    handleCancelAppointment(slot.booking)
+                                  }
+                                }}
+                                className="text-red-500 hover:text-red-700 px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Cancel appointment"
+                              >
+                                ❌
+                              </button>
                             </div>
                           ) : isSelected ? (
                             <div className="flex items-center gap-2">
