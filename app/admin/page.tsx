@@ -366,13 +366,17 @@ export default function AdminDashboard() {
 
   // Handle slot selection - open patient assignment modal for available slots
   const handleSlotMouseDown = (time: string) => {
+    // Use selectedDayData.date when in modal, selectedDate otherwise
+    const currentDate = selectedDayData?.date || selectedDate || ''
+    if (!currentDate) return
+    
     // Check if slot is available (not blocked)
-    const daySlots = getDaySlots(selectedDate || '')
+    const daySlots = generateTimeSlots(currentDate)
     const slot = daySlots.find(s => s.time === time)
     
     if (slot && slot.isAvailable && !slot.isBooked) {
       // Open patient assignment modal for available slots
-      setSelectedSlot({ date: selectedDate || '', time })
+      setSelectedSlot({ date: currentDate, time })
       setShowAssignPatientModal(true)
     } else {
       // Original drag behavior for blocking/unblocking
