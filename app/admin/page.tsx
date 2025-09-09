@@ -906,6 +906,12 @@ export default function AdminDashboard() {
   }
 
   const handleCreateNewPatient = async () => {
+    if (!newPatientData.fullName || !newPatientData.email) {
+      alert('❌ Please fill in required fields: Full Name and Email')
+      return
+    }
+    
+    setLoading(true)
     try {
       // Generate unique IDs
       const bookingToken = crypto.randomUUID()
@@ -953,12 +959,18 @@ export default function AdminDashboard() {
         
         // Refresh data
         fetchData()
+        
+        // Show success message
+        alert(`✅ Patient ${newPatientData.fullName} was created successfully!`)
       } else {
         console.error('Error creating patient:', result.error)
+        alert(`❌ Failed to create patient: ${result.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error creating patient:', error)
-      console.error('Error creating patient')
+      alert(`❌ Error creating patient: ${error.message || 'Network or server error'}`)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -2192,9 +2204,9 @@ export default function AdminDashboard() {
                 <Button
                   onClick={handleCreateNewPatient}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                  disabled={!newPatientData.fullName || !newPatientData.email}
+                  disabled={!newPatientData.fullName || !newPatientData.email || loading}
                 >
-                  Create Patient
+                  {loading ? 'Creating Patient...' : 'Create Patient'}
                 </Button>
                 <Button
                   onClick={() => setShowNewPatientModal(false)}
