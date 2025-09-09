@@ -147,6 +147,30 @@ export default function AdminDashboard() {
     }
   }
 
+  // Wait for a specific booking to appear in the data
+  const waitForBookingToAppear = async (date: string, time: string, maxRetries = 5) => {
+    for (let i = 0; i < maxRetries; i++) {
+      await fetchData()
+      await fetchAvailability()
+      
+      // Check if the booking now appears
+      const hasBooking = bookings.some(b => b.date === date && b.time === time)
+      if (hasBooking) {
+        console.log(`✅ Booking appeared after ${i + 1} attempts`)
+        return true
+      }
+      
+      // Wait 2 seconds before retry
+      if (i < maxRetries - 1) {
+        console.log(`⏳ Waiting for booking to sync (attempt ${i + 1}/${maxRetries})...`)
+        await new Promise(resolve => setTimeout(resolve, 2000))
+      }
+    }
+    
+    console.warn('⚠️ Booking still not visible after max retries')
+    return false
+  }
+
   const fetchAvailability = async () => {
     try {
       const response = await fetch('/api/admin/availability')
@@ -883,17 +907,22 @@ export default function AdminDashboard() {
       const result = await response.json()
       
       if (result.success) {
-        // Close modal and refresh
+        // Close modal first
         setShowAssignPatientModal(false)
         setSelectedPatientForSlot("")
         setSelectedSlot(null)
         
-        // Refresh data
-        fetchData()
-        fetchAvailability()
-        
         // Show success message
         alert(`Appointment assigned successfully! Invitation sent to ${patient.medicalFormData?.email || patient.patientEmail}`)
+        
+        // Wait for booking to appear with retry logic
+        console.log('🔄 Waiting for booking to sync with Google Calendar...')
+        const bookingAppeared = await waitForBookingToAppear(selectedSlot.date, selectedSlot.time)
+        
+        if (!bookingAppeared) {
+          alert('✅ Appointment created successfully! Note: If the slot doesn\'t appear as booked immediately, please refresh the page.')
+        }
+        
       } else {
         alert('Failed to assign appointment: ' + (result.error || 'Unknown error'))
       }
