@@ -357,20 +357,21 @@ export default function AdminDashboard() {
         let booking = dayBookings.find(b => b.time === timeStr)
         let isBookedSlot = !!booking
         
-        // For 60-min sessions, also check if this is the second half of a booking
+        // Check if this slot is covered by any existing booking (for multi-slot bookings)
         if (!booking) {
-          const hour = parseInt(timeStr.split(':')[0])
-          const minute = parseInt(timeStr.split(':')[1])
+          const currentSlotTime = new Date(`${date}T${timeStr}:00`)
           
-          if (minute === 30) {
-            // This is a :30 slot, check if there's a 60-min booking at :00
-            const hourSlot = `${hour.toString().padStart(2, '0')}:00`
-            const hourBooking = dayBookings.find(b => b.time === hourSlot)
+          // Check all existing bookings to see if this slot falls within their duration
+          for (const existingBooking of dayBookings) {
+            const bookingStart = new Date(`${date}T${existingBooking.time}:00`)
+            const bookingDuration = existingBooking.duration || 50 // Default 50 minutes if not specified
+            const bookingEnd = new Date(bookingStart.getTime() + bookingDuration * 60 * 1000)
             
-            if (hourBooking && hourBooking.sessionPackage?.sessionType !== 'consultation') {
-              // This :30 slot is blocked by a 60-min session that started at :00
-              booking = hourBooking
+            // Check if current slot is within the booking duration
+            if (currentSlotTime >= bookingStart && currentSlotTime < bookingEnd) {
+              booking = existingBooking
               isBookedSlot = true
+              break
             }
           }
         }
@@ -2371,7 +2372,14 @@ export default function AdminDashboard() {
                 {selectedSlots.length > 0 && (
                   <div className="px-6 py-3 bg-amber-50 border-b border-amber-200">
                     <span className="text-sm text-amber-800 font-medium">
-                      {selectedSlots.length} slots selected • {selectedSlots[0]} - {selectedSlots[selectedSlots.length - 1]}
+                      {selectedSlots.length} slots selected • {(() => {
+                        const sortedSlots = selectedSlots.sort()
+                        const startTime = sortedSlots[0]
+                        const lastSlotTime = sortedSlots[sortedSlots.length - 1]
+                        const [lastHour, lastMinute] = lastSlotTime.split(':').map(Number)
+                        const endTime = `${(lastHour + (lastMinute === 30 ? 1 : 0)).toString().padStart(2, '0')}:${lastMinute === 30 ? '00' : '30'}`
+                        return `${startTime} - ${endTime}`
+                      })()}
                     </span>
                   </div>
                 )}
@@ -2440,7 +2448,14 @@ export default function AdminDashboard() {
                           {selectedSlots.length} time slot{selectedSlots.length > 1 ? 's' : ''} selected
                         </span>
                         <div className="hidden sm:block text-xs text-slate-500">
-                          ({selectedSlots[0]} - {selectedSlots[selectedSlots.length - 1]})
+                          ({(() => {
+                            const sortedSlots = selectedSlots.sort()
+                            const startTime = sortedSlots[0]
+                            const lastSlotTime = sortedSlots[sortedSlots.length - 1]
+                            const [lastHour, lastMinute] = lastSlotTime.split(':').map(Number)
+                            const endTime = `${(lastHour + (lastMinute === 30 ? 1 : 0)).toString().padStart(2, '0')}:${lastMinute === 30 ? '00' : '30'}`
+                            return `${startTime} - ${endTime}`
+                          })()})
                         </div>
                       </div>
                       <div className="flex gap-2">
