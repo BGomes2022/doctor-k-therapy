@@ -117,7 +117,7 @@ export default function AdminDashboard() {
     }
   })
   const [showAssignPatientModal, setShowAssignPatientModal] = useState(false)
-  const [selectedSlot, setSelectedSlot] = useState<{date: string, time: string} | null>(null)
+  const [selectedSlot, setSelectedSlot] = useState<{date: string, time: string, duration?: number} | null>(null)
   const [selectedPatientForSlot, setSelectedPatientForSlot] = useState<string>("")
   const [assignmentLoading, setAssignmentLoading] = useState(false)
 
@@ -364,27 +364,13 @@ export default function AdminDashboard() {
     return slots
   }
 
-  // Handle slot selection - open patient assignment modal for available slots
+  // Handle slot selection for drag and drop
   const handleSlotMouseDown = (time: string) => {
-    // Use selectedDayData.date when in modal, selectedDate otherwise
-    const currentDate = selectedDayData?.date || selectedDate || ''
-    if (!currentDate) return
-    
-    // Check if slot is available (not blocked)
-    const daySlots = generateTimeSlots(currentDate)
-    const slot = daySlots.find(s => s.time === time)
-    
-    if (slot && slot.isAvailable && !slot.isBooked) {
-      // Open patient assignment modal for available slots
-      setSelectedSlot({ date: currentDate, time })
-      setShowAssignPatientModal(true)
-    } else {
-      // Original drag behavior for blocking/unblocking
-      setIsDragging(true)
-      setDragStartSlot(time)
-      setDragEndSlot(time)
-      setSelectedSlots([time])
-    }
+    // Always use drag behavior - patient assignment is now via button
+    setIsDragging(true)
+    setDragStartSlot(time)
+    setDragEndSlot(time)
+    setSelectedSlots([time])
   }
 
   const handleSlotMouseEnter = (time: string) => {
@@ -2239,6 +2225,11 @@ export default function AdminDashboard() {
                 </div>
                 <p className="text-sm text-stone-600 mt-2">
                   {selectedSlot.date} at {selectedSlot.time}
+                  {selectedSlot.duration && selectedSlot.duration > 30 && (
+                    <span className="ml-2 font-medium">
+                      ({selectedSlot.duration} minutes session)
+                    </span>
+                  )}
                 </p>
               </div>
               
@@ -2414,6 +2405,28 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex gap-2">
                         <Button
+                          onClick={() => {
+                            // Direct patient booking for selected slots
+                            if (selectedSlots.length >= 1) {
+                              // Support multiple slots (e.g., 2-hour session = 4 slots)
+                              const startTime = selectedSlots.sort()[0]
+                              const endTime = selectedSlots.sort()[selectedSlots.length - 1]
+                              setSelectedSlot({ 
+                                date: selectedDayData.date, 
+                                time: startTime,
+                                duration: selectedSlots.length * 30 // Each slot is 30 minutes
+                              })
+                              setShowAssignPatientModal(true)
+                            } else {
+                              alert('Please select at least one slot for patient booking')
+                            }
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-lg transition-colors flex items-center gap-2"
+                        >
+                          <User className="w-4 h-4" />
+                          Book for Patient
+                        </Button>
+                        <Button
                           onClick={() => handleSetAvailability(true)}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2 rounded-lg transition-colors"
                         >
@@ -2423,7 +2436,7 @@ export default function AdminDashboard() {
                           onClick={() => handleSetAvailability(false)}
                           className="bg-stone-600 hover:bg-stone-700 text-white font-medium px-5 py-2 rounded-lg transition-colors"
                         >
-                          Remove
+                          Block
                         </Button>
                         <Button
                           onClick={() => setSelectedSlots([])}
