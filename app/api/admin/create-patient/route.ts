@@ -1,24 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { savePatientData } from '@/utils/patientData'
+import { savePatientData } from '@/utils/jsonPatientStorage'
 
 export async function POST(request: NextRequest) {
   try {
     const { 
-      bookingToken,
-      userId,
       medicalFormData,
       sessionPackage
     } = await request.json()
 
     // Validate required fields
-    if (!medicalFormData?.fullName || !medicalFormData?.email || !bookingToken) {
+    if (!medicalFormData?.fullName || !medicalFormData?.email) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: fullName and email' },
         { status: 400 }
       )
     }
 
-    // Save patient data using existing utility
+    // Save patient data using JSON storage system
     const result = await savePatientData({
       patientEmail: medicalFormData.email,
       patientName: medicalFormData.fullName,

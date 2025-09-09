@@ -913,16 +913,10 @@ export default function AdminDashboard() {
     
     setLoading(true)
     try {
-      // Generate unique IDs
-      const bookingToken = crypto.randomUUID()
-      const userId = `MANUAL-${Date.now()}`
-
       const response = await fetch('/api/admin/create-patient', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bookingToken,
-          userId,
           medicalFormData: newPatientData,
           sessionPackage: newPatientData.sessionPackage
         })
