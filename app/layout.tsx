@@ -18,8 +18,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Dr. Katiuscia Mercogliano",
   description:
-    "Compassionate online therapy for trauma, depression, anxiety, and relationship challenges. Sessions in English & Italian.",
-    generator: 'v0.dev'
+    "Compassionate online therapy for trauma, depression, anxiety, and relationship challenges. Sessions in English & Italian."
 }
 
 export default function RootLayout({
