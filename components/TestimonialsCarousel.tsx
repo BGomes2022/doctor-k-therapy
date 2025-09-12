@@ -71,7 +71,7 @@ const testimonials: Testimonial[] = [
     flag: "🇮🇹"
   },
   {
-    content: "With my extreme OCD, I was a slave to myself and felt unloved and ununderstood by my family, to whom I subjected absurd routines. Katiuscia not only explained the origin of my fixations to me, but with behavioral and dynamic methods, I understood why I had them. It's hard, but Katiuscia is always there for me with messages and encouragement.",
+    content: "With my extreme OCD, I was a slave to myself and felt unloved and misunderstood by my family, to whom I subjected absurd routines. Katiuscia not only explained the origin of my fixations to me, but with behavioral and dynamic methods, I understood why I had them. It's hard, but Katiuscia is always there for me with messages and encouragement.",
     author: "Chiara",
     country: "Italia",
     flag: "🇮🇹"
@@ -81,6 +81,18 @@ const testimonials: Testimonial[] = [
     author: "P.",
     country: "Nigeria",
     flag: "🇳🇬"
+  },
+  {
+    content: "As a man struggling with anger management and relationship issues, Katiuscia helped me understand the root causes of my emotional reactions. Her direct approach and practical tools gave me the confidence to change destructive patterns and build healthier relationships.",
+    author: "Omar",
+    country: "Morocco",
+    flag: "🇲🇦"
+  },
+  {
+    content: "Dealing with work stress and burnout, I felt lost and overwhelmed. Katiuscia's sessions helped me regain control of my life and set proper boundaries. I now have a much better work-life balance and feel more confident in my decisions.",
+    author: "Samuele",
+    country: "Italia",
+    flag: "🇮🇹"
   }
 ]
 

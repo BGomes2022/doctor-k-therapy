@@ -14,22 +14,22 @@ export default function PaymentMethods({ language }: PaymentMethodsProps) {
         {
           title: "PayLater",
           description: "Buy now, pay later option",
-          countries: "Available in multiple countries"
+          countries: "Australia, France, Germany, Italy, Spain, United Kingdom, United States."
         },
         {
           title: "Credit",
           description: "Credit and debit card payments",
-          countries: "Worldwide availability"
+          countries: "United Kingdom, United States."
         },
         {
           title: "Pay in 3",
           description: "Split payments into 3 installments",
-          countries: "Select countries"
+          countries: "United Kingdom."
         },
         {
           title: "Pay Monthly",
           description: "Monthly payment plans available",
-          countries: "Select regions"
+          countries: "United States."
         }
       ],
       security: "All payments are processed securely through PayPal's encrypted platform"
@@ -41,22 +41,22 @@ export default function PaymentMethods({ language }: PaymentMethodsProps) {
         {
           title: "Paga Dopo",
           description: "Compra ora, paga dopo",
-          countries: "Disponibile in più paesi"
+          countries: "Australia, Francia, Germania, Italia, Spagna, Regno Unito, Stati Uniti."
         },
         {
           title: "Credito",
           description: "Pagamenti con carta di credito e debito",
-          countries: "Disponibilità mondiale"
+          countries: "Regno Unito, Stati Uniti."
         },
         {
           title: "Paga in 3",
           description: "Dividi i pagamenti in 3 rate",
-          countries: "Paesi selezionati"
+          countries: "Regno Unito."
         },
         {
           title: "Paga Mensilmente",
           description: "Piani di pagamento mensili disponibili",
-          countries: "Regioni selezionate"
+          countries: "Stati Uniti."
         }
       ],
       security: "Tutti i pagamenti sono elaborati in modo sicuro attraverso la piattaforma crittografata di PayPal"

@@ -80,6 +80,10 @@ We implement industry-standard security measures:
 • **Regular security audits** and vulnerability assessments
 • **Encrypted backups** with secure storage
 • **Two-factor authentication** for admin access
+
+**For your own security, keep the following in mind:**
+
+**Phishing:** This is a type of online identity theft or account hacking. We will never request your login information or credit card information in any non-secure or unsolicited communication. You should always be diligent when you are asked to provide your account information and make sure it is in our secure system.
           `
         },
         dataRetention: {
@@ -209,6 +213,10 @@ Implementiamo misure di sicurezza standard del settore:
 • **Audit di sicurezza regolari** e valutazioni delle vulnerabilità
 • **Backup crittografati** con archiviazione sicura
 • **Autenticazione a due fattori** per l'accesso amministrativo
+
+**Per la vostra sicurezza, tenete presente quanto segue:**
+
+**Phishing:** Si tratta di un tipo di furto di identità online o hacking di account. Non richiederemo mai le vostre informazioni di accesso o i dati della carta di credito in comunicazioni non sicure o non richieste. Dovreste sempre essere diligenti quando vi viene chiesto di fornire le informazioni del vostro account e assicurarvi che sia nel nostro sistema sicuro.
           `
         },
         dataRetention: {

@@ -30,6 +30,7 @@ import BookingModal from "@/components/BookingModal"
 import TestimonialsCarousel from "@/components/TestimonialsCarousel"
 import PaymentMethods from "@/components/PaymentMethods"
 import EmergencyModal from "@/components/EmergencyModal"
+import CredentialsModal from "@/components/CredentialsModal"
 
 export default function TherapyWebsite() {
   const [language, setLanguage] = useState<"en" | "it">("en")
@@ -38,6 +39,7 @@ export default function TherapyWebsite() {
   const [selectedPackage, setSelectedPackage] = useState(null)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false)
+  const [credentialsModalOpen, setCredentialsModalOpen] = useState(false)
   const moreMenuRef = useRef(null)
 
   // Close dropdown when clicking outside
@@ -180,13 +182,13 @@ export default function TherapyWebsite() {
           {
             name: "4 Sessions",
             price: "€350",
-            duration: "Valid for 3 months",
+            duration: "50 min each • Valid for 3 months",
             description: "",
           },
           {
             name: "6 Sessions",
             price: "€450",
-            duration: "Valid for 3 months",
+            duration: "50 min each • Valid for 3 months",
             description: "",
           },
         ],
@@ -225,7 +227,7 @@ export default function TherapyWebsite() {
         email: "hello@doctorktherapy.com",
         worldwide: "Online sessions worldwide",
         emergency:
-          "Important: This is not an emergency contact. If you're in crisis, please contact your local emergency services or crisis hotline.",
+          "This is not an emergency contact. If you're in crisis, please contact your local emergency services or crisis hotline.",
         suicidalDisclaimer:
           "My online counseling is not appropriate for all types of problems. If you have suicidal thoughts or are in a crisis situation, it's important that you seek help immediately. If you are in a crisis or any other person may be in danger - do not use this site.",
         consent:
@@ -343,17 +345,22 @@ export default function TherapyWebsite() {
         slogan: "Vedi, senti e cambia per una vita di significato.",
         sloganSubtext: "Il mio approccio con ogni paziente",
         text1:
-          "Sono la Dr.ssa Katiuscia Mercogliano, e ho camminato accanto alle persone nei loro momenti più difficili per oltre 18 anni in tre paesi.",
+          "Benvenuto. Sono la Dr.ssa Katiuscia Mercogliano, Psicologa bilingue Inglese e Italiano, specializzata in psicologia degli adulti, relazioni e recupero/ gestione dei traumi. Ho la laurea e licenza in Psicologia e un master in Psicoterapia con un focus sull'Analisi Transazionale (TA).",
         text2:
-          "Il mio approccio combina terapia psicodinamica, cura informata sul trauma, ACT e tecniche EMDR – ma ciò che conta di più è che voglio che tu ti senta visto, al sicuro e forte di nuovo.",
+          "Sono certificata a livello internazionale nel trattamento dell'ansia, nell'ACT e nella terapia somatica, e ho anche lavorato come psicologo forense, fungendo da testimone esperto in casi legali. Per oltre 18 anni, in tre paesi, ho camminato al fianco delle persone durante alcuni dei momenti più difficili della loro vita.",
         text3:
-          "Che tu stia lottando con traumi, depressione, ansia o sfide relazionali, non devi affrontarlo da solo. Insieme, troveremo il tuo percorso verso la guarigione.",
+          "Insieme, esploriamo e identifichiamo i profondi modelli emotivi della vita che possono tenerci bloccati in cicli di dipendenza, depressione o ansia. Utilizzando un approccio psicodinamico e personalizzato, affrontiamo i traumi passati, i fattori scatenanti emotivi e i modelli inconsci, aiutandoti a capire e cambiare i comportamenti disadattivi.",
+        text4:
+          "Imparerai strumenti pratici per riconoscere i fattori scatenanti emotivi e le dinamiche relazionali malsane, gestire l'ansia e, soprattutto, sviluppare l'indipendenza e i confini necessari per mantenere una vita mentale ed emotiva sana.",
+        text5:
+          "Sono profondamente appassionata nel sostenere individui, coppie, genitori e giovani adulti nel ridefinire i confini, riequilibrare i ruoli e costruire una maggiore consapevolezza di sé. Il trauma non è solo un ricordo doloroso o una verità nascosta, è il momento in cui ci siamo sentiti insicuri e soli, e dove l'insicurezza ha iniziato a plasmare le nostre scelte future. Andremo lì insieme. Per vedere, sentire e decidere se è il momento di cambiare uno schema che non ti appartiene più.",
         badges: [
           "Dottorato in Psicologia",
           "18+ Anni di Esperienza",
           "Informata sul Trauma",
           "Formazione EMDR Completata",
         ],
+        viewCertifications: "Visualizza Tutte le Certificazioni",
       },
       pricing: {
         title: "Investimento nella Tua Guarigione",
@@ -374,13 +381,13 @@ export default function TherapyWebsite() {
           {
             name: "4 Sessioni",
             price: "€350",
-            duration: "Valido per 3 mesi",
+            duration: "50 min ciascuna • Valido per 3 mesi",
             description: "",
           },
           {
             name: "6 Sessioni",
             price: "€450",
-            duration: "Valido per 3 mesi",
+            duration: "50 min ciascuna • Valido per 3 mesi",
             description: "",
           },
         ],
@@ -419,7 +426,7 @@ export default function TherapyWebsite() {
         email: "hello@doctorktherapy.com",
         worldwide: "Sessioni online in tutto il mondo",
         emergency:
-          "Importante: Questo non è un contatto di emergenza. Se sei in crisi, contatta i servizi di emergenza locali o la linea di crisi.",
+          "Questo non è un contatto di emergenza. Se sei in crisi, contatta i servizi di emergenza locali o la linea di crisi.",
         suicidalDisclaimer:
           "La mia consulenza online non è appropriata per tutti i tipi di problemi. Se hai pensieri suicidi o sei in una situazione di crisi, è importante che cerchi aiuto immediatamente. Se sei in crisi o qualsiasi altra persona potrebbe essere in pericolo - non utilizzare questo sito.",
         consent:
@@ -635,7 +642,7 @@ export default function TherapyWebsite() {
         <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-cream-200/10 to-transparent rounded-full blur-3xl animate-pulse-slow"></div>
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
+            <div className="space-y-8 relative z-10">
               <div className="space-y-6">
                 <Badge className="bg-cream-100 text-stone-600 hover:bg-cream-100 font-light border-cream-200">
                   {currentContent.hero.badge}
@@ -648,14 +655,15 @@ export default function TherapyWebsite() {
                 <p className="text-xl text-stone-500 leading-relaxed font-light">{currentContent.hero.description}</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  onClick={() => setBookingModalOpen(true)}
-                  size="lg"
-                  className="bg-stone-600 hover:bg-stone-700 text-white px-8 py-3 rounded-full font-light shadow-lg"
-                >
-                  {currentContent.hero.bookSession}
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
+                <a href="#pricing">
+                  <Button
+                    size="lg"
+                    className="bg-stone-600 hover:bg-stone-700 text-white px-8 py-3 rounded-full font-light shadow-lg"
+                  >
+                    {currentContent.hero.bookSession}
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </a>
                 <Link href="#about">
                   <Button
                     size="lg"
@@ -755,6 +763,7 @@ export default function TherapyWebsite() {
               <Button 
                 variant="outline" 
                 className="border-cream-300 text-stone-700 hover:bg-cream-50"
+                onClick={() => setCredentialsModalOpen(true)}
               >
                 {currentContent.about.viewCertifications}
               </Button>
@@ -808,7 +817,7 @@ export default function TherapyWebsite() {
                 name: language === "en" ? "4 Therapy Sessions" : "4 Sessioni di Terapia",
                 price: 350,
                 originalPrice: 400,
-                duration: language === "en" ? "Valid for 3 months" : "Valido per 3 mesi",
+                duration: language === "en" ? "50 min each • Valid for 3 months" : "50 min ciascuna • Valido per 3 mesi",
                 description: language === "en"
                   ? "Perfect for short-term focused therapy goals"
                   : "Perfetto per obiettivi terapeutici a breve termine",
@@ -886,7 +895,7 @@ export default function TherapyWebsite() {
                 name: language === "en" ? "6 Therapy Sessions" : "6 Sessioni di Terapia",
                 price: 450,
                 originalPrice: 600,
-                duration: language === "en" ? "Valid for 3 months" : "Valido per 3 mesi",
+                duration: language === "en" ? "50 min each • Valid for 3 months" : "50 min ciascuna • Valido per 3 mesi",
                 description: language === "en"
                   ? "Comprehensive therapy program for deep transformation"
                   : "Programma terapeutico completo per trasformazione profonda",
@@ -1194,6 +1203,13 @@ export default function TherapyWebsite() {
       <EmergencyModal 
         isOpen={emergencyModalOpen}
         onClose={() => setEmergencyModalOpen(false)}
+        language={language}
+      />
+
+      {/* Credentials Modal */}
+      <CredentialsModal 
+        isOpen={credentialsModalOpen}
+        onClose={() => setCredentialsModalOpen(false)}
         language={language}
       />
     </div>
