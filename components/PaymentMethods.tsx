@@ -14,22 +14,22 @@ export default function PaymentMethods({ language }: PaymentMethodsProps) {
         {
           title: "PayLater",
           description: "Buy now, pay later option",
-          countries: "Australia, France, Germany, Italy, Spain, United Kingdom, United States."
+          countries: "🇦🇺 🇫🇷 🇩🇪 🇮🇹 🇪🇸 🇬🇧 🇺🇸"
         },
         {
           title: "Credit",
           description: "Credit and debit card payments",
-          countries: "United Kingdom, United States."
+          countries: "🇬🇧 🇺🇸"
         },
         {
           title: "Pay in 3",
           description: "Split payments into 3 installments",
-          countries: "United Kingdom."
+          countries: "🇬🇧"
         },
         {
           title: "Pay Monthly",
           description: "Monthly payment plans available",
-          countries: "United States."
+          countries: "🇺🇸"
         }
       ],
       security: "All payments are processed securely through PayPal's encrypted platform"
@@ -41,22 +41,22 @@ export default function PaymentMethods({ language }: PaymentMethodsProps) {
         {
           title: "Paga Dopo",
           description: "Compra ora, paga dopo",
-          countries: "Australia, Francia, Germania, Italia, Spagna, Regno Unito, Stati Uniti."
+          countries: "🇦🇺 🇫🇷 🇩🇪 🇮🇹 🇪🇸 🇬🇧 🇺🇸"
         },
         {
           title: "Credito",
           description: "Pagamenti con carta di credito e debito",
-          countries: "Regno Unito, Stati Uniti."
+          countries: "🇬🇧 🇺🇸"
         },
         {
           title: "Paga in 3",
           description: "Dividi i pagamenti in 3 rate",
-          countries: "Regno Unito."
+          countries: "🇬🇧"
         },
         {
           title: "Paga Mensilmente",
           description: "Piani di pagamento mensili disponibili",
-          countries: "Stati Uniti."
+          countries: "🇺🇸"
         }
       ],
       security: "Tutti i pagamenti sono elaborati in modo sicuro attraverso la piattaforma crittografata di PayPal"

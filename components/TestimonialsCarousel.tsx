@@ -93,6 +93,12 @@ const testimonials: Testimonial[] = [
     author: "Samuele",
     country: "Italia",
     flag: "🇮🇹"
+  },
+  {
+    content: "The beginning of my journey was difficult, as I was strongly reluctant and resistant to taking on this path that would have led me to awareness and active work on myself. I believe it was due to the fear of facing my fears, my painful emotions, and of feeling alone, alone in facing this tsunami of thoughts and emotions that would have overwhelmed me, and I was afraid, afraid of succumbing!!!! But to my great surprise, that wasn't the case!!! This isn't just any psychologist who listens to you while you wallow in your pity and victimhood, but a true expert who never makes you feel alone or afraid, even though the internal demon you're facing is terrifying, scary, and hits hard! Katiuscia has and is helping me find the keys we already possess, only they are hidden in this darkness that is our mind, and once found, she helped me unlock and open those doors that limited my ability to see, feel, and experience! It is a sometimes painful journey that leads to a great self-awareness. I am currently able to concentrate and dedicate myself to the things that make me feel good, and I am trying to bury all those unfair feelings of guilt that are not mine, but that have been placed on us by people more disturbed than us!!!! We deserve to love ourselves! And to enjoy the beauty that is within us and that we can give to those who love us! And above all, learn to defend ourselves from emotional predators who don't care about us!!! I believe that this journey makes the difference between living well, healthy, mentally strong, and aware, or living as slaves to mental traps, wounds, and limitations imposed by others!!!!",
+    author: "Patrizio",
+    country: "Spagna",
+    flag: "🇪🇸"
   }
 ]
 

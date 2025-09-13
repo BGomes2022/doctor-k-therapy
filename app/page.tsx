@@ -345,7 +345,7 @@ export default function TherapyWebsite() {
         slogan: "Vedi, senti e cambia per una vita di significato.",
         sloganSubtext: "Il mio approccio con ogni paziente",
         text1:
-          "Benvenuto. Sono la Dr.ssa Katiuscia Mercogliano, Psicologa bilingue Inglese e Italiano, specializzata in psicologia degli adulti, relazioni e recupero/ gestione dei traumi. Ho la laurea e licenza in Psicologia e un master in Psicoterapia con un focus sull'Analisi Transazionale (TA).",
+          "Benvenuto. Sono la Dr.ssa Katiuscia Mercogliano, Psicologa Abilitata e psicologa bilingue Inglese e Italiano, specializzata in psicologia degli adulti, relazioni e recupero/ gestione dei traumi. Ho la laurea e licenza in Psicologia e un master in Psicoterapia con un focus sull'Analisi Transazionale (TA).",
         text2:
           "Sono certificata a livello internazionale nel trattamento dell'ansia, nell'ACT e nella terapia somatica, e ho anche lavorato come psicologo forense, fungendo da testimone esperto in casi legali. Per oltre 18 anni, in tre paesi, ho camminato al fianco delle persone durante alcuni dei momenti più difficili della loro vita.",
         text3:
@@ -795,7 +795,7 @@ export default function TherapyWebsite() {
                 name: language === "en" ? "Consultation" : "Consulenza",
                 price: 30,
                 duration: language === "en" ? "20 minutes" : "20 minuti",
-                description: language === "en" 
+                description: language === "en"
                   ? "Initial assessment and therapy planning session"
                   : "Valutazione iniziale e pianificazione terapeutica",
                 icon: "",
@@ -813,17 +813,15 @@ export default function TherapyWebsite() {
                 popular: false
               },
               {
-                id: "four-sessions",
-                name: language === "en" ? "4 Therapy Sessions" : "4 Sessioni di Terapia",
-                price: 350,
-                originalPrice: 400,
-                duration: language === "en" ? "50 min each • Valid for 3 months" : "50 min ciascuna • Valido per 3 mesi",
+                id: "couples-session",
+                name: language === "en" ? "Couples Therapy" : "Terapia di Coppia",
+                price: 120,
+                duration: language === "en" ? "50 minutes" : "50 minuti",
                 description: language === "en"
-                  ? "Perfect for short-term focused therapy goals"
-                  : "Perfetto per obiettivi terapeutici a breve termine",
-                savings: language === "en" ? "Save €50" : "Risparmia €50",
+                  ? "Relationship counseling for couples seeking harmony"
+                  : "Consulenza relazionale per coppie che cercano armonia",
                 icon: "",
-                popular: true
+                popular: false
               }
             ].map((pkg) => (
               <div key={pkg.id} className="relative">
@@ -887,9 +885,22 @@ export default function TherapyWebsite() {
             ))}
           </div>
 
-          {/* Second Row - Additional Services */}
+          {/* Second Row - Package Deals */}
           <div className="grid md:grid-cols-2 gap-6 mb-8 max-w-4xl mx-auto">
             {[
+              {
+                id: "four-sessions",
+                name: language === "en" ? "4 Therapy Sessions" : "4 Sessioni di Terapia",
+                price: 350,
+                originalPrice: 400,
+                duration: language === "en" ? "50 min each • Valid for 3 months" : "50 min ciascuna • Valido per 3 mesi",
+                description: language === "en"
+                  ? "Perfect for short-term focused therapy goals"
+                  : "Perfetto per obiettivi terapeutici a breve termine",
+                savings: language === "en" ? "Save €50" : "Risparmia €50",
+                icon: "",
+                popular: true
+              },
               {
                 id: "six-sessions",
                 name: language === "en" ? "6 Therapy Sessions" : "6 Sessioni di Terapia",
@@ -902,24 +913,24 @@ export default function TherapyWebsite() {
                 savings: language === "en" ? "Save €150" : "Risparmia €150",
                 icon: "",
                 popular: false
-              },
-              {
-                id: "couples-session",
-                name: language === "en" ? "Couples Therapy" : "Terapia di Coppia",
-                price: 120,
-                duration: language === "en" ? "50 minutes" : "50 minuti",
-                description: language === "en"
-                  ? "Relationship counseling for couples seeking harmony"
-                  : "Consulenza relazionale per coppie che cercano armonia",
-                icon: "",
-                popular: false
               }
             ].map((pkg) => (
-              <Card
-                key={pkg.id}
-                className="group bg-gradient-to-br from-white via-white to-stone-50/50 border-2 hover:shadow-2xl transition-all duration-500 backdrop-blur-sm hover:-translate-y-2 cursor-pointer relative overflow-hidden border-stone-200 hover:border-amber-300 hover:shadow-amber-100/50 flex flex-col h-full"
-                onClick={() => setSelectedPackage(pkg)}
-              >
+              <div key={pkg.id} className="relative">
+                {pkg.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-30">
+                    <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
+                      {language === "en" ? "Most Popular" : "Più Popolare"}
+                    </span>
+                  </div>
+                )}
+                <Card
+                  className={`group bg-gradient-to-br from-white via-white to-stone-50/50 border-2 hover:shadow-2xl transition-all duration-500 backdrop-blur-sm hover:-translate-y-2 cursor-pointer relative flex flex-col h-full ${
+                    pkg.popular
+                      ? "border-amber-400 shadow-2xl ring-2 ring-amber-200/50 scale-105 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/60"
+                      : "border-stone-200 hover:border-amber-300 hover:shadow-amber-100/50"
+                  }`}
+                  onClick={() => setSelectedPackage(pkg)}
+                >
                 <CardContent className="p-6 text-center relative z-10 flex flex-col h-full">
                   {pkg.icon && (
                     <div className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">
@@ -960,6 +971,7 @@ export default function TherapyWebsite() {
                 {/* Subtle background decoration */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-100/20 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </Card>
+              </div>
             ))}
           </div>
 
@@ -1033,13 +1045,13 @@ export default function TherapyWebsite() {
                     ? "Online therapy is not appropriate in all situations or for all kinds of problems. If you are experiencing suicidal thoughts or are in a crisis, it's important that you seek help immediately. If you are in a crisis or any other person may be in danger - don't use this site."
                     : "La terapia online non è appropriata in tutte le situazioni o per tutti i tipi di problemi. Se stai vivendo pensieri suicidi o sei in una situazione di crisi, è importante che tu cerchi aiuto immediatamente. Se sei in crisi o qualsiasi altra persona potrebbe essere in pericolo - non utilizzare questo sito."}
                 </p>
-                <a 
-                  href="#emergency-help" 
+                <button
+                  onClick={() => setEmergencyModalOpen(true)}
                   className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-800 font-medium mt-2"
                 >
                   {language === "en" ? "Get help right now" : "Ottieni aiuto subito"}
                   <ChevronRight className="h-4 w-4" />
-                </a>
+                </button>
               </div>
             </div>
           </div>
