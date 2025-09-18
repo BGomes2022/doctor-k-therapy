@@ -87,6 +87,11 @@ export default function PayPalCheckout({
     }
   }
 
+  const onCancel = (data: any) => {
+    console.log('PayPal payment cancelled:', data)
+    // Don't call onPaymentError for cancellation - just stay on payment page
+  }
+
   const onError = (err: any) => {
     console.error('PayPal error:', err)
     onPaymentError(err)
@@ -127,6 +132,7 @@ export default function PayPalCheckout({
             <PayPalButtons
               createOrder={createOrder}
               onApprove={onApprove}
+              onCancel={onCancel}
               onError={onError}
               style={{
                 layout: "vertical",

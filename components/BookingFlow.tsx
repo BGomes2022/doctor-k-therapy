@@ -65,11 +65,12 @@ export default function BookingFlow({ language, preSelectedPackage }: BookingFlo
 
   const handlePaymentError = (error: any) => {
     console.error("Payment error:", error)
-    alert(language === "en" 
-      ? "Payment failed. Please try again." 
+    alert(language === "en"
+      ? "Payment failed. Please try again."
       : "Pagamento fallito. Riprova."
     )
-    setCurrentStep("selection")
+    // Stay on payment step instead of going back to selection
+    setCurrentStep("payment")
   }
 
   const handleMedicalFormSubmit = async (formData: MedicalFormData) => {
