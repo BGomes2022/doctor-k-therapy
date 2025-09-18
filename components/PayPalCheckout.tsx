@@ -95,6 +95,16 @@ export default function PayPalCheckout({
 
   const onError = (err: any) => {
     console.error('PayPal error:', err)
+
+    // Ignore "Window closed" errors - these are just user cancellations
+    if (err?.message?.includes('Window closed') ||
+        err?.message?.includes('User cancelled') ||
+        err?.message?.includes('popup closed')) {
+      console.log('PayPal payment cancelled by user')
+      return // Stay on payment page, don't show error
+    }
+
+    // Only show error for real payment failures
     onPaymentError(err)
   }
 
