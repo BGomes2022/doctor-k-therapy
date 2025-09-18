@@ -29,8 +29,7 @@ export default function PayPalCheckout({
   const paypalOptions = {
     clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
     currency: "EUR",
-    intent: "capture",
-    "disable-funding": "credit,card"
+    intent: "capture"
   }
 
   const createOrder = async (data: any, actions: any) => {
