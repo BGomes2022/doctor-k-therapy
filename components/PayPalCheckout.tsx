@@ -27,11 +27,13 @@ export default function PayPalCheckout({
   const [isProcessing, setIsProcessing] = useState(false)
 
   const paypalOptions = {
-    "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
+    clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
     currency: "EUR",
     intent: "capture",
-    environment: "production",
-    "disable-funding": "credit,card"
+    "disable-funding": "credit,card",
+    "enable-funding": "paypal",
+    locale: "de_DE",
+    "buyer-country": "DE"
   }
 
   const createOrder = (data: any, actions: any) => {
@@ -130,7 +132,10 @@ export default function PayPalCheckout({
             </p>
           </div>
         ) : (
-          <PayPalScriptProvider options={paypalOptions}>
+          <PayPalScriptProvider
+            options={paypalOptions}
+            deferLoading={false}
+          >
             <PayPalButtons
               createOrder={createOrder}
               onApprove={onApprove}
@@ -142,6 +147,7 @@ export default function PayPalCheckout({
                 shape: "rect",
                 label: "paypal"
               }}
+              forceReRender={[sessionPackage.id, sessionPackage.price]}
             />
           </PayPalScriptProvider>
         )}
