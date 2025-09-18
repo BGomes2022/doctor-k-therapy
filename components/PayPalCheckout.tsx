@@ -27,66 +27,91 @@ export default function PayPalCheckout({
   const [isProcessing, setIsProcessing] = useState(false)
 
   const paypalOptions = {
-    "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
+    clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
     currency: "EUR",
-    intent: "capture"
+    intent: "capture",
+    "disable-funding": "credit,card"
   }
 
-  const createOrder = (data: any, actions: any) => {
-    return actions.order.create({
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "EUR",
-            value: sessionPackage.price.toString()
-          },
-          description: sessionPackage.name
-        }
-      ],
-      application_context: {
-        shipping_preference: "NO_SHIPPING"
-      }
-    })
-  }
-
-  const onApprove = async (data: any, actions: any) => {
-    console.log('🔵 PayPal onApprove triggered with data:', data)
-    setIsProcessing(true)
+  const createOrder = async (data: any, actions: any) => {
     try {
-      console.log('🔵 Capturing PayPal order...')
-      const details = await actions.order.capture()
-      console.log('✅ PayPal payment captured successfully:', details)
-      console.log('✅ Payment ID:', details.id)
-      console.log('✅ Payer:', details.payer)
-
-      // Send payment details to your backend
-      console.log('🔵 Sending to backend /api/payment/verify...')
-      const response = await fetch('/api/payment/verify', {
+      console.log('🔵 Creating PayPal order via server...')
+      const response = await fetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          paymentId: details.id,
-          sessionPackage: sessionPackage,
-          paymentDetails: details
+          sessionPackage: sessionPackage
         })
       })
 
-      console.log('🔵 Backend response status:', response.status)
+      const orderData = await response.json()
+      console.log('✅ Server created order:', orderData)
 
-      if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Payment verification successful:', result)
-        onPaymentSuccess({
-          ...details,
-          sessionPackage,
-          userId: result.userId
-        })
+      if (orderData.id) {
+        return orderData.id
+      }
+
+      const errorDetail = orderData?.details?.[0]
+      const errorMessage = errorDetail
+        ? `${errorDetail.issue} ${errorDetail.description} (${orderData.debug_id})`
+        : JSON.stringify(orderData)
+
+      throw new Error(errorMessage)
+    } catch (error) {
+      console.error('❌ Failed to create order:', error)
+      throw error
+    }
+  }
+
+  const onApprove = async (data: any, actions: any) => {
+    console.log('🔵 PayPal onApprove triggered with orderID:', data.orderID)
+    setIsProcessing(true)
+    try {
+      console.log('🔵 Capturing PayPal order via server...')
+      const response = await fetch(`/api/orders/${data.orderID}/capture`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const orderData = await response.json()
+      console.log('🔵 Server response status:', response.status)
+
+      // Handle PayPal's standard error responses
+      const errorDetail = orderData?.details?.[0]
+
+      if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
+        // Recoverable state - let user try again
+        console.log('🔄 Payment declined, restarting...')
+        return actions.restart()
+      } else if (errorDetail) {
+        // Non-recoverable error
+        console.error('❌ PayPal error:', errorDetail)
+        throw new Error(`${errorDetail.description} (${orderData.debug_id})`)
+      } else if (!orderData.purchase_units) {
+        console.error('❌ Invalid order data:', orderData)
+        throw new Error(JSON.stringify(orderData))
+      } else if (!response.ok) {
+        console.error('❌ Server error:', response.status, orderData)
+        throw new Error(`Server error: ${response.status}`)
       } else {
-        const errorText = await response.text()
-        console.error('❌ Payment verification failed:', response.status, errorText)
-        throw new Error(`Payment verification failed: ${response.status} - ${errorText}`)
+        // Success!
+        const transaction =
+          orderData?.purchase_units?.[0]?.payments?.captures?.[0] ||
+          orderData?.purchase_units?.[0]?.payments?.authorizations?.[0]
+
+        console.log('✅ Payment successful:', transaction.status, transaction.id)
+        console.log('✅ Full order data:', orderData)
+
+        onPaymentSuccess({
+          ...orderData,
+          transactionId: transaction.id,
+          userId: orderData.userId,
+          sessionPackage: orderData.sessionPackage || sessionPackage
+        })
       }
     } catch (error) {
       console.error('❌ Error in onApprove:', error)
@@ -103,16 +128,6 @@ export default function PayPalCheckout({
 
   const onError = (err: any) => {
     console.error('PayPal error:', err)
-
-    // Ignore "Window closed" errors - these are just user cancellations
-    if (err?.message?.includes('Window closed') ||
-        err?.message?.includes('User cancelled') ||
-        err?.message?.includes('popup closed')) {
-      console.log('PayPal payment cancelled by user')
-      return // Stay on payment page, don't show error
-    }
-
-    // Only show error for real payment failures
     onPaymentError(err)
   }
 
