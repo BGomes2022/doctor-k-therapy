@@ -29,8 +29,7 @@ export default function PayPalCheckout({
   const paypalOptions = {
     "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
     currency: "EUR",
-    intent: "capture",
-    environment: "production"
+    intent: "capture"
   }
 
   const createOrder = (data: any, actions: any) => {
@@ -51,12 +50,17 @@ export default function PayPalCheckout({
   }
 
   const onApprove = async (data: any, actions: any) => {
+    console.log('🔵 PayPal onApprove triggered with data:', data)
     setIsProcessing(true)
     try {
+      console.log('🔵 Capturing PayPal order...')
       const details = await actions.order.capture()
-      console.log('PayPal payment captured:', details)
-      
+      console.log('✅ PayPal payment captured successfully:', details)
+      console.log('✅ Payment ID:', details.id)
+      console.log('✅ Payer:', details.payer)
+
       // Send payment details to your backend
+      console.log('🔵 Sending to backend /api/payment/verify...')
       const response = await fetch('/api/payment/verify', {
         method: 'POST',
         headers: {
@@ -69,19 +73,23 @@ export default function PayPalCheckout({
         })
       })
 
+      console.log('🔵 Backend response status:', response.status)
+
       if (response.ok) {
         const result = await response.json()
-        console.log('Payment verification result:', result)
+        console.log('✅ Payment verification successful:', result)
         onPaymentSuccess({
           ...details,
           sessionPackage,
           userId: result.userId
         })
       } else {
-        console.error('Payment verification failed:', response.status)
-        throw new Error('Payment verification failed')
+        const errorText = await response.text()
+        console.error('❌ Payment verification failed:', response.status, errorText)
+        throw new Error(`Payment verification failed: ${response.status} - ${errorText}`)
       }
     } catch (error) {
+      console.error('❌ Error in onApprove:', error)
       onPaymentError(error)
     } finally {
       setIsProcessing(false)
