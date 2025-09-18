@@ -29,7 +29,9 @@ export default function PayPalCheckout({
   const paypalOptions = {
     "client-id": process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "",
     currency: "EUR",
-    intent: "capture"
+    intent: "capture",
+    environment: "production",
+    "disable-funding": "credit,card"
   }
 
   const createOrder = (data: any, actions: any) => {
@@ -134,12 +136,17 @@ export default function PayPalCheckout({
               onApprove={onApprove}
               onCancel={onCancel}
               onError={onError}
+              onCancel={(data) => {
+                console.log('PayPal payment cancelled:', data)
+                onPaymentError(new Error('Payment was cancelled'))
+              }}
               style={{
                 layout: "vertical",
                 color: "gold",
                 shape: "rect",
                 label: "paypal"
               }}
+              forceReRender={[sessionPackage.price]}
             />
           </PayPalScriptProvider>
         )}

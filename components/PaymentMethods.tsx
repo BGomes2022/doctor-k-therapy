@@ -94,7 +94,7 @@ export default function PaymentMethods({ language }: PaymentMethodsProps) {
               
               {/* Availability */}
               <div className="text-center">
-                <p className="text-gray-500 text-xs">{option.countries}</p>
+                <p className="text-gray-500 text-lg">{option.countries}</p>
               </div>
             </div>
           ))}
