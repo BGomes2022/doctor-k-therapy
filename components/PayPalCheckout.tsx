@@ -136,17 +136,12 @@ export default function PayPalCheckout({
               onApprove={onApprove}
               onCancel={onCancel}
               onError={onError}
-              onCancel={(data) => {
-                console.log('PayPal payment cancelled:', data)
-                onPaymentError(new Error('Payment was cancelled'))
-              }}
               style={{
                 layout: "vertical",
                 color: "gold",
                 shape: "rect",
                 label: "paypal"
               }}
-              forceReRender={[sessionPackage.price]}
             />
           </PayPalScriptProvider>
         )}
