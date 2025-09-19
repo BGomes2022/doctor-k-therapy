@@ -23,6 +23,7 @@ interface PatientBasicInfo {
     validUntil: string
   }
   status: 'active' | 'inactive'
+  archived?: boolean
   hasTherapistNotes: boolean
   lastActivity: string
 }
@@ -242,7 +243,8 @@ export async function getAllPatients(): Promise<{ success: boolean; patients: an
             sessionsUsed: patient.sessionInfo.sessionsUsed,
             sessionsRemaining: patient.sessionInfo.sessionsTotal - patient.sessionInfo.sessionsUsed,
             createdAt: patient.basicInfo.createdAt,
-            therapistNotes: therapistNotes
+            therapistNotes: therapistNotes,
+            archived: patient.archived || false
           }
         } catch (error) {
           console.error(`⚠️ Fehler beim Laden der Daten für Patient ${patient.id}:`, error)
@@ -266,7 +268,8 @@ export async function getAllPatients(): Promise<{ success: boolean; patients: an
             sessionsUsed: patient.sessionInfo.sessionsUsed,
             sessionsRemaining: patient.sessionInfo.sessionsTotal - patient.sessionInfo.sessionsUsed,
             createdAt: patient.basicInfo.createdAt,
-            therapistNotes: ''
+            therapistNotes: '',
+            archived: patient.archived || false
           }
         }
       })
@@ -634,6 +637,7 @@ export async function updatePatientBasicInfo(
     fullName?: string
     email?: string
     phone?: string
+    archived?: boolean
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -664,6 +668,10 @@ export async function updatePatientBasicInfo(
     if (updates.phone !== undefined) {
       currentPatient.basicInfo.phone = updates.phone
       console.log('📝 Updated phone to:', updates.phone)
+    }
+    if (updates.archived !== undefined) {
+      currentPatient.archived = updates.archived
+      console.log('📝 Updated archived status to:', updates.archived)
     }
     console.log('🔧 After update - basicInfo:', currentPatient.basicInfo)
 

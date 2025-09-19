@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     if (updates.email !== undefined) basicUpdates.email = updates.email
     if (updates.phone !== undefined) basicUpdates.phone = updates.phone
     if (updates.fullName !== undefined) basicUpdates.fullName = updates.fullName
+    if (updates.archived !== undefined) basicUpdates.archived = updates.archived
 
     // Medical data fields
     const medicalFields = [
