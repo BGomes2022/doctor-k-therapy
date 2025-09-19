@@ -89,6 +89,66 @@ class GoogleWorkspaceService {
     }
   }
 
+  // Send bulk emails to multiple recipients (for admin panel)
+  async sendBulkEmails({ recipients, subject, htmlContent, textContent }) {
+    try {
+      if (!this.gmail) {
+        const authSuccess = await this.authenticate();
+        if (!authSuccess) {
+          throw new Error('Authentication failed');
+        }
+      }
+
+      const emailPromises = recipients.map(async (recipient) => {
+        const message = [
+          `From: Dr. Katiuscia <${DOCTOR_EMAIL}>`,
+          `To: ${recipient}`,
+          `Subject: ${subject}`,
+          'MIME-Version: 1.0',
+          'Content-Type: text/html; charset=utf-8',
+          '',
+          htmlContent || textContent
+        ].join('\n');
+
+        const encodedMessage = Buffer.from(message)
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        try {
+          const result = await this.gmail.users.messages.send({
+            userId: 'me',
+            requestBody: {
+              raw: encodedMessage,
+            },
+          });
+
+          console.log(`✅ Email sent to ${recipient}:`, result.data.id);
+          return { success: true, recipient, messageId: result.data.id };
+        } catch (error) {
+          console.error(`❌ Failed to send email to ${recipient}:`, error.message);
+          return { success: false, recipient, error: error.message };
+        }
+      });
+
+      const results = await Promise.all(emailPromises);
+      const successful = results.filter(r => r.success).length;
+      const failed = results.filter(r => !r.success).length;
+
+      console.log(`📧 Bulk email results: ${successful} sent, ${failed} failed`);
+
+      return {
+        success: failed === 0,
+        results,
+        summary: { successful, failed, total: recipients.length }
+      };
+    } catch (error) {
+      console.error('❌ Bulk email sending failed:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
   async createCalendarEvent({ summary, description, startDateTime, endDateTime, attendeeEmail, bookingId }) {
     try {
       if (!this.calendar) {
