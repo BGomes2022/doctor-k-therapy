@@ -673,6 +673,22 @@ export async function updatePatientBasicInfo(
     // Save updated patients list
     await saveJsonFile(PATIENTS_FILE, patientsBasicInfo)
 
+    // IMPORTANT: Also update the medical data to keep them in sync
+    if (updates.email !== undefined || updates.fullName !== undefined || updates.phone !== undefined) {
+      console.log('🏥 Syncing medical data with basic info updates')
+      const medicalUpdateResult = await updatePatientMedicalData(bookingToken, {
+        ...(updates.email !== undefined && { email: updates.email }),
+        ...(updates.fullName !== undefined && { fullName: updates.fullName }),
+        ...(updates.phone !== undefined && { phone: updates.phone })
+      })
+
+      if (!medicalUpdateResult.success) {
+        console.warn('⚠️ Failed to sync medical data, but basic info was updated:', medicalUpdateResult.error)
+      } else {
+        console.log('✅ Medical data synced successfully')
+      }
+    }
+
     console.log(`✅ Basic info updated for ${bookingToken}`)
 
     return { success: true }
