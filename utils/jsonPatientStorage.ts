@@ -626,3 +626,116 @@ export async function getTherapistNotes(bookingToken: string): Promise<{ success
     return { success: false, error: error.message, notes: '' }
   }
 }
+
+// Update patient basic information (contact details)
+export async function updatePatientBasicInfo(
+  bookingToken: string,
+  updates: {
+    fullName?: string
+    email?: string
+    phone?: string
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log(`🔄 Updating basic info for patient: ${bookingToken}`)
+
+    // Load current patients data
+    const patientsBasicInfo = await loadJsonFile<PatientBasicInfo[]>(PATIENTS_FILE, [])
+
+    // Find the patient to update
+    const patientIndex = patientsBasicInfo.findIndex(p => p.bookingToken === bookingToken)
+
+    if (patientIndex === -1) {
+      throw new Error('Patient not found in storage')
+    }
+
+    const currentPatient = patientsBasicInfo[patientIndex]
+
+    // Update basic info
+    console.log('🔧 Before update - basicInfo:', currentPatient.basicInfo)
+    if (updates.fullName !== undefined) {
+      currentPatient.basicInfo.fullName = updates.fullName
+      console.log('📝 Updated fullName to:', updates.fullName)
+    }
+    if (updates.email !== undefined) {
+      currentPatient.basicInfo.email = updates.email
+      console.log('📝 Updated email to:', updates.email)
+    }
+    if (updates.phone !== undefined) {
+      currentPatient.basicInfo.phone = updates.phone
+      console.log('📝 Updated phone to:', updates.phone)
+    }
+    console.log('🔧 After update - basicInfo:', currentPatient.basicInfo)
+
+    // Update last activity
+    currentPatient.lastActivity = new Date().toISOString()
+
+    // Save updated patients list
+    await saveJsonFile(PATIENTS_FILE, patientsBasicInfo)
+
+    console.log(`✅ Basic info updated for ${bookingToken}`)
+
+    return { success: true }
+
+  } catch (error: any) {
+    console.error('❌ Failed to update patient basic info:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Update patient medical data
+export async function updatePatientMedicalData(
+  bookingToken: string,
+  medicalUpdates: any
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log(`🏥 Updating medical data for patient: ${bookingToken}`)
+
+    // Load existing medical data
+    const medicalFilePath = path.join(MEDICAL_DIR, `${bookingToken}.json`)
+
+    let existingMedicalData = {}
+    try {
+      const medicalFile = await loadJsonFile<MedicalDataFile>(medicalFilePath, null as any)
+      if (medicalFile && medicalFile.encryptedData) {
+        existingMedicalData = await decryptMedicalData(medicalFile.encryptedData)
+      }
+    } catch (error) {
+      console.log(`📄 No existing medical data found for ${bookingToken}, creating new`)
+    }
+
+    // Merge updates with existing data
+    const updatedMedicalData = {
+      ...existingMedicalData,
+      ...medicalUpdates
+    }
+
+    // Encrypt and save medical data
+    const encryptedData = await encryptMedicalData(updatedMedicalData)
+    const medicalFileData: MedicalDataFile = {
+      encryptedData,
+      metadata: {
+        savedAt: new Date().toISOString(),
+        formVersion: '1.0',
+        dataIntegrityHash: createDataSignature(JSON.stringify(updatedMedicalData)),
+        encryptionMethod: 'AES-256-GCM'
+      }
+    }
+
+    await saveJsonFile(medicalFilePath, medicalFileData)
+
+    console.log(`✅ Medical data updated for ${bookingToken}`)
+
+    return { success: true }
+
+  } catch (error: any) {
+    console.error('❌ Failed to update patient medical data:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}

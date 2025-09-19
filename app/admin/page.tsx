@@ -5,7 +5,7 @@ import { useSession, signIn, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Clock, Stethoscope, User, Mail, Phone, ChevronDown, ChevronUp, Heart, Brain, AlertCircle, Settings, Video, Plus, X, Check, AlertTriangle, ChevronLeft, ChevronRight, Trash2, MoreVertical, Edit, Trash } from "lucide-react"
+import { Calendar, Clock, Stethoscope, User, Mail, Phone, ChevronDown, ChevronUp, Heart, Brain, AlertCircle, Settings, Video, Plus, X, Check, AlertTriangle, ChevronLeft, ChevronRight, Trash2, MoreVertical, Edit, Trash, Archive, Send, Download, CheckSquare } from "lucide-react"
 
 interface BookingData {
   bookingId: string
@@ -22,6 +22,9 @@ interface PatientData {
   sessionPackage: any
   createdAt: string
   therapistNotes?: string
+  archived?: boolean
+  lastUpdated?: string
+  updatedBy?: string
 }
 
 export default function AdminDashboard() {
@@ -120,6 +123,16 @@ export default function AdminDashboard() {
   const [selectedSlot, setSelectedSlot] = useState<{date: string, time: string, duration?: number} | null>(null)
   const [selectedPatientForSlot, setSelectedPatientForSlot] = useState<string>("")
   const [assignmentLoading, setAssignmentLoading] = useState(false)
+  const [editingPatient, setEditingPatient] = useState<string | null>(null)
+  const [editValues, setEditValues] = useState<any>({})
+  const [selectedPatients, setSelectedPatients] = useState<string[]>([])
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [emailData, setEmailData] = useState({
+    subject: "",
+    message: "",
+    recipients: [] as string[]
+  })
+  const [showArchivedPatients, setShowArchivedPatients] = useState(false)
 
   // Load data when user is authenticated
   useEffect(() => {
@@ -132,10 +145,21 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
+      console.log('📡 Fetching fresh admin data...')
       const response = await fetch('/api/admin/data')
       const data = await response.json()
-      
+
       if (data.success) {
+        console.log('📋 Received patients:', data.patients?.length || 0)
+        console.log('📋 First patient example:', data.patients?.[0])
+
+        // Show the specific patient we just updated
+        const updatedPatient = data.patients?.find(p => p.bookingToken === '933bd79ea8f553956f531075ff56ea8b52fd3a476e331ed48241d0e98e53786f')
+        if (updatedPatient) {
+          console.log('🎯 Updated patient data:', updatedPatient)
+          console.log('🎯 Updated patient email:', updatedPatient.medicalFormData?.email || updatedPatient.patientEmail)
+        }
+
         setBookings(data.bookings || [])
         setPatients(data.patients || [])
         return { bookings: data.bookings || [], patients: data.patients || [] }
@@ -882,6 +906,142 @@ export default function AdminDashboard() {
     setNotesContent("")
   }
 
+  const handleUpdatePatient = async (bookingToken: string, updates: any) => {
+    try {
+      console.log('🔄 Updating patient:', bookingToken, 'with updates:', updates)
+
+      const response = await fetch('/api/admin/update-patient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingToken, updates })
+      })
+
+      console.log('📡 API Response status:', response.status)
+
+      if (response.ok) {
+        console.log('✅ Update successful, refreshing data...')
+        // Refresh the data after successful update
+        await fetchData()
+        return true
+      } else {
+        const errorData = await response.json()
+        console.error('❌ Update failed:', errorData)
+        setError(`Failed to update patient: ${errorData.error}`)
+      }
+    } catch (error) {
+      console.error('❌ Network error updating patient:', error)
+      setError('Failed to update patient - network error')
+    }
+    return false
+  }
+
+  const startEditPatient = (patient: PatientData) => {
+    setEditingPatient(patient.bookingToken)
+    const data = patient.medicalFormData || {}
+    setEditValues({
+      // Contact Info
+      email: data.email || '',
+      phone: data.phone || '',
+      emergencyContactName: data.emergencyContactName || '',
+      emergencyContactPhone: data.emergencyContactPhone || '',
+      emergencyContactRelation: data.emergencyContactRelation || '',
+      // Medical Info
+      doctorName: data.doctorName || '',
+      doctorPhone: data.doctorPhone || '',
+      currentMedications: data.currentMedications || '',
+      allergies: data.allergies || '',
+      medicalConditions: data.medicalConditions || '',
+      // Therapy Info
+      currentProblems: data.currentProblems || '',
+      therapyGoals: data.therapyGoals || '',
+      therapyHistory: data.therapyHistory || '',
+      substanceUse: data.substanceUse || '',
+      suicidalThoughts: data.suicidalThoughts || ''
+    })
+  }
+
+  const savePatientEdits = async (bookingToken: string) => {
+    console.log('💾 Saving patient edits for:', bookingToken)
+    console.log('💾 Edit values:', editValues)
+
+    const success = await handleUpdatePatient(bookingToken, editValues)
+    if (success) {
+      console.log('✅ Update successful, clearing edit state')
+      setEditingPatient(null)
+      setEditValues({})
+
+      // Force a small delay to ensure data is refreshed
+      setTimeout(() => {
+        console.log('🔄 Force refreshing after delay')
+        fetchData()
+      }, 500)
+    } else {
+      console.log('❌ Update failed, keeping edit mode')
+    }
+  }
+
+  const cancelPatientEdits = () => {
+    setEditingPatient(null)
+    setEditValues({})
+  }
+
+  const togglePatientSelection = (bookingToken: string) => {
+    setSelectedPatients(prev =>
+      prev.includes(bookingToken)
+        ? prev.filter(id => id !== bookingToken)
+        : [...prev, bookingToken]
+    )
+  }
+
+  const selectAllPatients = () => {
+    const activePatients = patients.filter(p => !p.archived)
+    if (selectedPatients.length === activePatients.length) {
+      setSelectedPatients([])
+    } else {
+      setSelectedPatients(activePatients.map(p => p.bookingToken))
+    }
+  }
+
+  const handleArchivePatients = async (bookingTokens: string[]) => {
+    for (const token of bookingTokens) {
+      await handleUpdatePatient(token, { archived: true })
+    }
+    setSelectedPatients([])
+  }
+
+  const handleSendBulkEmail = () => {
+    const recipients = selectedPatients
+      .map(token => patients.find(p => p.bookingToken === token))
+      .filter(p => p?.medicalFormData?.email)
+      .map(p => p.medicalFormData.email)
+
+    setEmailData(prev => ({ ...prev, recipients }))
+    setShowEmailModal(true)
+  }
+
+  const exportBackup = async () => {
+    try {
+      const data = {
+        patients,
+        bookings,
+        availability,
+        exportDate: new Date().toISOString()
+      }
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `backup_${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error exporting backup:', error)
+      setError('Failed to export backup')
+    }
+  }
+
 
   const handleAssignSlotToPatient = async () => {
     if (!selectedSlot || !selectedPatientForSlot) return
@@ -1298,7 +1458,69 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {patients.map((patient, index) => {
+                      {/* Action Buttons */}
+                      <div className="flex justify-between items-center p-3 bg-stone-50 rounded-lg">
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const activePatients = patients.filter(p => !p.archived)
+                              if (selectedPatients.length === activePatients.length) {
+                                setSelectedPatients([])
+                              } else {
+                                setSelectedPatients(activePatients.map(p => p.bookingToken))
+                              }
+                            }}
+                            className="border-stone-300"
+                          >
+                            <CheckSquare className="h-4 w-4 mr-1" />
+                            {selectedPatients.length > 0 ? 'Deselect All' : 'Select All'}
+                          </Button>
+                          {selectedPatients.length > 0 && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={handleSendBulkEmail}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <Send className="h-4 w-4 mr-1" />
+                                Send Email ({selectedPatients.length})
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleArchivePatients(selectedPatients)}
+                                className="bg-orange-600 hover:bg-orange-700 text-white"
+                              >
+                                <Archive className="h-4 w-4 mr-1" />
+                                Archive ({selectedPatients.length})
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={exportBackup}
+                            className="border-green-300 text-green-700 hover:bg-green-50"
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            Backup
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowArchivedPatients(!showArchivedPatients)}
+                            className="border-stone-300"
+                          >
+                            {showArchivedPatients ? 'Hide' : 'Show'} Archived
+                          </Button>
+                        </div>
+                      </div>
+                      {patients
+                        .filter(p => showArchivedPatients ? true : !p.archived)
+                        .map((patient, index) => {
                         const data = patient.medicalFormData || {}
                         const isExpanded = expandedPatients.includes(patient.userId)
                         const sessionsRemaining = getSessionsRemaining(patient)
@@ -1307,17 +1529,45 @@ export default function AdminDashboard() {
                         })
                         
                         return (
-                          <div key={index} className="border rounded-lg hover:shadow-md transition-shadow">
-                            <div 
-                              className="p-4 cursor-pointer hover:bg-stone-50"
-                              onClick={() => togglePatientExpand(patient.userId)}
-                            >
+                          <div key={index} className={`border rounded-lg hover:shadow-md transition-shadow ${patient.archived ? 'opacity-60 bg-gray-50' : ''}`}>
+                            <div className="p-4 hover:bg-stone-50">
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-4">
-                                  <div>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedPatients.includes(patient.bookingToken)}
+                                    onChange={(e) => {
+                                      e.stopPropagation()
+                                      togglePatientSelection(patient.bookingToken)
+                                    }}
+                                    className="rounded border-stone-300"
+                                  />
+                                  <div onClick={() => togglePatientExpand(patient.userId)} className="cursor-pointer">
                                     <div className="font-medium text-lg">{patient.medicalFormData?.fullName || patient.patientName}</div>
                                     <div className="text-sm text-stone-500">
-                                      {patient.medicalFormData?.email || patient.patientEmail} • {patient.medicalFormData?.phone || 'N/A'}
+                                      {editingPatient === patient.bookingToken ? (
+                                        <>
+                                          <input
+                                            className="border rounded px-2 py-1 mr-2"
+                                            value={editValues.email}
+                                            onChange={(e) => setEditValues({...editValues, email: e.target.value})}
+                                            onClick={(e) => e.stopPropagation()}
+                                            placeholder="Email"
+                                          />
+                                          {' • '}
+                                          <input
+                                            className="border rounded px-2 py-1"
+                                            value={editValues.phone}
+                                            onChange={(e) => setEditValues({...editValues, phone: e.target.value})}
+                                            onClick={(e) => e.stopPropagation()}
+                                            placeholder="Phone"
+                                          />
+                                        </>
+                                      ) : (
+                                        <>
+                                          {patient.medicalFormData?.email || patient.patientEmail} • {patient.medicalFormData?.phone || 'N/A'}
+                                        </>
+                                      )}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -1331,9 +1581,63 @@ export default function AdminDashboard() {
                                     }`}>
                                       {patientBookings.length} bookings
                                     </span>
+                                    {patient.archived && (
+                                      <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs ml-2">
+                                        Archived
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                  {editingPatient === patient.bookingToken ? (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          savePatientEdits(patient.bookingToken)
+                                        }}
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          cancelPatientEdits()
+                                        }}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        startEditPatient(patient)
+                                      }}
+                                      className="text-blue-600 hover:text-blue-700"
+                                      title="Edit patient data"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleUpdatePatient(patient.bookingToken, { archived: !patient.archived })
+                                    }}
+                                    className="text-orange-600 hover:text-orange-700"
+                                    title="Archive patient"
+                                  >
+                                    <Archive className="h-4 w-4" />
+                                  </Button>
                                   <span className="text-sm text-stone-500">
                                     {patientBookings.length} bookings
                                   </span>
@@ -1360,15 +1664,48 @@ export default function AdminDashboard() {
                                       </div>
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Emergency Contact:</span>
-                                        <span className="font-medium text-stone-700">{data.emergencyContactName}</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm"
+                                            value={editValues.emergencyContactName}
+                                            onChange={(e) => setEditValues({...editValues, emergencyContactName: e.target.value})}
+                                            placeholder="Contact name"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700">
+                                            {data.emergencyContactName}
+                                          </span>
+                                        )}
                                       </div>
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Emergency Phone:</span>
-                                        <span className="font-medium text-stone-700">{data.emergencyContactPhone}</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm"
+                                            value={editValues.emergencyContactPhone}
+                                            onChange={(e) => setEditValues({...editValues, emergencyContactPhone: e.target.value})}
+                                            placeholder="Contact phone"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700">
+                                            {data.emergencyContactPhone}
+                                          </span>
+                                        )}
                                       </div>
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Relationship:</span>
-                                        <span className="font-medium text-stone-700">{data.emergencyContactRelation || 'Not specified'}</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm"
+                                            value={editValues.emergencyContactRelation}
+                                            onChange={(e) => setEditValues({...editValues, emergencyContactRelation: e.target.value})}
+                                            placeholder="Relationship"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700">
+                                            {data.emergencyContactRelation || 'Not specified'}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -1382,23 +1719,68 @@ export default function AdminDashboard() {
                                     <div className="space-y-3 text-sm">
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Doctor:</span>
-                                        <span className="font-medium text-stone-700">{data.doctorName || 'Not provided'}</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm"
+                                            value={editValues.doctorName}
+                                            onChange={(e) => setEditValues({...editValues, doctorName: e.target.value})}
+                                            placeholder="Doctor name"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700">{data.doctorName || 'Not provided'}</span>
+                                        )}
                                       </div>
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Doctor Phone:</span>
-                                        <span className="font-medium text-stone-700">{data.doctorPhone || 'Not provided'}</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm"
+                                            value={editValues.doctorPhone}
+                                            onChange={(e) => setEditValues({...editValues, doctorPhone: e.target.value})}
+                                            placeholder="Doctor phone"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700">{data.doctorPhone || 'Not provided'}</span>
+                                        )}
                                       </div>
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Medications:</span>
-                                        <span className="font-medium text-stone-700">{data.currentMedications || 'None'}</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <textarea
+                                            className="border rounded px-2 py-1 text-sm w-48 h-16 resize-none"
+                                            value={editValues.currentMedications}
+                                            onChange={(e) => setEditValues({...editValues, currentMedications: e.target.value})}
+                                            placeholder="Current medications"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700">{data.currentMedications || 'None'}</span>
+                                        )}
                                       </div>
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Allergies:</span>
-                                        <span className="font-medium text-stone-700">{data.allergies || 'None'}</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <textarea
+                                            className="border rounded px-2 py-1 text-sm w-48 h-16 resize-none"
+                                            value={editValues.allergies}
+                                            onChange={(e) => setEditValues({...editValues, allergies: e.target.value})}
+                                            placeholder="Allergies"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700">{data.allergies || 'None'}</span>
+                                        )}
                                       </div>
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Medical Conditions:</span>
-                                        <span className="font-medium text-stone-700">{data.medicalConditions || 'None'}</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <textarea
+                                            className="border rounded px-2 py-1 text-sm w-48 h-16 resize-none"
+                                            value={editValues.medicalConditions}
+                                            onChange={(e) => setEditValues({...editValues, medicalConditions: e.target.value})}
+                                            placeholder="Medical conditions"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700">{data.medicalConditions || 'None'}</span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -1475,29 +1857,77 @@ export default function AdminDashboard() {
                                     <div className="space-y-4 text-sm">
                                       <div className="bg-gradient-to-r from-cream-50 to-white p-3 rounded-lg border border-cream-200">
                                         <strong className="text-stone-700">Current Problems:</strong>
-                                        <p className="mt-2 text-stone-600 leading-relaxed">{data.currentProblems}</p>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <textarea
+                                            className="w-full mt-2 p-2 border rounded text-sm"
+                                            rows={3}
+                                            value={editValues.currentProblems}
+                                            onChange={(e) => setEditValues({...editValues, currentProblems: e.target.value})}
+                                            placeholder="Describe current problems"
+                                          />
+                                        ) : (
+                                          <p className="mt-2 text-stone-600 leading-relaxed">{data.currentProblems}</p>
+                                        )}
                                       </div>
                                       <div className="bg-gradient-to-r from-white to-cream-50 p-3 rounded-lg border border-cream-200">
                                         <strong className="text-stone-700">Therapy Goals:</strong>
-                                        <p className="mt-2 text-stone-600 leading-relaxed">{data.therapyGoals}</p>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <textarea
+                                            className="w-full mt-2 p-2 border rounded text-sm"
+                                            rows={3}
+                                            value={editValues.therapyGoals}
+                                            onChange={(e) => setEditValues({...editValues, therapyGoals: e.target.value})}
+                                            placeholder="Describe therapy goals"
+                                          />
+                                        ) : (
+                                          <p className="mt-2 text-stone-600 leading-relaxed">{data.therapyGoals}</p>
+                                        )}
                                       </div>
                                       <div className="bg-gradient-to-r from-cream-50 to-white p-3 rounded-lg border border-cream-200">
                                         <strong className="text-stone-700">Previous Therapy:</strong>
-                                        <p className="mt-2 text-stone-600 leading-relaxed">{data.therapyHistory || 'No previous therapy'}</p>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <textarea
+                                            className="w-full mt-2 p-2 border rounded text-sm"
+                                            rows={3}
+                                            value={editValues.therapyHistory}
+                                            onChange={(e) => setEditValues({...editValues, therapyHistory: e.target.value})}
+                                            placeholder="Previous therapy history"
+                                          />
+                                        ) : (
+                                          <p className="mt-2 text-stone-600 leading-relaxed">{data.therapyHistory || 'No previous therapy'}</p>
+                                        )}
                                       </div>
                                       <div className="bg-gradient-to-r from-white to-cream-50 p-3 rounded-lg border border-cream-200">
                                         <strong className="text-stone-700">Substance Use:</strong>
-                                        <p className="mt-2 text-stone-600 leading-relaxed">{data.substanceUse || 'None reported'}</p>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <textarea
+                                            className="w-full mt-2 p-2 border rounded text-sm"
+                                            rows={2}
+                                            value={editValues.substanceUse}
+                                            onChange={(e) => setEditValues({...editValues, substanceUse: e.target.value})}
+                                            placeholder="Substance use information"
+                                          />
+                                        ) : (
+                                          <p className="mt-2 text-stone-600 leading-relaxed">{data.substanceUse || 'None reported'}</p>
+                                        )}
                                       </div>
-                                      {data.suicidalThoughts && (
-                                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                          <div className="flex items-center gap-2 text-red-700">
-                                            <span>⚠️</span>
-                                            <strong>Suicidal Thoughts:</strong>
-                                          </div>
-                                          <p className="mt-1 text-red-600">{data.suicidalThoughts}</p>
+                                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                                        <div className="flex items-center gap-2 text-red-700">
+                                          <span>⚠️</span>
+                                          <strong>Suicidal Thoughts:</strong>
                                         </div>
-                                      )}
+                                        {editingPatient === patient.bookingToken ? (
+                                          <textarea
+                                            className="w-full mt-2 p-2 border rounded text-sm bg-white"
+                                            rows={2}
+                                            value={editValues.suicidalThoughts}
+                                            onChange={(e) => setEditValues({...editValues, suicidalThoughts: e.target.value})}
+                                            placeholder="Suicidal thoughts information (if any)"
+                                          />
+                                        ) : (
+                                          <p className="mt-1 text-red-600">{data.suicidalThoughts || 'None reported'}</p>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
 
@@ -2532,6 +2962,73 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Email Modal */}
+        {showEmailModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-lg">
+              <h3 className="text-lg font-semibold mb-4">Send Email to Patients</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1">Recipients</label>
+                  <div className="text-sm text-stone-600">
+                    {emailData.recipients.length} patient(s) selected
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1">Subject</label>
+                  <Input
+                    value={emailData.subject}
+                    onChange={(e) => setEmailData(prev => ({...prev, subject: e.target.value}))}
+                    placeholder="Email subject"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1">Message</label>
+                  <textarea
+                    className="w-full p-2 border rounded-md"
+                    rows={6}
+                    value={emailData.message}
+                    onChange={(e) => setEmailData(prev => ({...prev, message: e.target.value}))}
+                    placeholder="Type your message here..."
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowEmailModal(false)
+                      setEmailData({ subject: "", message: "", recipients: [] })
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/admin/send-email', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(emailData)
+                        })
+                        if (response.ok) {
+                          setShowEmailModal(false)
+                          setEmailData({ subject: "", message: "", recipients: [] })
+                          setSelectedPatients([])
+                        }
+                      } catch (error) {
+                        console.error('Error sending email:', error)
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Send Email
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

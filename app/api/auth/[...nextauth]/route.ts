@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 
-const handler = NextAuth({
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -14,12 +14,12 @@ const handler = NextAuth({
       const allowedEmails = [
         'dr.k@doctorktherapy.com',
       ]
-      
+
       if (allowedEmails.includes(user.email || '')) {
         console.log(`✅ Admin login successful: ${user.email}`)
         return true
       }
-      
+
       console.log(`❌ Admin login denied: ${user.email}`)
       return false
     },
@@ -32,6 +32,8 @@ const handler = NextAuth({
     signIn: '/admin/signin', // Custom Sign-in page falls gewünscht
     error: '/admin/error',
   },
-})
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }

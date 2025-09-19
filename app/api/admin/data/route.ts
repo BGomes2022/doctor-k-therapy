@@ -12,14 +12,21 @@ export async function GET() {
       patients = patientsResult.patients.map((patient: any) => ({
         bookingToken: patient.bookingToken,
         userId: patient.userId,
-        patientEmail: patient.patientEmail || 'Unknown',
-        patientName: patient.patientName || 'Unknown',
+        // Use basicInfo for current contact data, fall back to medical data, then old fields
+        patientEmail: patient.basicInfo?.email || patient.medicalFormData?.email || patient.patientEmail || 'Unknown',
+        patientName: patient.basicInfo?.fullName || patient.medicalFormData?.fullName || patient.patientName || 'Unknown',
         sessionPackage: patient.sessionPackage,
         sessionsTotal: patient.sessionsTotal || 1,
         sessionsUsed: 0, // Will be updated from calendar sessions
         sessionsRemaining: patient.sessionsRemaining || 1,
         createdAt: patient.createdAt,
-        medicalFormData: patient.medicalFormData, // Now properly decrypted!
+        medicalFormData: {
+          // Merge basicInfo into medicalFormData for consistent access
+          ...patient.medicalFormData,
+          fullName: patient.basicInfo?.fullName || patient.medicalFormData?.fullName,
+          email: patient.basicInfo?.email || patient.medicalFormData?.email,
+          phone: patient.basicInfo?.phone || patient.medicalFormData?.phone
+        },
         therapistNotes: patient.therapistNotes || ''
       }))
       

@@ -18,7 +18,7 @@
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-08-15T08:08:53.988Z"
+    "lastActivity": "2025-09-19T09:25:08.887Z"
   },
   {
     "id": "6cd20dfa799d5e6041852aede4e7783a",
@@ -67,7 +67,7 @@
     "bookingToken": "933bd79ea8f553956f531075ff56ea8b52fd3a476e331ed48241d0e98e53786f",
     "basicInfo": {
       "fullName": "Benjamin Gomes",
-      "email": "b.gomes@talentmatch24.com",
+      "email": "b.gomes@talentmatch24.de",
       "phone": "01773347661",
       "createdAt": "2025-09-18T15:50:19.433Z"
     },
@@ -81,6 +81,6 @@
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-09-18T15:50:19.433Z"
+    "lastActivity": "2025-09-19T10:05:02.962Z"
   }
 ]
