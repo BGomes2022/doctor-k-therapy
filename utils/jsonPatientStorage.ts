@@ -701,7 +701,7 @@ export async function updatePatientMedicalData(
     try {
       const medicalFile = await loadJsonFile<MedicalDataFile>(medicalFilePath, null as any)
       if (medicalFile && medicalFile.encryptedData) {
-        existingMedicalData = await decryptMedicalData(medicalFile.encryptedData)
+        existingMedicalData = decryptMedicalData(medicalFile.encryptedData)
       }
     } catch (error) {
       console.log(`📄 No existing medical data found for ${bookingToken}, creating new`)
@@ -714,7 +714,7 @@ export async function updatePatientMedicalData(
     }
 
     // Encrypt and save medical data
-    const encryptedData = await encryptMedicalData(updatedMedicalData)
+    const encryptedData = encryptMedicalData(updatedMedicalData)
     const medicalFileData: MedicalDataFile = {
       encryptedData,
       metadata: {
