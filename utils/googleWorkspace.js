@@ -945,7 +945,7 @@ class GoogleWorkspaceService {
   }
 
   async sendAdminPackageNotification({ patientName, patientEmail, sessionPackage, purchaseDate }) {
-    const adminEmail = 'therapist.mercogliano@gmail.com';
+    const adminEmail = process.env.DOCTOR_EMAIL;
     const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin`;
 
     const htmlContent = `
@@ -1060,7 +1060,7 @@ class GoogleWorkspaceService {
   }
 
   async sendAdminBookingNotification({ patientName, appointmentDate, appointmentTime, sessionPackage, remainingSessions }) {
-    const adminEmail = 'therapist.mercogliano@gmail.com';
+    const adminEmail = process.env.DOCTOR_EMAIL;
     const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin`;
 
     const htmlContent = `
