@@ -944,6 +944,252 @@ class GoogleWorkspaceService {
     });
   }
 
+  async sendAdminPackageNotification({ patientName, patientEmail, sessionPackage, purchaseDate }) {
+    const adminEmail = 'therapist.mercogliano@gmail.com';
+    const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin`;
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                color: #333;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                text-align: center;
+            }
+            .content {
+                padding: 30px;
+            }
+            .info-box {
+                background: #f8f9fa;
+                border-left: 4px solid #667eea;
+                padding: 15px;
+                margin: 20px 0;
+            }
+            .info-row {
+                margin: 10px 0;
+                padding: 8px 0;
+                border-bottom: 1px solid #e9ecef;
+            }
+            .label {
+                font-weight: bold;
+                color: #495057;
+                display: inline-block;
+                width: 120px;
+            }
+            .value {
+                color: #212529;
+            }
+            .button {
+                display: inline-block;
+                background: #667eea;
+                color: white;
+                padding: 12px 30px;
+                text-decoration: none;
+                border-radius: 5px;
+                margin-top: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>💰 New Package Purchase</h2>
+            </div>
+            <div class="content">
+                <p>Dear Dr. Katiuscia,</p>
+                <p>A new package has been purchased:</p>
+
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="label">Patient:</span>
+                        <span class="value">${patientName}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Email:</span>
+                        <span class="value">${patientEmail}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Package:</span>
+                        <span class="value">${sessionPackage.name || 'Therapy Sessions'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Amount:</span>
+                        <span class="value">€${sessionPackage.price || '0'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Date:</span>
+                        <span class="value">${purchaseDate || new Date().toLocaleDateString('en-US')}</span>
+                    </div>
+                </div>
+
+                <p>The patient has received their booking link and can now schedule appointments.</p>
+
+                <center>
+                    <a href="${dashboardUrl}" class="button">View Admin Dashboard</a>
+                </center>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return await this.sendEmail({
+      to: adminEmail,
+      subject: `New Package Purchase - ${patientName}`,
+      htmlContent: htmlContent
+    });
+  }
+
+  async sendAdminBookingNotification({ patientName, appointmentDate, appointmentTime, sessionPackage, remainingSessions }) {
+    const adminEmail = 'therapist.mercogliano@gmail.com';
+    const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin`;
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                color: #333;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                text-align: center;
+            }
+            .content {
+                padding: 30px;
+            }
+            .info-box {
+                background: #f8f9fa;
+                border-left: 4px solid #28a745;
+                padding: 15px;
+                margin: 20px 0;
+            }
+            .info-row {
+                margin: 10px 0;
+                padding: 8px 0;
+                border-bottom: 1px solid #e9ecef;
+            }
+            .label {
+                font-weight: bold;
+                color: #495057;
+                display: inline-block;
+                width: 140px;
+            }
+            .value {
+                color: #212529;
+            }
+            .button {
+                display: inline-block;
+                background: #667eea;
+                color: white;
+                padding: 12px 30px;
+                text-decoration: none;
+                border-radius: 5px;
+                margin-top: 20px;
+            }
+            .calendar-note {
+                background: #e8f4fd;
+                border: 1px solid #bee5eb;
+                padding: 12px;
+                border-radius: 5px;
+                margin-top: 20px;
+                color: #004085;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>📅 New Appointment Booked</h2>
+            </div>
+            <div class="content">
+                <p>Dear Dr. Katiuscia,</p>
+                <p>A new appointment has been booked:</p>
+
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="label">Patient:</span>
+                        <span class="value">${patientName}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Date:</span>
+                        <span class="value">${appointmentDate}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Time:</span>
+                        <span class="value">${appointmentTime}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Duration:</span>
+                        <span class="value">50 minutes</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Package:</span>
+                        <span class="value">${sessionPackage || 'Single Session'}</span>
+                    </div>
+                    ${remainingSessions ? `
+                    <div class="info-row">
+                        <span class="label">Remaining Sessions:</span>
+                        <span class="value">${remainingSessions}</span>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="calendar-note">
+                    ✅ This appointment has been automatically added to your Google Calendar
+                </div>
+
+                <center>
+                    <a href="${dashboardUrl}" class="button">View Admin Dashboard</a>
+                </center>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    return await this.sendEmail({
+      to: adminEmail,
+      subject: `New Appointment - ${patientName} - ${appointmentDate} at ${appointmentTime}`,
+      htmlContent: htmlContent
+    });
+  }
+
   async sendBookingLinkEmail({ patientEmail, patientName, bookingToken, sessionPackage }) {
     const bookingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/booking/${bookingToken}`;
     const expiryDate = new Date();

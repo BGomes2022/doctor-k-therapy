@@ -122,6 +122,27 @@ export async function POST(request: NextRequest) {
       console.warn('Failed to send confirmation email:', emailResult.error)
     }
 
+    // Send admin notification about new booking
+    try {
+      const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+
+      await googleWorkspaceService.sendAdminBookingNotification({
+        patientName: sessionInfo.patientName,
+        appointmentDate: formattedDate,
+        appointmentTime: selectedTime,
+        sessionPackage: sessionInfo.sessionPackage?.name || 'Therapy Session',
+        remainingSessions: `${sessionInfo.sessionsRemaining - 1} of ${sessionInfo.sessionsTotal}`
+      })
+    } catch (adminEmailError) {
+      console.warn('Failed to send admin notification:', adminEmailError)
+      // Don't fail the booking if admin email fails
+    }
+
     // Return success response
     return NextResponse.json({
       success: true,

@@ -66,7 +66,15 @@ export async function POST(request: NextRequest) {
           existingCheck.patient.basicInfo?.fullName || formData.fullName,
           sessionPackage
         )
-        
+
+        // Send admin notification about package upgrade
+        await googleWorkspaceService.sendAdminPackageNotification({
+          patientName: existingCheck.patient.basicInfo?.fullName || formData.fullName,
+          patientEmail: formData.email,
+          sessionPackage: sessionPackage,
+          purchaseDate: new Date().toLocaleDateString('en-US')
+        })
+
         return NextResponse.json({
           success: true,
           message: 'Package upgraded successfully! Check your email for updated booking information.',
@@ -109,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Patient saved to CSV: ${formData.fullName} (${patientResult.patientId})`)
 
-    // Send booking link email
+    // Send booking link email to patient
     try {
       await sendBookingLinkEmail(
         formData.email,
@@ -117,6 +125,14 @@ export async function POST(request: NextRequest) {
         formData.fullName,
         finalSessionPackage
       )
+
+      // Send admin notification about new package purchase
+      await googleWorkspaceService.sendAdminPackageNotification({
+        patientName: formData.fullName,
+        patientEmail: formData.email,
+        sessionPackage: finalSessionPackage,
+        purchaseDate: new Date().toLocaleDateString('en-US')
+      })
 
       return NextResponse.json({
         success: true,
