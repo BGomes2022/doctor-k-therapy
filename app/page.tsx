@@ -160,7 +160,13 @@ export default function TherapyWebsite() {
           "You'll learn practical tools to recognize emotional triggers and unhealthy relationship dynamics, manage anxiety, and most importantly, develop the independence and boundaries needed to maintain a healthy mental and emotional life.",
         text5:
           "I'm deeply passionate about supporting individuals, couples, parents, and young adults in redefining boundaries, rebalancing roles, and building greater self-awareness. Trauma isn't just a painful memory or hidden truth, it's the moment we felt unsafe and alone, and where insecurity began to shape our future choices. We'll go there together. To see, to feel, and to decide whether it's time to change a pattern that no longer belongs to you.",
-        badges: ["PhD in Psychology", "18+ Years Experience", "Trauma-Informed", "International Certifications"],
+        badges: [
+          "Laurea in Psicologia",
+          "18+ Years Experience",
+          "Trauma-Informed",
+          "Licensed Therapist in Italy (Reg. 5899) & Portugal (Reg. 30509)",
+          "Member of CNOP and ODP"
+        ],
         viewCertifications: "View All Certifications",
       },
       pricing: {
@@ -183,13 +189,13 @@ export default function TherapyWebsite() {
             name: "4 Sessions",
             price: "€350",
             duration: "50 min each • Valid for 3 months",
-            description: "",
+            description: "*not valid for Couple Therapy",
           },
           {
             name: "6 Sessions",
             price: "€450",
             duration: "50 min each • Valid for 3 months",
-            description: "",
+            description: "*not valid for Couple Therapy",
           },
         ],
         couplesNote: "Couples therapy: €120 per session",
@@ -355,10 +361,11 @@ export default function TherapyWebsite() {
         text5:
           "Sono profondamente appassionata nel sostenere individui, coppie, genitori e giovani adulti nel ridefinire i confini, riequilibrare i ruoli e costruire una maggiore consapevolezza di sé. Il trauma non è solo un ricordo doloroso o una verità nascosta, è il momento in cui ci siamo sentiti insicuri e soli, e dove l'insicurezza ha iniziato a plasmare le nostre scelte future. Andremo lì insieme. Per vedere, sentire e decidere se è il momento di cambiare uno schema che non ti appartiene più.",
         badges: [
-          "Dottorato in Psicologia",
+          "Laurea in Psicologia",
           "18+ Anni di Esperienza",
           "Informata sul Trauma",
-          "Formazione EMDR Completata",
+          "Psicoterapeuta abilitata in Italia (Albo 5899) e Portogallo (Albo 30509)",
+          "Membro CNOP e ODP"
         ],
         viewCertifications: "Visualizza Tutte le Certificazioni",
       },
@@ -382,13 +389,13 @@ export default function TherapyWebsite() {
             name: "4 Sessioni",
             price: "€350",
             duration: "50 min ciascuna • Valido per 3 mesi",
-            description: "",
+            description: "*non valido per Terapia di Coppia",
           },
           {
             name: "6 Sessioni",
             price: "€450",
             duration: "50 min ciascuna • Valido per 3 mesi",
-            description: "",
+            description: "*non valido per Terapia di Coppia",
           },
         ],
         couplesNote: "Terapia di coppia: €120 per sessione",
@@ -863,6 +870,9 @@ export default function TherapyWebsite() {
                   </div>
                   
                   <p className="text-stone-600 mb-2 text-sm">{pkg.duration}</p>
+                  {pkg.coupleNote && (
+                    <p className="text-orange-600 text-xs mb-2 italic">{pkg.coupleNote}</p>
+                  )}
                   <p className="text-stone-500 text-xs mb-4 leading-relaxed flex-grow">{pkg.description}</p>
                   
                   <Button
@@ -894,6 +904,7 @@ export default function TherapyWebsite() {
                 price: 350,
                 originalPrice: 400,
                 duration: language === "en" ? "50 min each • Valid for 3 months" : "50 min ciascuna • Valido per 3 mesi",
+                coupleNote: language === "en" ? "*not valid for Couple Therapy" : "*non valido per Terapia di Coppia",
                 description: language === "en"
                   ? "Perfect for short-term focused therapy goals"
                   : "Perfetto per obiettivi terapeutici a breve termine",
@@ -907,6 +918,7 @@ export default function TherapyWebsite() {
                 price: 450,
                 originalPrice: 600,
                 duration: language === "en" ? "50 min each • Valid for 3 months" : "50 min ciascuna • Valido per 3 mesi",
+                coupleNote: language === "en" ? "*not valid for Couple Therapy" : "*non valido per Terapia di Coppia",
                 description: language === "en"
                   ? "Comprehensive therapy program for deep transformation"
                   : "Programma terapeutico completo per trasformazione profonda",
@@ -953,6 +965,9 @@ export default function TherapyWebsite() {
                   </div>
                   
                   <p className="text-stone-600 mb-2 text-sm">{pkg.duration}</p>
+                  {pkg.coupleNote && (
+                    <p className="text-orange-600 text-xs mb-2 italic">{pkg.coupleNote}</p>
+                  )}
                   <p className="text-stone-500 text-xs mb-4 leading-relaxed flex-grow">{pkg.description}</p>
                   
                   <Button
@@ -1180,13 +1195,20 @@ export default function TherapyWebsite() {
           </div>
           <div className="border-t border-stone-600 mt-12 pt-8">
             <div className="flex justify-center space-x-6 mb-6">
-              <Link href="https://www.instagram.com/i.amdoctork/" target="_blank" rel="noopener noreferrer" className="text-stone-500 hover:text-stone-700 transition-colors">
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              <Link href="https://www.instagram.com/i.amdoctork/" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+                <svg className="h-6 w-6" viewBox="0 0 24 24">
+                  <defs>
+                    <linearGradient id="instagram-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#FDC468" />
+                      <stop offset="50%" stopColor="#FD3E8D" />
+                      <stop offset="100%" stopColor="#7F3FDB" />
+                    </linearGradient>
+                  </defs>
+                  <path fill="url(#instagram-gradient)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                 </svg>
               </Link>
-              <Link href="https://www.youtube.com/@I.am.DoctorK" target="_blank" rel="noopener noreferrer" className="text-stone-500 hover:text-stone-700 transition-colors">
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+              <Link href="https://www.youtube.com/@I.am.DoctorK" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+                <svg className="h-6 w-6" fill="#FF0000" viewBox="0 0 24 24">
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
               </Link>
