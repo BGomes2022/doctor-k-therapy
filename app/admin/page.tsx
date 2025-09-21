@@ -2762,7 +2762,7 @@ export default function AdminDashboard() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-2xl font-light text-stone-800 mb-1">
-                      {new Date(selectedDayData.date + 'T00:00:00').toLocaleDateString('de-DE', {
+                      {new Date(selectedDayData.date + 'T00:00:00').toLocaleDateString('en-US', {
                         weekday: 'long',
                         day: 'numeric',
                         month: 'long',
@@ -2920,11 +2920,11 @@ export default function AdminDashboard() {
                           Set Available
                         </Button>
                         <Button
-                          onClick={() => setSelectedSlots([])}
-                          className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-medium px-6 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                          onClick={() => handleSetAvailability(false)}
+                          className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-medium px-6 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
                         >
-                          <span className="text-lg">🗑️</span>
-                          Clear Selection
+                          <span className="text-lg">❌</span>
+                          Remove Availability
                         </Button>
                       </div>
                     </div>
