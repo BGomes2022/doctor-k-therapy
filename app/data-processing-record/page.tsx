@@ -16,31 +16,30 @@ export default function DataProcessingRecordPage() {
         controller: {
           title: "1. Data Controller Information",
           content: `
-**Name:** Dr. Katiuscia Mercogliano
-**Profession:** Licensed Mental Health Therapist
-**Contact:** privacy@doctorktherapy.com
-**Address:** [Professional Practice Address]
-**Registration:** [Professional License Number]
-**DPO Contact:** privacy@doctorktherapy.com
+Name: Dr. Katiuscia Mercogliano
+Profession: Licensed Mental Health Therapist
+Contact: privacy@doctorktherapy.com
+Registration: 5899 (IT) / 30509 (PT)
+DPO Contact: privacy@doctorktherapy.com
           `
         },
         purpose: {
           title: "2. Purposes of Processing",
           content: `
-**Primary Purposes:**
+Primary Purposes:
 • Providing online psychotherapy services
 • Managing patient appointments and scheduling
 • Maintaining clinical records for continuity of care
 • Processing payments for services
 • Communication regarding treatment
 
-**Legal Basis:**
+Legal Basis:
 • Consent (Art. 6(1)(a) GDPR) - for therapy services
 • Contract (Art. 6(1)(b) GDPR) - service delivery
 • Legal obligation (Art. 6(1)(c) GDPR) - professional record keeping
 • Legitimate interests (Art. 6(1)(f) GDPR) - administrative purposes
 
-**Special Category Data (Art. 9 GDPR):**
+Special Category Data (Art. 9 GDPR):
 • Processing health data for healthcare purposes
 • Legal basis: Art. 9(2)(h) - healthcare provision
 • Consent obtained for all therapy-related processing
@@ -49,29 +48,29 @@ export default function DataProcessingRecordPage() {
         categories: {
           title: "3. Categories of Personal Data",
           content: `
-**Identity Data:**
+Identity Data:
 • Full name, date of birth
 • Contact information (email, phone)
 • Emergency contact details
 
-**Health Data (Special Category):**
+Health Data (Special Category):
 • Mental health symptoms and concerns
 • Treatment history and current medications
 • Therapy session notes and records
 • Progress assessments and treatment plans
 • Risk assessments and safety planning
 
-**Technical Data:**
+Technical Data:
 • IP addresses and session logs
 • Device and browser information
 • Platform usage statistics (anonymized)
 
-**Financial Data:**
+Financial Data:
 • Payment transaction records
 • Billing information and invoices
 • Package purchase history
 
-**Communication Data:**
+Communication Data:
 • Email correspondence
 • Appointment scheduling communications
 • Session recordings (with explicit consent)
@@ -80,55 +79,55 @@ export default function DataProcessingRecordPage() {
         recipients: {
           title: "4. Categories of Recipients",
           content: `
-**Internal Recipients:**
+Internal Recipients:
 • Dr. Katiuscia Mercogliano (primary therapist)
 • Administrative staff (appointment scheduling only)
 
-**External Recipients:**
+External Recipients:
 • PayPal (payment processing) - EU-US adequacy decision
 • Google Workspace (email, calendar) - EU-US DPA
 • Hosting providers (encrypted data storage) - EU-based
 • Professional supervisors (anonymized data for clinical supervision)
 
-**Conditional Recipients:**
+Conditional Recipients:
 • Medical professionals (with explicit consent for referrals)
 • Emergency services (only in imminent risk situations)
 • Legal authorities (only when legally required)
 
-**No data is shared without legal basis or explicit consent**
+No data is shared without legal basis or explicit consent
           `
         },
         retention: {
           title: "5. Data Retention Periods",
           content: `
-**Clinical Records:** 10 years after last contact
+Clinical Records: 10 years after last contact
 • Required by professional standards for mental health records
 • Ensures continuity of care if treatment resumes
 • Allows for legitimate follow-up and outcome tracking
 
-**Administrative Records:** 7 years after last service
+Administrative Records: 7 years after last service
 • Appointment histories and scheduling data
 • Payment records and financial documentation
 • General correspondence and administrative notes
 
-**Technical Logs:** 1 year maximum
+Technical Logs: 1 year maximum
 • Security logs and access records
 • Platform usage statistics
 • Error logs and system diagnostics
 
-**Communication Records:** 3 years
+Communication Records: 3 years
 • Email correspondence related to treatment
 • Appointment confirmations and reminders
 • Non-clinical administrative communications
 
-**Deletion Process:**
+Deletion Process:
 All data is securely deleted using cryptographic erasure methods after retention periods expire. Backups are included in deletion schedules.
           `
         },
         security: {
           title: "6. Security Measures (Article 32 GDPR)",
           content: `
-**Technical Measures:**
+Technical Measures:
 • AES-256 encryption for all data at rest
 • TLS 1.3 encryption for all data in transit
 • Multi-factor authentication for all admin access
@@ -136,7 +135,7 @@ All data is securely deleted using cryptographic erasure methods after retention
 • Secure data centers with 24/7 monitoring
 • Regular security vulnerability assessments
 
-**Organizational Measures:**
+Organizational Measures:
 • Staff training on GDPR and data protection
 • Incident response procedures and breach protocols
 • Regular policy reviews and updates
@@ -144,12 +143,12 @@ All data is securely deleted using cryptographic erasure methods after retention
 • Data minimization policies and procedures
 • Privacy by design in all system implementations
 
-**Pseudonymization:**
+Pseudonymization:
 • Patient identifiers separated from clinical data where possible
 • Statistical analysis performed on anonymized datasets
 • Research and quality improvement use anonymized data only
 
-**Data Protection Impact Assessments:**
+Data Protection Impact Assessments:
 • Conducted for all high-risk processing activities
 • Regular reviews of processing activities for compliance
 • Third-party processor agreements include GDPR requirements
@@ -158,45 +157,45 @@ All data is securely deleted using cryptographic erasure methods after retention
         transfers: {
           title: "7. International Data Transfers",
           content: `
-**Primary Data Storage:** European Union
+Primary Data Storage: European Union
 All patient data is stored within EU data centers with GDPR compliance.
 
-**Third-Party Processors:**
-• **PayPal:** EU-US adequacy decision provides adequate protection
-• **Google Workspace:** Standard Contractual Clauses (SCCs) in place
-• **Backup Services:** EU-based providers with GDPR compliance
+Third-Party Processors:
+• PayPal: EU-US adequacy decision provides adequate protection
+• Google Workspace: Standard Contractual Clauses (SCCs) in place
+• Backup Services: EU-based providers with GDPR compliance
 
-**Transfer Safeguards:**
+Transfer Safeguards:
 • Standard Contractual Clauses for all non-EU transfers
 • Regular assessment of adequacy decisions
 • Encryption requirements for all transferred data
 • Right to object to international transfers
 
-**No data transfers to countries without adequate protection measures**
+No data transfers to countries without adequate protection measures
           `
         },
         monitoring: {
           title: "8. Monitoring and Review",
           content: `
-**Regular Reviews:**
+Regular Reviews:
 • Quarterly review of processing activities
 • Annual comprehensive GDPR compliance audit
 • Continuous monitoring of data protection measures
 • Regular assessment of third-party processors
 
-**Breach Detection:**
+Breach Detection:
 • Automated monitoring systems for unauthorized access
 • Regular log analysis and anomaly detection
 • Staff training on identifying potential breaches
 • 24-hour breach notification procedures
 
-**Compliance Verification:**
+Compliance Verification:
 • Internal audits of data processing activities
 • Third-party security assessments annually
 • Staff competency assessments on data protection
 • Documentation and record-keeping validation
 
-**Updates and Changes:**
+Updates and Changes:
 This record is updated whenever processing activities change, at minimum annually, and is available for supervisory authority inspection.
           `
         }
@@ -210,31 +209,30 @@ This record is updated whenever processing activities change, at minimum annuall
         controller: {
           title: "1. Informazioni del Titolare del Trattamento",
           content: `
-**Nome:** Dott.ssa Katiuscia Mercogliano
-**Professione:** Terapeuta Autorizzata per la Salute Mentale
-**Contatto:** privacy@doctorktherapy.com
-**Indirizzo:** [Indirizzo Studio Professionale]
-**Registrazione:** [Numero Licenza Professionale]
-**Contatto DPO:** privacy@doctorktherapy.com
+Nome: Dott.ssa Katiuscia Mercogliano
+Professione: Terapeuta Autorizzata per la Salute Mentale
+Contatto: privacy@doctorktherapy.com
+Registrazione: 5899 (IT) / 30509 (PT)
+Contatto DPO: privacy@doctorktherapy.com
           `
         },
         purpose: {
           title: "2. Finalità del Trattamento",
           content: `
-**Finalità Principali:**
+Finalità Principali:
 • Fornire servizi di psicoterapia online
 • Gestire appuntamenti e programmazione pazienti
 • Mantenere registri clinici per la continuità delle cure
 • Elaborare pagamenti per i servizi
 • Comunicazione riguardo al trattamento
 
-**Base Giuridica:**
+Base Giuridica:
 • Consenso (Art. 6(1)(a) GDPR) - per i servizi terapeutici
 • Contratto (Art. 6(1)(b) GDPR) - erogazione del servizio
 • Obbligo legale (Art. 6(1)(c) GDPR) - tenuta registri professionali
 • Interessi legittimi (Art. 6(1)(f) GDPR) - scopi amministrativi
 
-**Dati Particolari (Art. 9 GDPR):**
+Dati Particolari (Art. 9 GDPR):
 • Trattamento dati sanitari per finalità sanitarie
 • Base giuridica: Art. 9(2)(h) - erogazione assistenza sanitaria
 • Consenso ottenuto per tutti i trattamenti terapeutici
@@ -243,29 +241,29 @@ This record is updated whenever processing activities change, at minimum annuall
         categories: {
           title: "3. Categorie di Dati Personali",
           content: `
-**Dati Identificativi:**
+Dati Identificativi:
 • Nome completo, data di nascita
 • Informazioni di contatto (email, telefono)
 • Dettagli contatto di emergenza
 
-**Dati Sanitari (Categoria Particolare):**
+Dati Sanitari (Categoria Particolare):
 • Sintomi e preoccupazioni di salute mentale
 • Storia del trattamento e farmaci attuali
 • Note e registri delle sessioni terapeutiche
 • Valutazioni del progresso e piani di trattamento
 • Valutazioni del rischio e pianificazione della sicurezza
 
-**Dati Tecnici:**
+Dati Tecnici:
 • Indirizzi IP e log delle sessioni
 • Informazioni dispositivo e browser
 • Statistiche d'uso piattaforma (anonimizzate)
 
-**Dati Finanziari:**
+Dati Finanziari:
 • Registri transazioni di pagamento
 • Informazioni fatturazione e fatture
 • Storico acquisti pacchetti
 
-**Dati di Comunicazione:**
+Dati di Comunicazione:
 • Corrispondenza email
 • Comunicazioni programmazione appuntamenti
 • Registrazioni sessioni (con consenso esplicito)
@@ -274,55 +272,55 @@ This record is updated whenever processing activities change, at minimum annuall
         recipients: {
           title: "4. Categorie di Destinatari",
           content: `
-**Destinatari Interni:**
+Destinatari Interni:
 • Dott.ssa Katiuscia Mercogliano (terapeuta principale)
 • Staff amministrativo (solo programmazione appuntamenti)
 
-**Destinatari Esterni:**
+Destinatari Esterni:
 • PayPal (elaborazione pagamenti) - decisione di adeguatezza EU-US
 • Google Workspace (email, calendario) - DPA EU-US
 • Provider hosting (archiviazione dati crittografati) - basati EU
 • Supervisori professionali (dati anonimizzati per supervisione clinica)
 
-**Destinatari Condizionali:**
+Destinatari Condizionali:
 • Professionisti medici (con consenso esplicito per referral)
 • Servizi di emergenza (solo in situazioni di rischio imminente)
 • Autorità legali (solo quando legalmente richiesto)
 
-**Nessun dato è condiviso senza base giuridica o consenso esplicito**
+Nessun dato è condiviso senza base giuridica o consenso esplicito
           `
         },
         retention: {
           title: "5. Periodi di Conservazione",
           content: `
-**Registri Clinici:** 10 anni dopo l'ultimo contatto
+Registri Clinici: 10 anni dopo l'ultimo contatto
 • Richiesto da standard professionali per registri salute mentale
 • Assicura continuità cure se il trattamento riprende
 • Permette follow-up legittimo e tracciamento risultati
 
-**Registri Amministrativi:** 7 anni dopo l'ultimo servizio
+Registri Amministrativi: 7 anni dopo l'ultimo servizio
 • Storico appuntamenti e dati programmazione
 • Registri pagamenti e documentazione finanziaria
 • Corrispondenza generale e note amministrative
 
-**Log Tecnici:** Massimo 1 anno
+Log Tecnici: Massimo 1 anno
 • Log sicurezza e registri accesso
 • Statistiche utilizzo piattaforma
 • Log errori e diagnostica sistema
 
-**Registri Comunicazioni:** 3 anni
+Registri Comunicazioni: 3 anni
 • Corrispondenza email relativa al trattamento
 • Conferme appuntamenti e promemoria
 • Comunicazioni amministrative non cliniche
 
-**Processo di Cancellazione:**
+Processo di Cancellazione:
 Tutti i dati sono cancellati in modo sicuro usando metodi di cancellazione crittografica dopo la scadenza dei periodi di conservazione. I backup sono inclusi nei programmi di cancellazione.
           `
         },
         security: {
           title: "6. Misure di Sicurezza (Articolo 32 GDPR)",
           content: `
-**Misure Tecniche:**
+Misure Tecniche:
 • Crittografia AES-256 per tutti i dati a riposo
 • Crittografia TLS 1.3 per tutti i dati in transito
 • Autenticazione multi-fattore per tutti gli accessi admin
@@ -330,7 +328,7 @@ Tutti i dati sono cancellati in modo sicuro usando metodi di cancellazione critt
 • Data center sicuri con monitoraggio 24/7
 • Valutazioni regolari vulnerabilità sicurezza
 
-**Misure Organizzative:**
+Misure Organizzative:
 • Formazione staff su GDPR e protezione dati
 • Procedure risposta incidenti e protocolli violazione
 • Revisioni regolari politiche e aggiornamenti
@@ -338,12 +336,12 @@ Tutti i dati sono cancellati in modo sicuro usando metodi di cancellazione critt
 • Politiche e procedure minimizzazione dati
 • Privacy by design in tutte le implementazioni sistema
 
-**Pseudonimizzazione:**
+Pseudonimizzazione:
 • Identificatori pazienti separati da dati clinici dove possibile
 • Analisi statistica eseguita su dataset anonimizzati
 • Ricerca e miglioramento qualità usano solo dati anonimizzati
 
-**Valutazioni Impatto Protezione Dati:**
+Valutazioni Impatto Protezione Dati:
 • Condotte per tutte le attività trattamento ad alto rischio
 • Revisioni regolari attività trattamento per conformità
 • Accordi responsabili esterni includono requisiti GDPR
@@ -352,45 +350,45 @@ Tutti i dati sono cancellati in modo sicuro usando metodi di cancellazione critt
         transfers: {
           title: "7. Trasferimenti Internazionali di Dati",
           content: `
-**Archiviazione Dati Principale:** Unione Europea
+Archiviazione Dati Principale: Unione Europea
 Tutti i dati pazienti sono archiviati in data center UE con conformità GDPR.
 
-**Responsabili Terzi:**
-• **PayPal:** Decisione adeguatezza EU-US fornisce protezione adeguata
-• **Google Workspace:** Clausole Contrattuali Standard (SCC) in vigore
-• **Servizi Backup:** Provider basati UE con conformità GDPR
+Responsabili Terzi:
+• PayPal: Decisione adeguatezza EU-US fornisce protezione adeguata
+• Google Workspace: Clausole Contrattuali Standard (SCC) in vigore
+• Servizi Backup: Provider basati UE con conformità GDPR
 
-**Salvaguardie Trasferimento:**
+Salvaguardie Trasferimento:
 • Clausole Contrattuali Standard per tutti i trasferimenti non-UE
 • Valutazione regolare decisioni di adeguatezza
 • Requisiti crittografia per tutti i dati trasferiti
 • Diritto di opposizione ai trasferimenti internazionali
 
-**Nessun trasferimento dati a paesi senza misure protezione adeguate**
+Nessun trasferimento dati a paesi senza misure protezione adeguate
           `
         },
         monitoring: {
           title: "8. Monitoraggio e Revisione",
           content: `
-**Revisioni Regolari:**
+Revisioni Regolari:
 • Revisione trimestrale attività di trattamento
 • Audit annuale completo conformità GDPR
 • Monitoraggio continuo misure protezione dati
 • Valutazione regolare responsabili terzi
 
-**Rilevamento Violazioni:**
+Rilevamento Violazioni:
 • Sistemi monitoraggio automatico per accessi non autorizzati
 • Analisi regolare log e rilevamento anomalie
 • Formazione staff su identificazione potenziali violazioni
 • Procedure notifica violazioni 24 ore
 
-**Verifica Conformità:**
+Verifica Conformità:
 • Audit interni attività trattamento dati
 • Valutazioni sicurezza terze parti annuali
 • Valutazioni competenze staff su protezione dati
 • Validazione documentazione e tenuta registri
 
-**Aggiornamenti e Modifiche:**
+Aggiornamenti e Modifiche:
 Questo registro è aggiornato ogni volta che le attività di trattamento cambiano, almeno annualmente, ed è disponibile per l'ispezione dell'autorità di controllo.
           `
         }

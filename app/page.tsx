@@ -161,11 +161,9 @@ export default function TherapyWebsite() {
         text5:
           "I'm deeply passionate about supporting individuals, couples, parents, and young adults in redefining boundaries, rebalancing roles, and building greater self-awareness. Trauma isn't just a painful memory or hidden truth, it's the moment we felt unsafe and alone, and where insecurity began to shape our future choices. We'll go there together. To see, to feel, and to decide whether it's time to change a pattern that no longer belongs to you.",
         badges: [
-          "Laurea in Psicologia",
+          "Degree in Psychology",
           "18+ Years Experience",
-          "Trauma-Informed",
-          "Licensed Therapist in Italy (Reg. 5899) & Portugal (Reg. 30509)",
-          "Member of CNOP and ODP"
+          "Trauma-Informed"
         ],
         viewCertifications: "View All Certifications",
       },
@@ -363,9 +361,7 @@ export default function TherapyWebsite() {
         badges: [
           "Laurea in Psicologia",
           "18+ Anni di Esperienza",
-          "Informata sul Trauma",
-          "Psicoterapeuta abilitata in Italia (Albo 5899) e Portogallo (Albo 30509)",
-          "Membro CNOP e ODP"
+          "Informata sul Trauma"
         ],
         viewCertifications: "Visualizza Tutte le Certificazioni",
       },

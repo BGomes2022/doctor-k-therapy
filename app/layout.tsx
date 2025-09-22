@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter, DM_Sans } from "next/font/google"
 import "./globals.css"
 import CookieBanner from "@/components/CookieBanner"
+import GoogleAnalytics from "@/components/GoogleAnalytics"
 import { Providers } from "./providers"
 
 const dmSans = DM_Sans({
@@ -28,6 +29,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <GoogleAnalytics />
+      </head>
       <body className={`${dmSans.variable} ${inter.variable} font-sans antialiased`}>
         <Providers>
           {children}

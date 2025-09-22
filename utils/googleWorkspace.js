@@ -1190,10 +1190,55 @@ class GoogleWorkspaceService {
     });
   }
 
-  async sendBookingLinkEmail({ patientEmail, patientName, bookingToken, sessionPackage }) {
+  async sendBookingLinkEmail({ patientEmail, patientName, bookingToken, sessionPackage, language = 'en' }) {
     const bookingUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/booking/${bookingToken}`;
     const expiryDate = new Date();
     expiryDate.setMonth(expiryDate.getMonth() + 3);
+
+    // Template content based on language
+    const templates = {
+      en: {
+        subject: 'Welcome - Your Personal Therapy Booking Link',
+        title: '🗓️ Your Personal Booking Link',
+        subtitle: 'Ready to schedule your therapy sessions',
+        greeting: 'Dear',
+        thankYouText: 'Thank you for completing your medical form! Your payment has been processed and you\'re all set to book your therapy sessions.',
+        therapyPlanTitle: '🌱 Your Therapy Plan',
+        validUntil: 'Valid until',
+        schedulingTitle: '📅 Schedule Your Sessions',
+        schedulingText: 'Use your personal booking link below to schedule all your sessions:',
+        bookingButton: '📅 Book Your Sessions',
+        importantTitle: 'ℹ️ Important Information',
+        availability: 'Sessions are available Tuesday & Thursday, 19:00-23:00',
+        bookingInfo: 'You can book one session at a time',
+        linkValidity: 'Keep this link safe - you\'ll need it for each session',
+        meetLinks: 'You\'ll receive Google Meet links for each session',
+        closingText: 'I\'m looking forward to working with you!',
+        regards: 'Best regards,'
+      },
+      it: {
+        subject: 'Benvenuto - Il Tuo Link Personale per le Prenotazioni',
+        title: '🗓️ Il Tuo Link Personale per le Prenotazioni',
+        subtitle: 'Pronto per programmare le tue sessioni di terapia',
+        greeting: 'Caro/a',
+        thankYouText: 'Grazie per aver completato il modulo medico! Il tuo pagamento è stato elaborato e sei pronto/a per prenotare le tue sessioni di terapia.',
+        therapyPlanTitle: '🌱 Il Tuo Piano Terapeutico',
+        validUntil: 'Valido fino al',
+        schedulingTitle: '📅 Programma le Tue Sessioni',
+        schedulingText: 'Usa il tuo link personale qui sotto per programmare tutte le tue sessioni:',
+        bookingButton: '📅 Prenota le Tue Sessioni',
+        importantTitle: 'ℹ️ Informazioni Importanti',
+        availability: 'Le sessioni sono disponibili Martedì e Giovedì, 19:00-23:00',
+        bookingInfo: 'Puoi prenotare una sessione alla volta',
+        linkValidity: 'Conserva questo link al sicuro - ne avrai bisogno per ogni sessione',
+        meetLinks: 'Riceverai i link di Google Meet per ogni sessione',
+        closingText: 'Non vedo l\'ora di lavorare con te!',
+        regards: 'Cordiali saluti,'
+      }
+    };
+
+    const template = templates[language] || templates.en;
+    const formattedExpiryDate = expiryDate.toLocaleDateString(language === 'it' ? 'it-IT' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     const htmlContent = `
     <!DOCTYPE html>
@@ -1287,41 +1332,41 @@ class GoogleWorkspaceService {
     <body>
         <div class="container">
             <div class="header">
-                <h1>🗓️ Your Personal Booking Link</h1>
-                <p>Ready to schedule your therapy sessions</p>
+                <h1>${template.title}</h1>
+                <p>${template.subtitle}</p>
             </div>
-            
+
             <div class="content">
-                <p>Dear <strong>${patientName}</strong>,</p>
-                
-                <p>Thank you for completing your medical form! Your payment has been processed and you're all set to book your therapy sessions.</p>
-                
+                <p>${template.greeting} <strong>${patientName}</strong>,</p>
+
+                <p>${template.thankYouText}</p>
+
                 <div class="therapy-plan-card">
-                    <h3>🌱 Your Therapy Plan</h3>
-                    <div>${sessionPackage.name.replace('Package', 'Plan')}</div>
+                    <h3>${template.therapyPlanTitle}</h3>
+                    <div>${sessionPackage.name.replace('Package', language === 'it' ? 'Piano' : 'Plan')}</div>
                     <div class="therapy-price">€${sessionPackage.price}</div>
-                    <small>Valid until ${expiryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</small>
+                    <small>${template.validUntil} ${formattedExpiryDate}</small>
                 </div>
-                
+
                 <div class="booking-section">
-                    <h3>📅 Schedule Your Sessions</h3>
-                    <p>Use your personal booking link below to schedule all your sessions:</p>
-                    <a href="${bookingUrl}" class="booking-button">📅 Book Your Sessions</a>
+                    <h3>${template.schedulingTitle}</h3>
+                    <p>${template.schedulingText}</p>
+                    <a href="${bookingUrl}" class="booking-button">${template.bookingButton}</a>
                     <p><small>Link: <a href="${bookingUrl}">${bookingUrl}</a></small></p>
                 </div>
-                
+
                 <div class="important-info">
-                    <h4>ℹ️ Important Information</h4>
+                    <h4>${template.importantTitle}</h4>
                     <ul>
-                        <li><strong>Availability:</strong> Sessions are available Tuesday & Thursday, 19:00-23:00</li>
-                        <li><strong>Booking:</strong> You can book one session at a time</li>
-                        <li><strong>Link Validity:</strong> Keep this link safe - you'll need it for each session</li>
-                        <li><strong>Meet Links:</strong> You'll receive Google Meet links for each session</li>
+                        <li><strong>${language === 'it' ? 'Disponibilità:' : 'Availability:'}</strong> ${template.availability}</li>
+                        <li><strong>${language === 'it' ? 'Prenotazione:' : 'Booking:'}</strong> ${template.bookingInfo}</li>
+                        <li><strong>${language === 'it' ? 'Validità Link:' : 'Link Validity:'}</strong> ${template.linkValidity}</li>
+                        <li><strong>${language === 'it' ? 'Link Meet:' : 'Meet Links:'}</strong> ${template.meetLinks}</li>
                     </ul>
                 </div>
-                
-                <p style="margin-top: 30px;">I'm looking forward to working with you!</p>
-                <p>Best regards,<br><strong>Dr. Katiuscia</strong></p>
+
+                <p style="margin-top: 30px;">${template.closingText}</p>
+                <p>${template.regards}<br><strong>Dr. Katiuscia</strong></p>
             </div>
             
             <div class="footer">
@@ -1335,7 +1380,7 @@ class GoogleWorkspaceService {
 
     return await this.sendEmail({
       to: patientEmail,
-      subject: `Welcome - Your Personal Therapy Booking Link`,
+      subject: template.subject,
       htmlContent: htmlContent
     });
   }

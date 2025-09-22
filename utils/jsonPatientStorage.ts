@@ -12,6 +12,7 @@ interface PatientBasicInfo {
     fullName: string
     email: string
     phone: string
+    preferredLanguage: "en" | "it"
     createdAt: string
   }
   sessionInfo: {
@@ -109,6 +110,7 @@ export async function savePatientData(patientData: {
         fullName: patientData.patientName,
         email: patientData.patientEmail,
         phone: patientData.medicalData.phone || '',
+        preferredLanguage: patientData.medicalData.preferredLanguage || 'en',
         createdAt: new Date().toISOString()
       },
       sessionInfo: {

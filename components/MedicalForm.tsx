@@ -13,29 +13,32 @@ interface MedicalFormData {
   emailConfirm: string
   phone: string
   dateOfBirth: string
-  
+
   // Emergency Contact
   emergencyContactName: string
   emergencyContactPhone: string
   emergencyContactRelation: string
-  
+
   // Medical Information
   doctorName: string
   doctorPhone: string
   currentMedications: string
   allergies: string
   medicalConditions: string
-  
+
   // Mental Health Information
   currentProblems: string
   therapyHistory: string
   therapyGoals: string
   suicidalThoughts: string
   substanceUse: string
-  
+
   // Consent
   dataConsent: boolean
   treatmentConsent: boolean
+
+  // Language Preference
+  preferredLanguage?: "en" | "it"
 }
 
 interface MedicalFormProps {
@@ -45,7 +48,12 @@ interface MedicalFormProps {
   selectedPackage?: any // Add package info for upgrade
 }
 
-export default function MedicalForm({ language, userId, onSubmit, selectedPackage }: MedicalFormProps) {
+interface MedicalFormInternalProps extends MedicalFormProps {
+  onLanguageChange?: (language: "en" | "it") => void
+}
+
+export default function MedicalForm({ language: initialLanguage, userId, onSubmit, selectedPackage }: MedicalFormProps) {
+  const [language, setLanguage] = useState<"en" | "it">(initialLanguage)
   const [formData, setFormData] = useState<MedicalFormData>({
     fullName: "",
     email: "",
@@ -210,7 +218,12 @@ export default function MedicalForm({ language, userId, onSubmit, selectedPackag
 
     setIsSubmitting(true)
     try {
-      await onSubmit(formData)
+      // Add language preference to form data
+      const formDataWithLanguage = {
+        ...formData,
+        preferredLanguage: language
+      }
+      await onSubmit(formDataWithLanguage)
     } catch (error) {
       console.error('Form submission error:', error)
     } finally {
@@ -253,6 +266,28 @@ export default function MedicalForm({ language, userId, onSubmit, selectedPackag
         </Badge>
         <h2 className="text-3xl font-light text-stone-800 mb-4">{currentContent.title}</h2>
         <p className="text-stone-600">{currentContent.subtitle}</p>
+
+        {/* Language Selection */}
+        <div className="flex justify-center gap-4 mt-6">
+          <Button
+            type="button"
+            variant={language === 'en' ? 'default' : 'outline'}
+            onClick={() => setLanguage('en')}
+            size="sm"
+            className="min-w-[120px]"
+          >
+            🇬🇧 English
+          </Button>
+          <Button
+            type="button"
+            variant={language === 'it' ? 'default' : 'outline'}
+            onClick={() => setLanguage('it')}
+            size="sm"
+            className="min-w-[120px]"
+          >
+            🇮🇹 Italiano
+          </Button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">

@@ -4,15 +4,16 @@ const googleWorkspaceService = require('@/utils/googleWorkspace')
 
 
 // Email service using Google Workspace
-async function sendBookingLinkEmail(email: string, bookingToken: string, name: string, sessionPackage: any) {
+async function sendBookingLinkEmail(email: string, bookingToken: string, name: string, sessionPackage: any, language: string = 'en') {
   try {
-    console.log(`📧 Sending booking link email to ${email}`)
-    
+    console.log(`📧 Sending booking link email to ${email} in ${language}`)
+
     const result = await googleWorkspaceService.sendBookingLinkEmail({
       patientEmail: email,
       patientName: name,
       bookingToken: bookingToken,
-      sessionPackage: sessionPackage
+      sessionPackage: sessionPackage,
+      language: language
     })
 
     if (result.success) {
@@ -64,7 +65,8 @@ export async function POST(request: NextRequest) {
           formData.email,
           upgradeResult.bookingToken,
           existingCheck.patient.basicInfo?.fullName || formData.fullName,
-          sessionPackage
+          sessionPackage,
+          formData.preferredLanguage || 'en'
         )
 
         // Send admin notification about package upgrade
@@ -123,7 +125,8 @@ export async function POST(request: NextRequest) {
         formData.email,
         patientResult.bookingToken,
         formData.fullName,
-        finalSessionPackage
+        finalSessionPackage,
+        formData.preferredLanguage || 'en'
       )
 
       // Send admin notification about new package purchase
