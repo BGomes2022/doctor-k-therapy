@@ -76,22 +76,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send confirmation email
-    const emailResult = await googleWorkspaceService.sendBookingConfirmation({
-      patientEmail: patientEmail,
-      patientName: patientName,
-      appointmentDate: startDateTime.toISOString(),
-      appointmentTime: time,
-      meetLink: calendarResult.meetLink,
-      bookingId: calendarResult.bookingId,
-      sessionType: sessionPackage.name,
-      sessionNumber: 1,
-      totalSessions: sessionsTotal
-    })
+    // TEMPORARILY DISABLED: Send confirmation email (to avoid confusing patient with multiple emails)
+    console.log('📧 Email sending temporarily disabled for testing - patient already received previous emails')
 
-    if (!emailResult.success) {
-      console.warn('Failed to send manual booking confirmation email:', emailResult.error)
-    }
+    // const emailResult = await googleWorkspaceService.sendBookingConfirmation({
+    //   patientEmail: patientEmail,
+    //   patientName: patientName,
+    //   appointmentDate: startDateTime.toISOString(),
+    //   appointmentTime: time,
+    //   meetLink: calendarResult.meetLink,
+    //   bookingId: calendarResult.bookingId,
+    //   sessionType: sessionPackage.name,
+    //   sessionNumber: 1,
+    //   totalSessions: sessionsTotal
+    // })
+
+    // if (!emailResult.success) {
+    //   console.warn('Failed to send manual booking confirmation email:', emailResult.error)
+    // }
 
     return NextResponse.json({
       success: true,

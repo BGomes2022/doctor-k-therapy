@@ -84,11 +84,43 @@ export async function POST(request: NextRequest) {
     }
 
     // Get session info from token to determine duration
-    const sessionInfo = await googleWorkspaceService.getSessionInfoFromBookingToken(bookingToken)
-    
-    console.log('🔍 Session Info from Token:', sessionInfo?.sessionPackage)
-    
-    // Determine block duration based on session package type  
+    // First try to get from Google Calendar
+    let sessionInfo = await googleWorkspaceService.getSessionInfoFromBookingToken(bookingToken)
+
+    // If not found in calendar, get from patients.json
+    if (!sessionInfo) {
+      const fs = require('fs/promises')
+      const path = require('path')
+      const patientsPath = path.join(process.cwd(), 'data', 'patients.json')
+
+      try {
+        const patientsData = await fs.readFile(patientsPath, 'utf-8')
+        const patients = JSON.parse(patientsData)
+        const patient = patients.find((p: any) => p.bookingToken === bookingToken)
+
+        if (patient && patient.sessionInfo) {
+          // Check if it's a single-session package
+          const isSingleSession = patient.sessionInfo.packageId === 'single-session'
+          sessionInfo = {
+            sessionPackage: {
+              name: patient.sessionInfo.packageName,
+              price: patient.sessionInfo.price,
+              // single-session is a therapy session (60 min), not consultation
+              sessionType: patient.sessionInfo.packageId === 'consultation' ? 'consultation' : 'therapy'
+            },
+            totalSessions: patient.sessionInfo.sessionsTotal,
+            sessionsUsed: patient.sessionInfo.sessionsUsed
+          }
+          console.log(`📝 Found patient info for ${patient.basicInfo.fullName}: ${patient.sessionInfo.packageName}`)
+        }
+      } catch (error) {
+        console.error('Error reading patients data:', error)
+      }
+    }
+
+    console.log('🔍 Session Info:', sessionInfo?.sessionPackage)
+
+    // Determine block duration based on session package type
     const sessionPackageType = sessionInfo?.sessionPackage?.sessionType || 'therapy'
     const blockDuration = sessionPackageType === 'consultation' ? 30 : 60 // minutes
     
@@ -102,7 +134,8 @@ export async function POST(request: NextRequest) {
     const startISO = new Date(`${queryStartDate}T00:00:00.000Z`).toISOString()
     const endISO = new Date(`${queryEndDate}T23:59:59.999Z`).toISOString()
 
-    const result = await googleWorkspaceService.getAvailableTimeSlots(startISO, endISO)
+    // Get ALL available slots without intelligent filtering (we'll filter them here based on session type)
+    const result = await googleWorkspaceService.getAvailableTimeSlots(startISO, endISO, false)
 
     if (!result.success) {
       return NextResponse.json(
@@ -112,9 +145,14 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`📊 Found ${result.slots.length} total available slots`)
-    
+
+    // Apply intelligent filtering to the slots
+    const intelligentSlots = googleWorkspaceService.applyIntelligentSlotFiltering(result.slots)
+
+    console.log(`🔍 After intelligent filtering: ${intelligentSlots.length} slots`)
+
     // Filter slots based on session type using the new intelligent filtering
-    const filteredSlots = result.slots.filter((slot: any) => {
+    const filteredSlots = intelligentSlots.filter((slot: any) => {
       if (sessionPackageType === 'consultation') {
         // For consultations (30min), check if slot can accommodate consultation
         return slot.canAccommodateConsultation !== false

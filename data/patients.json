@@ -1,86 +1,24 @@
 [
   {
-    "id": "123668105d83e91cbff6b3a0049b3921",
-    "bookingToken": "68c9c4c262dd2b83e181c5f1dacc62aba287528e38bc64c32043c1eaf9530f40",
+    "id": "c00bf4ebc9fac2828eda01a2cdef834d",
+    "bookingToken": "2be40ff9153a407a2592c5f9a2a535bc31c81e180cf5d61628626aa437a50d49",
     "basicInfo": {
-      "fullName": "Benjamin Gomes",
-      "email": "b.gomes@bg-personal.com",
-      "phone": "01773347661",
-      "createdAt": "2025-08-14T09:47:00.601Z"
+      "fullName": "David Udot",
+      "email": "dudot@telus.net",
+      "phone": "6047281477",
+      "preferredLanguage": "en",
+      "createdAt": "2025-09-25T03:04:29.560Z"
     },
     "sessionInfo": {
-      "packageId": "consultation",
-      "packageName": "Consultation + 4 Therapy Sessions",
-      "price": 380,
-      "sessionsTotal": 5,
-      "sessionsUsed": 0,
-      "validUntil": "2025-11-12T18:42:15.125Z"
-    },
-    "status": "active",
-    "hasTherapistNotes": false,
-    "lastActivity": "2025-09-19T09:25:08.887Z"
-  },
-  {
-    "id": "6cd20dfa799d5e6041852aede4e7783a",
-    "bookingToken": "5901f792d2309b7eb6987eba546d0dea316bec122e693cfdaa1a13100e34681c",
-    "basicInfo": {
-      "fullName": "Ben Gomes",
-      "email": "ben.gomes28@gmail.com",
-      "phone": "+491773347661",
-      "createdAt": "2025-08-14T10:27:29.418Z"
-    },
-    "sessionInfo": {
-      "packageId": "four-sessions",
-      "packageName": "4 Therapy Sessions",
-      "price": 350,
-      "sessionsTotal": 4,
-      "sessionsUsed": 0,
-      "validUntil": "2025-11-14T11:27:29.418Z"
-    },
-    "status": "active",
-    "hasTherapistNotes": false,
-    "lastActivity": "2025-08-14T11:48:21.147Z"
-  },
-  {
-    "id": "58e6b2ff80400533862cff0b92c34f46",
-    "bookingToken": "a3c1150828155f57ca63b269613e4e21a63ea8f61346840bb1d7cca12a498b3a",
-    "basicInfo": {
-      "fullName": "Brian Grey",
-      "email": "brn.grey@gmail.com",
-      "phone": "933683862",
-      "createdAt": "2025-08-15T07:50:56.888Z"
-    },
-    "sessionInfo": {
-      "packageId": "consultation",
-      "packageName": "Consultation + 4 Therapy Sessions",
-      "price": 380,
-      "sessionsTotal": 5,
-      "sessionsUsed": 0,
-      "validUntil": "2025-11-13T08:00:57.682Z"
-    },
-    "status": "active",
-    "hasTherapistNotes": false,
-    "lastActivity": "2025-08-15T08:10:09.984Z"
-  },
-  {
-    "id": "99b5b0676088dc03bb635d632d16cb09",
-    "bookingToken": "933bd79ea8f553956f531075ff56ea8b52fd3a476e331ed48241d0e98e53786f",
-    "basicInfo": {
-      "fullName": "Benjamin Gomes",
-      "email": "b.gomes@talentmatch24.de",
-      "phone": "01773347661",
-      "createdAt": "2025-09-18T15:50:19.433Z"
-    },
-    "sessionInfo": {
-      "packageId": "consultation",
-      "packageName": "Consultation",
-      "price": 30,
+      "packageId": "single-session",
+      "packageName": "Single Session",
+      "price": 100,
       "sessionsTotal": 1,
       "sessionsUsed": 0,
-      "validUntil": "2025-12-18T16:50:19.432Z"
+      "validUntil": "2025-12-25T04:04:29.560Z"
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-09-19T10:35:57.924Z"
+    "lastActivity": "2025-09-25T03:04:29.560Z"
   }
 ]

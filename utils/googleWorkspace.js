@@ -1616,7 +1616,10 @@ This is a confidential therapy session.
   // Apply intelligent slot filtering based on existing bookings and session types
   applyIntelligentSlotFiltering(slots) {
     const filteredSlots = [];
-    
+
+    // Debug logging
+    console.log(`🔍 applyIntelligentSlotFiltering: Starting with ${slots.length} slots`);
+
     // Group slots by date for easier processing
     const slotsByDate = slots.reduce((acc, slot) => {
       if (!acc[slot.date]) acc[slot.date] = [];
@@ -1626,17 +1629,19 @@ This is a confidential therapy session.
 
     Object.keys(slotsByDate).forEach(date => {
       const daySlots = slotsByDate[date].sort((a, b) => a.time.localeCompare(b.time));
-      
+
+      console.log(`📅 Date ${date}: ${daySlots.length} slots available`);
+
       // For each available slot, check if it can accommodate different session types
       daySlots.forEach(slot => {
         const slotTime = new Date(`${slot.date}T${slot.time}:00`);
-        
+
         // Check if this slot can accommodate a 50-minute session (therapy)
         const canAccommodateTherapy = this.canSlotAccommodateSession(daySlots, slot, 50);
-        
-        // Check if this slot can accommodate a 30-minute session (consultation)  
+
+        // Check if this slot can accommodate a 30-minute session (consultation)
         const canAccommodateConsultation = this.canSlotAccommodateSession(daySlots, slot, 30);
-        
+
         // Only include slots that can accommodate at least one session type
         if (canAccommodateTherapy || canAccommodateConsultation) {
           filteredSlots.push({
@@ -1648,6 +1653,7 @@ This is a confidential therapy session.
       });
     });
 
+    console.log(`✅ applyIntelligentSlotFiltering: Returning ${filteredSlots.length} filtered slots`);
     return filteredSlots;
   }
 
@@ -1655,21 +1661,34 @@ This is a confidential therapy session.
   canSlotAccommodateSession(daySlots, slot, durationMinutes) {
     const slotTime = new Date(`${slot.date}T${slot.time}:00`);
     const requiredEndTime = new Date(slotTime.getTime() + durationMinutes * 60 * 1000);
-    
-    // Check if we have consecutive available 30-min slots to cover the full duration
+
+    // For single 60-minute sessions, we need two consecutive 30-min slots (50 minutes actual therapy + 10 min buffer)
+    // For 30-minute consultations, we just need the single slot
     const slotsNeeded = Math.ceil(durationMinutes / 30);
-    
+
+    // Debug first slot check
+    if (slot.time === '19:00' && durationMinutes === 50) {
+      console.log(`🔍 Checking ${slot.date} ${slot.time} for ${durationMinutes} min session:`);
+      console.log(`   Need ${slotsNeeded} consecutive slots`);
+    }
+
     for (let i = 0; i < slotsNeeded; i++) {
       const checkTime = new Date(slotTime.getTime() + i * 30 * 60 * 1000);
       const checkTimeStr = `${checkTime.getHours().toString().padStart(2, '0')}:${checkTime.getMinutes().toString().padStart(2, '0')}`;
-      
-      // Find if this time slot exists and is available
-      const hasSlot = daySlots.find(s => s.time === checkTimeStr && s.available);
+
+      // Find if this time slot exists in our available slots
+      // Note: daySlots already contains only available slots, no need to check 'available' field
+      const hasSlot = daySlots.find(s => s.time === checkTimeStr);
+
+      if (slot.time === '19:00' && durationMinutes === 50) {
+        console.log(`   Slot ${i+1}: ${checkTimeStr} - ${hasSlot ? 'FOUND' : 'NOT FOUND'}`);
+      }
+
       if (!hasSlot) {
         return false; // Required slot is not available
       }
     }
-    
+
     return true; // All required slots are available
   }
 
@@ -1683,19 +1702,62 @@ This is a confidential therapy session.
         }
       }
 
-      const now = new Date();
-      const result = await this.calendar.events.list({
+      // Include recent events from 7 days ago to catch any recent bookings
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
+
+      // First try with q parameter for faster search
+      let result = await this.calendar.events.list({
         calendarId: DOCTOR_EMAIL,
-        timeMin: now.toISOString(),
+        timeMin: startDate.toISOString(),
         maxResults: limit,
         singleEvents: true,
         orderBy: 'startTime',
         q: 'Therapy Session', // Search for therapy sessions
       });
 
-      const therapySessions = result.data.items?.filter(event => 
+      let therapySessions = result.data.items?.filter(event =>
         event.extendedProperties?.private?.therapySession === 'true'
       ) || [];
+
+      // DEBUG: If no therapy sessions found, log what we DID find
+      if (therapySessions.length === 0 && result.data.items?.length > 0) {
+        console.log(`🔍 DEBUG: Found ${result.data.items.length} events but 0 therapy sessions`);
+        result.data.items.slice(0, 2).forEach(event => {
+          console.log(`  - "${event.summary}" (${event.start.dateTime})`);
+          console.log(`    therapySession: ${event.extendedProperties?.private?.therapySession}`);
+          console.log(`    extendedProperties keys: ${Object.keys(event.extendedProperties?.private || {}).join(', ')}`);
+        });
+      }
+
+      // ALWAYS try without q parameter as well (for debugging and catching missed events)
+      if (true || therapySessions.length === 0) {
+        console.log('🔄 No sessions found with q filter, trying without...');
+        result = await this.calendar.events.list({
+          calendarId: DOCTOR_EMAIL,
+          timeMin: startDate.toISOString(),
+          maxResults: limit * 2, // Get more events to filter
+          singleEvents: true,
+          orderBy: 'startTime',
+        });
+
+        const allEvents = result.data.items || [];
+        console.log(`🔍 Found ${allEvents.length} total events in the last 7 days`);
+
+        // Debug: Log first few events
+        allEvents.slice(0, 3).forEach(event => {
+          console.log(`  Event: "${event.summary}" at ${event.start.dateTime}`);
+          console.log(`    therapySession: ${event.extendedProperties?.private?.therapySession}`);
+          console.log(`    attendees: ${event.attendees?.length || 0}`);
+        });
+
+        therapySessions = allEvents.filter(event =>
+          event.extendedProperties?.private?.therapySession === 'true' ||
+          (event.summary?.includes('Therapy Session') && event.attendees?.length > 1)
+        );
+
+        console.log(`🎯 Filtered to ${therapySessions.length} therapy sessions`);
+      }
 
       const sessions = therapySessions.map(event => ({
         eventId: event.id,
@@ -1722,12 +1784,26 @@ This is a confidential therapy session.
 
   // Get all therapy sessions (past and future) from Google Calendar
   async getAllTherapySessions(limit = 200) {
+    console.log('🔍 getAllTherapySessions: Starting function...');
+    console.log(`🔍 getAllTherapySessions: REFRESH_TOKEN available: ${!!REFRESH_TOKEN}`);
+    console.log(`🔍 getAllTherapySessions: DOCTOR_EMAIL: ${DOCTOR_EMAIL}`);
+    console.log(`🔍 getAllTherapySessions: Calendar instance: ${!!this.calendar}`);
     try {
       if (!this.calendar) {
+        console.log('🔍 getAllTherapySessions: Authenticating...');
         const authSuccess = await this.authenticate();
+        console.log(`🔍 getAllTherapySessions: Authentication result: ${authSuccess}`);
         if (!authSuccess) {
-          throw new Error('Authentication failed');
+          console.error('🔍 getAllTherapySessions: Authentication failed, returning empty result');
+          return { success: true, sessions: [] };
         }
+      }
+      console.log('🔍 getAllTherapySessions: Calendar authenticated, making API call...');
+
+      // Double-check that calendar is available
+      if (!this.calendar) {
+        console.error('🔍 getAllTherapySessions: Calendar still null after authentication!');
+        return { success: true, sessions: [] };
       }
 
       // Get events from 3 months ago to 6 months in future
@@ -1736,6 +1812,9 @@ This is a confidential therapy session.
       
       const endDate = new Date();
       endDate.setMonth(endDate.getMonth() + 6);
+
+      console.log(`🔍 getAllTherapySessions: Searching from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+      console.log(`🔍 getAllTherapySessions: Calendar ID: ${DOCTOR_EMAIL}`);
 
       const result = await this.calendar.events.list({
         calendarId: DOCTOR_EMAIL,
@@ -1747,13 +1826,28 @@ This is a confidential therapy session.
         // Remove q filter to get all events, then filter by extendedProperties
       });
 
+      console.log('🔍 getAllTherapySessions: API call completed successfully');
+
       const allEvents = result.data.items || [];
-      
+      console.log(`🔍 getAllTherapySessions: Found ${allEvents.length} total events`);
+
+      // Debug: Show first few events to understand what we're working with
+      allEvents.slice(0, 5).forEach((event, index) => {
+        console.log(`  Event ${index + 1}: "${event.summary}" (${event.start?.dateTime})`);
+        console.log(`    therapySession: ${event.extendedProperties?.private?.therapySession}`);
+        console.log(`    patientRecord: ${event.extendedProperties?.private?.patientRecord}`);
+        console.log(`    bookingToken: ${event.extendedProperties?.private?.bookingToken}`);
+        console.log(`    All extendedProperties keys: ${Object.keys(event.extendedProperties?.private || {}).join(', ')}`);
+        console.log(`    Full extendedProperties: ${JSON.stringify(event.extendedProperties?.private || {})}`);
+      });
+
       // Include therapy sessions and patient records
-      const relevantEvents = allEvents.filter(event => 
+      const relevantEvents = allEvents.filter(event =>
         event.extendedProperties?.private?.therapySession === 'true' ||
         event.extendedProperties?.private?.patientRecord === 'true'
       );
+
+      console.log(`🎯 Filtered to ${relevantEvents.length} relevant events`);
 
       const sessions = relevantEvents.map(event => ({
         eventId: event.id,

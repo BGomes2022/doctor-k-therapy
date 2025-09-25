@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Cookie, Settings, X, Check } from 'lucide-react'
+import { Settings, X, Check } from 'lucide-react'
 
 interface CookieConsent {
   necessary: boolean
@@ -12,9 +12,71 @@ interface CookieConsent {
   functional: boolean
 }
 
+interface CookieTexts {
+  title: string
+  description: string
+  acceptAll: string
+  necessary: string
+  settings: string
+  settingsTitle: string
+  saveSettings: string
+  cancel: string
+  alwaysActive: string
+  necessaryTitle: string
+  necessaryDesc: string
+  analyticsTitle: string
+  analyticsDesc: string
+  marketingTitle: string
+  marketingDesc: string
+  functionalTitle: string
+  functionalDesc: string
+}
+
+const translations = {
+  en: {
+    title: 'Cookie Settings',
+    description: 'This website uses cookies and similar technologies to provide you with the best possible experience. Some are necessary for the website to function, others help us improve the website.',
+    acceptAll: 'Accept All',
+    necessary: 'Necessary Only',
+    settings: 'Settings',
+    settingsTitle: 'Manage Cookie Settings',
+    saveSettings: 'Save Settings',
+    cancel: 'Cancel',
+    alwaysActive: 'Always Active',
+    necessaryTitle: 'Necessary Cookies',
+    necessaryDesc: 'These cookies are required for the basic functionality of the website and cannot be disabled.',
+    analyticsTitle: 'Analytics Cookies',
+    analyticsDesc: 'Help us understand how visitors use the website to improve the user experience.',
+    marketingTitle: 'Marketing Cookies',
+    marketingDesc: 'Used to show relevant advertising and measure the effectiveness of advertising campaigns.',
+    functionalTitle: 'Functional Cookies',
+    functionalDesc: 'Enable advanced features and personalization, such as chat widgets or personalized content.'
+  },
+  it: {
+    title: 'Impostazioni Cookie',
+    description: 'Questo sito web utilizza cookie e tecnologie simili per offrirti la migliore esperienza possibile. Alcuni sono necessari per il funzionamento del sito, altri ci aiutano a migliorare il sito web.',
+    acceptAll: 'Accetta Tutto',
+    necessary: 'Solo Necessari',
+    settings: 'Impostazioni',
+    settingsTitle: 'Gestisci Impostazioni Cookie',
+    saveSettings: 'Salva Impostazioni',
+    cancel: 'Annulla',
+    alwaysActive: 'Sempre Attivo',
+    necessaryTitle: 'Cookie Necessari',
+    necessaryDesc: 'Questi cookie sono necessari per la funzionalità di base del sito web e non possono essere disabilitati.',
+    analyticsTitle: 'Cookie Analitici',
+    analyticsDesc: 'Ci aiutano a capire come i visitatori utilizzano il sito web per migliorare l\'esperienza utente.',
+    marketingTitle: 'Cookie di Marketing',
+    marketingDesc: 'Utilizzati per mostrare pubblicità pertinenti e misurare l\'efficacia delle campagne pubblicitarie.',
+    functionalTitle: 'Cookie Funzionali',
+    functionalDesc: 'Abilitano funzionalità avanzate e personalizzazione, come widget di chat o contenuti personalizzati.'
+  }
+}
+
 export default function CookieBanner() {
   const [showBanner, setShowBanner] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [language, setLanguage] = useState<'en' | 'it'>('en')
   const [consent, setConsent] = useState<CookieConsent>({
     necessary: true, // Always required
     analytics: false,
@@ -22,7 +84,17 @@ export default function CookieBanner() {
     functional: false
   })
 
+  const texts = translations[language]
+
   useEffect(() => {
+    // Detect browser language
+    const browserLang = navigator.language.toLowerCase()
+    if (browserLang.startsWith('it')) {
+      setLanguage('it')
+    } else {
+      setLanguage('en') // Default to English
+    }
+
     // Check if user has already given consent
     const savedConsent = localStorage.getItem('cookie-consent')
     if (!savedConsent) {
@@ -94,42 +166,40 @@ export default function CookieBanner() {
   return (
     <>
       {/* Cookie Banner */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t-2 border-blue-500 shadow-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t-2 border-emerald-500 shadow-xl">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-start gap-4">
-            <Cookie className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-2">🍪 Cookie-Einstellungen</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">{texts.title}</h3>
               <p className="text-sm text-gray-600 mb-4">
-                Diese Website verwendet Cookies und ähnliche Technologien, um Ihnen die bestmögliche Erfahrung zu bieten. 
-                Einige sind für die Funktion der Website erforderlich, andere helfen uns, die Website zu verbessern.
+                {texts.description}
               </p>
               <div className="flex flex-wrap gap-3">
-                <Button 
+                <Button
                   onClick={acceptAll}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-emerald-600 hover:bg-emerald-700"
                 >
                   <Check className="h-4 w-4 mr-2" />
-                  Alle akzeptieren
+                  {texts.acceptAll}
                 </Button>
-                <Button 
+                <Button
                   onClick={acceptNecessary}
                   variant="outline"
                   className="border-gray-300"
                 >
-                  Nur notwendige
+                  {texts.necessary}
                 </Button>
-                <Button 
+                <Button
                   onClick={() => setShowSettings(true)}
                   variant="outline"
                   className="border-gray-300"
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  Einstellungen
+                  {texts.settings}
                 </Button>
               </div>
             </div>
-            <button 
+            <button
               onClick={acceptNecessary}
               className="text-gray-400 hover:text-gray-600"
             >
@@ -145,33 +215,33 @@ export default function CookieBanner() {
           <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Cookie-Einstellungen verwalten</h2>
-                <button 
+                <h2 className="text-xl font-semibold">{texts.settingsTitle}</h2>
+                <button
                   onClick={() => setShowSettings(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <X className="h-6 w-6" />
                 </button>
               </div>
-              
+
               <div className="space-y-6">
                 {/* Necessary Cookies */}
                 <div className="border-b pb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">Notwendige Cookies</h3>
-                    <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
-                      Immer aktiv
+                    <h3 className="font-medium">{texts.necessaryTitle}</h3>
+                    <div className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-sm">
+                      {texts.alwaysActive}
                     </div>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Diese Cookies sind für die grundlegende Funktionalität der Website erforderlich und können nicht deaktiviert werden.
+                    {texts.necessaryDesc}
                   </p>
                 </div>
 
                 {/* Analytics Cookies */}
                 <div className="border-b pb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">Analyse-Cookies</h3>
+                    <h3 className="font-medium">{texts.analyticsTitle}</h3>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
@@ -179,18 +249,18 @@ export default function CookieBanner() {
                         checked={consent.analytics}
                         onChange={() => toggleConsent('analytics')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                     </label>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Helfen uns zu verstehen, wie Besucher die Website nutzen, um die Benutzererfahrung zu verbessern.
+                    {texts.analyticsDesc}
                   </p>
                 </div>
 
                 {/* Marketing Cookies */}
                 <div className="border-b pb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">Marketing-Cookies</h3>
+                    <h3 className="font-medium">{texts.marketingTitle}</h3>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
@@ -198,18 +268,18 @@ export default function CookieBanner() {
                         checked={consent.marketing}
                         onChange={() => toggleConsent('marketing')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                     </label>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Werden verwendet, um relevante Werbung anzuzeigen und die Effektivität von Werbekampagnen zu messen.
+                    {texts.marketingDesc}
                   </p>
                 </div>
 
                 {/* Functional Cookies */}
                 <div className="pb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">Funktionale Cookies</h3>
+                    <h3 className="font-medium">{texts.functionalTitle}</h3>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
@@ -217,11 +287,11 @@ export default function CookieBanner() {
                         checked={consent.functional}
                         onChange={() => toggleConsent('functional')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                     </label>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Ermöglichen erweiterte Funktionen und Personalisierung, wie Chat-Widgets oder personalisierte Inhalte.
+                    {texts.functionalDesc}
                   </p>
                 </div>
               </div>
@@ -229,16 +299,16 @@ export default function CookieBanner() {
               <div className="flex gap-3 mt-6">
                 <Button
                   onClick={() => saveConsent(consent)}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                 >
-                  Einstellungen speichern
+                  {texts.saveSettings}
                 </Button>
                 <Button
                   onClick={() => setShowSettings(false)}
                   variant="outline"
                   className="border-gray-300"
                 >
-                  Abbrechen
+                  {texts.cancel}
                 </Button>
               </div>
             </div>

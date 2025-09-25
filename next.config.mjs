@@ -11,9 +11,6 @@ const nextConfig = {
   },
   productionBrowserSourceMaps: false,
   devIndicators: false,
-  experimental: {
-    devIndicators: false,
-  },
 }
 
 export default nextConfig
