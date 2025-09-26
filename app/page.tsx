@@ -36,16 +36,16 @@ export default function TherapyWebsite() {
   const [language, setLanguage] = useState<"en" | "it">("en")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [bookingModalOpen, setBookingModalOpen] = useState(false)
-  const [selectedPackage, setSelectedPackage] = useState(null)
+  const [selectedPackage, setSelectedPackage] = useState<any>(null)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [emergencyModalOpen, setEmergencyModalOpen] = useState(false)
   const [credentialsModalOpen, setCredentialsModalOpen] = useState(false)
-  const moreMenuRef = useRef(null)
+  const moreMenuRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setMoreMenuOpen(false)
       }
     }
@@ -797,10 +797,13 @@ export default function TherapyWebsite() {
                 id: "consultation",
                 name: language === "en" ? "Consultation" : "Consulenza",
                 price: 30,
+                originalPrice: undefined,
                 duration: language === "en" ? "20 minutes" : "20 minuti",
                 description: language === "en"
                   ? "Initial assessment and therapy planning session"
                   : "Valutazione iniziale e pianificazione terapeutica",
+                savings: undefined,
+                coupleNote: undefined,
                 icon: "",
                 popular: false
               },
@@ -808,10 +811,13 @@ export default function TherapyWebsite() {
                 id: "single-session",
                 name: language === "en" ? "Single Session" : "Sessione Singola",
                 price: 100,
+                originalPrice: undefined,
                 duration: language === "en" ? "50 minutes" : "50 minuti",
                 description: language === "en"
                   ? "One-on-one therapy session for immediate support"
                   : "Sessione di terapia individuale per supporto immediato",
+                savings: undefined,
+                coupleNote: undefined,
                 icon: "",
                 popular: false
               },
@@ -819,10 +825,13 @@ export default function TherapyWebsite() {
                 id: "couples-session",
                 name: language === "en" ? "Couples Therapy" : "Terapia di Coppia",
                 price: 120,
+                originalPrice: undefined,
                 duration: language === "en" ? "50 minutes" : "50 minuti",
                 description: language === "en"
                   ? "Relationship counseling for couples seeking harmony"
                   : "Consulenza relazionale per coppie che cercano armonia",
+                savings: undefined,
+                coupleNote: undefined,
                 icon: "",
                 popular: false
               }
