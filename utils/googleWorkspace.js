@@ -1531,7 +1531,7 @@ This is a confidential therapy session.
       };
 
       const result = await this.calendar.events.insert({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         resource: event,
         conferenceDataVersion: 1,
         sendUpdates: 'all',
@@ -1685,7 +1685,7 @@ This is a confidential therapy session.
 
       const now = new Date();
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         timeMin: now.toISOString(),
         maxResults: limit,
         singleEvents: true,
@@ -1730,15 +1730,14 @@ This is a confidential therapy session.
         }
       }
 
-      // Get events from 2 weeks ago to 3 months in future
+      // Get events from today onwards (avoid pagination trap with old events)
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 14);
-
+      
       const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 3);
+      endDate.setMonth(endDate.getMonth() + 6);
 
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         timeMin: startDate.toISOString(),
         timeMax: endDate.toISOString(),
         maxResults: limit,
@@ -1749,6 +1748,11 @@ This is a confidential therapy session.
       const allEvents = result.data.items || [];
 
       // Show ALL events - no filtering
+      console.log(`🔍 RAW API: Found ${allEvents.length} total events`);
+      allEvents.slice(0, 3).forEach((event, i) => {
+        console.log(`📅 Event ${i+1}: "${event.summary}"`);
+      });
+
       const relevantEvents = allEvents;
 
       const sessions = relevantEvents.map(event => ({
@@ -1791,7 +1795,7 @@ This is a confidential therapy session.
 
       // Search for events with this booking token
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         maxResults: 100,
         singleEvents: true,
         orderBy: 'startTime',
@@ -1854,7 +1858,7 @@ This is a confidential therapy session.
 
       // Search for all events with this booking token
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         maxResults: 100,
         singleEvents: true,
         orderBy: 'startTime',
@@ -1940,7 +1944,7 @@ Medical Data: ${medicalDataString}
       };
 
       const result = await this.calendar.events.insert({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         resource: event,
       });
 
@@ -2007,7 +2011,7 @@ Medical Data: ${medicalDataString}
 
       // Search for events with this email
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         maxResults: 100,
         singleEvents: true,
         orderBy: 'startTime',
@@ -2053,7 +2057,7 @@ Medical Data: ${medicalDataString}
       endDate.setMonth(endDate.getMonth() + 6);
 
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         timeMin: startDate.toISOString(),
         timeMax: endDate.toISOString(),
         maxResults: 500,
@@ -2078,7 +2082,7 @@ Medical Data: ${medicalDataString}
       for (const event of testEvents) {
         try {
           await this.calendar.events.delete({
-            calendarId: DOCTOR_EMAIL,
+            calendarId: 'primary',
             eventId: event.id
           });
           deletedCount++;
@@ -2117,7 +2121,7 @@ Medical Data: ${medicalDataString}
 
       // Get all events in timeframe
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         timeMin: startDate.toISOString(),
         timeMax: endDate.toISOString(),
         maxResults: 1000,
@@ -2320,7 +2324,7 @@ Medical Data: ${medicalDataString}
       }
 
       const result = await this.calendar.events.insert({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         resource: event
       });
 
@@ -2349,7 +2353,7 @@ Medical Data: ${medicalDataString}
       endDateTime.setHours(endDateTime.getHours() + 1);
 
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         timeMin: startDateTime.toISOString(),
         timeMax: endDateTime.toISOString(),
         maxResults: 10
@@ -2361,7 +2365,7 @@ Medical Data: ${medicalDataString}
 
       if (blockingEvent) {
         await this.calendar.events.delete({
-          calendarId: DOCTOR_EMAIL,
+          calendarId: 'primary',
           eventId: blockingEvent.id
         });
 
@@ -2406,7 +2410,7 @@ Medical Data: ${medicalDataString}
       };
 
       const result = await this.calendar.events.insert({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         resource: event
       });
 
@@ -2445,7 +2449,7 @@ Medical Data: ${medicalDataString}
       };
 
       const result = await this.calendar.events.insert({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         resource: event
       });
 
@@ -2487,7 +2491,7 @@ Medical Data: ${medicalDataString}
       };
 
       const result = await this.calendar.events.insert({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         resource: event
       });
 
@@ -2532,7 +2536,7 @@ Medical Data: ${medicalDataString}
       };
 
       const result = await this.calendar.events.insert({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         resource: event
       });
 
@@ -2582,7 +2586,7 @@ Medical Data: ${medicalDataString}
       };
 
       const response = await this.calendar.events.insert({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         resource: event
       });
 
@@ -2615,7 +2619,7 @@ Medical Data: ${medicalDataString}
       endDateTime.setHours(endDateTime.getHours() + 1);
 
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         timeMin: startDateTime.toISOString(),
         timeMax: endDateTime.toISOString(),
         maxResults: 10
@@ -2627,7 +2631,7 @@ Medical Data: ${medicalDataString}
 
       if (availabilityEvent) {
         await this.calendar.events.delete({
-          calendarId: DOCTOR_EMAIL,
+          calendarId: 'primary',
           eventId: availabilityEvent.id
         });
 
