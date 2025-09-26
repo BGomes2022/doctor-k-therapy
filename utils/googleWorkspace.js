@@ -1730,12 +1730,12 @@ This is a confidential therapy session.
         }
       }
 
-      // Get events from 1 week ago to catch recent appointments
+      // Get events from 2 weeks ago to 3 months in future
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 7);
-      
+      startDate.setDate(startDate.getDate() - 14);
+
       const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 6);
+      endDate.setMonth(endDate.getMonth() + 3);
 
       const result = await this.calendar.events.list({
         calendarId: DOCTOR_EMAIL,
