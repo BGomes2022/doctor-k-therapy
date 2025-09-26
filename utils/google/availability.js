@@ -68,6 +68,7 @@ async function getAvailableTimeSlots(calendar, startDate, endDate, useIntelligen
 
 // Apply intelligent slot filtering based on existing bookings and session types
 function applyIntelligentSlotFiltering(slots) {
+  console.log(`🔍 INTELLIGENT FILTERING START: ${slots.length} input slots`)
   const filteredSlots = [];
 
   // Group slots by date for easier processing
@@ -76,6 +77,8 @@ function applyIntelligentSlotFiltering(slots) {
     acc[slot.date].push(slot);
     return acc;
   }, {});
+
+  console.log(`🔍 Grouped slots by ${Object.keys(slotsByDate).length} dates`);
 
   Object.keys(slotsByDate).forEach(date => {
     const daySlots = slotsByDate[date].sort((a, b) => a.time.localeCompare(b.time));
@@ -97,6 +100,8 @@ function applyIntelligentSlotFiltering(slots) {
           canAccommodateTherapy,
           canAccommodateConsultation
         });
+      } else {
+        console.log(`❌ Slot REJECTED: ${slot.date} ${slot.time} - therapy:${canAccommodateTherapy}, consultation:${canAccommodateConsultation}`)
       }
     });
   });
@@ -116,8 +121,8 @@ function canSlotAccommodateSession(daySlots, slot, durationMinutes) {
     const checkTime = new Date(slotTime.getTime() + i * 30 * 60 * 1000);
     const checkTimeStr = `${checkTime.getHours().toString().padStart(2, '0')}:${checkTime.getMinutes().toString().padStart(2, '0')}`;
 
-    // Find if this time slot exists and is available
-    const hasSlot = daySlots.find(s => s.time === checkTimeStr && s.available);
+    // Find if this time slot exists and is available (or not explicitly unavailable)
+    const hasSlot = daySlots.find(s => s.time === checkTimeStr && s.available !== false);
     if (!hasSlot) {
       return false; // Required slot is not available
     }

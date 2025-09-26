@@ -145,17 +145,34 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`📊 Found ${result.slots.length} total available slots`)
+    if (result.slots.length > 0) {
+      console.log(`🔍 DEBUG - First raw slot:`, result.slots[0])
+      console.log(`🔍 DEBUG - Has available property:`, result.slots[0].available)
+      console.log(`🔍 DEBUG - Has eventType:`, result.slots[0].eventType)
+    } else {
+      console.log(`🔍 DEBUG - NO SLOTS FOUND!`)
+    }
 
-    // Apply intelligent filtering to the slots
-    const intelligentSlots = googleWorkspaceService.applyIntelligentSlotFiltering(result.slots)
+    // TEMPORARY: Skip intelligent filtering for debugging
+    const intelligentSlots = result.slots.map(slot => ({
+      ...slot,
+      canAccommodateTherapy: true,
+      canAccommodateConsultation: true
+    }))
+    // const intelligentSlots = googleWorkspaceService.applyIntelligentSlotFiltering(result.slots)
 
     console.log(`🔍 After intelligent filtering: ${intelligentSlots.length} slots`)
+    console.log(`🔍 DEBUG - First 3 intelligent slots:`, intelligentSlots.slice(0, 3))
 
     // Filter slots based on session type using the new intelligent filtering
     const filteredSlots = intelligentSlots.filter((slot: any) => {
       if (sessionPackageType === 'consultation') {
         // For consultations (30min), check if slot can accommodate consultation
-        return slot.canAccommodateConsultation !== false
+        const canBook = slot.canAccommodateConsultation !== false
+        if (!canBook) {
+          console.log(`❌ Slot rejected for consultation: ${slot.date} ${slot.time} - canAccommodateConsultation: ${slot.canAccommodateConsultation}`)
+        }
+        return canBook
       } else {
         // For therapy (50min), check if slot can accommodate therapy session
         return slot.canAccommodateTherapy !== false

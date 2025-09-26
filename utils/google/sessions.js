@@ -44,11 +44,14 @@ async function getUpcomingTherapySessions(calendar, limit = 50) {
 // Get all therapy sessions (past and future) from Google Calendar
 async function getAllTherapySessions(calendar, limit = 200) {
   try {
-    // Get events from today onwards (avoid pagination trap with old events)
+    // Get events from 2 weeks ago to 3 months forward (avoid pagination trap with very old events)
     const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 14); // 2 weeks back
 
     const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 6);
+    endDate.setMonth(endDate.getMonth() + 3); // 3 months forward
+
+    console.log(`🔍 getAllTherapySessions: Searching from ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
     const result = await calendar.events.list({
       calendarId: 'primary',
@@ -59,21 +62,32 @@ async function getAllTherapySessions(calendar, limit = 200) {
       orderBy: 'startTime',
     });
 
+    // Ensure result exists and has data property
+    if (!result || !result.data) {
+      throw new Error('Invalid response from Google Calendar API');
+    }
+
+    // Only proceed if API call was successful
     const allEvents = result.data.items || [];
 
     // Show ALL events - no filtering
     console.log(`🔍 RAW API: Found ${allEvents.length} total events`);
-    allEvents.slice(0, 3).forEach((event, i) => {
-      console.log(`📅 Event ${i+1}: "${event.summary}"`);
-    });
+    if (allEvents.length > 0) {
+      allEvents.slice(0, 3).forEach((event, i) => {
+        console.log(`📅 Event ${i+1}: "${event.summary || 'No title'}"`);
+      });
+    }
 
-    const relevantEvents = allEvents;
+    // Filter for actual therapy sessions only (like in getUpcomingTherapySessions)
+    const therapySessions = allEvents.filter(event =>
+      event.extendedProperties?.private?.therapySession === 'true'
+    ) || [];
 
-    const sessions = relevantEvents.map(event => ({
+    const sessions = therapySessions.map(event => ({
       eventId: event.id,
       summary: event.summary,
-      start: event.start.dateTime,
-      end: event.end.dateTime,
+      start: event.start?.dateTime,
+      end: event.end?.dateTime,
       patientEmail: event.extendedProperties?.private?.patientEmail,
       patientName: event.extendedProperties?.private?.patientName,
       sessionNumber: parseInt(event.extendedProperties?.private?.sessionNumber || '1'),
