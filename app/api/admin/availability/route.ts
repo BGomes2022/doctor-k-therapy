@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-const googleWorkspaceService = require('@/utils/googleWorkspace')
+const googleWorkspaceService = require('@/utils/google')
 
 // New Google Calendar-only availability management
 // Working hours: Tuesday & Thursday 9:00-17:00 Portuguese Time (UTC+1)
