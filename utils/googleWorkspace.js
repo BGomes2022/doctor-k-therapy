@@ -1730,15 +1730,14 @@ This is a confidential therapy session.
         }
       }
 
-      // Get events from 3 months ago to 6 months in future
+      // Get events from now onwards (future events only) to avoid pagination trap
       const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 3);
       
       const endDate = new Date();
       endDate.setMonth(endDate.getMonth() + 6);
 
       const result = await this.calendar.events.list({
-        calendarId: DOCTOR_EMAIL,
+        calendarId: 'primary',
         timeMin: startDate.toISOString(),
         timeMax: endDate.toISOString(),
         maxResults: limit,
@@ -1747,6 +1746,14 @@ This is a confidential therapy session.
       });
 
       const allEvents = result.data.items || [];
+
+      // DEBUG: Show what we actually find
+      console.log(`🔍 Raw events found: ${allEvents.length}`);
+      allEvents.forEach((event, i) => {
+        if (i < 5) { // Only log first 5 for debugging
+          console.log(`📅 Event ${i+1}:`, event.summary, event.start?.dateTime?.split('T')[0]);
+        }
+      });
 
       // Show ALL events - no filtering
       const relevantEvents = allEvents;

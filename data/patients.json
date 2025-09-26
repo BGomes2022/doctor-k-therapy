@@ -20,5 +20,27 @@
     "status": "active",
     "hasTherapistNotes": false,
     "lastActivity": "2025-09-25T03:04:29.560Z"
+  },
+  {
+    "id": "86ed140ade2458e017abfba710fb383e",
+    "bookingToken": "14813e5e791d5ee88a40caa7524764683eac624a8923dfcf30763e35b4c0f6ea",
+    "basicInfo": {
+      "fullName": "Benjamin TestAccount",
+      "email": "ben.gomes28@gmail.com",
+      "phone": "01773347661",
+      "preferredLanguage": "en",
+      "createdAt": "2025-09-25T08:24:54.523Z"
+    },
+    "sessionInfo": {
+      "packageId": "unknown",
+      "packageName": "Manual Entry",
+      "price": 0,
+      "sessionsTotal": 1,
+      "sessionsUsed": 0,
+      "validUntil": "2025-12-25T09:24:54.523Z"
+    },
+    "status": "active",
+    "hasTherapistNotes": false,
+    "lastActivity": "2025-09-25T09:42:22.889Z"
   }
 ]

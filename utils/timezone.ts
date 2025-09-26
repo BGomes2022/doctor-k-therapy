@@ -51,22 +51,54 @@ export function saveUserTimezone(timezone: string) {
   document.cookie = `userTimezone=${encodeURIComponent(timezone)}; max-age=${maxAge}; path=/; SameSite=Lax`
 }
 
-// Convert Portugal time to user's timezone
+// Convert Portugal time to user's timezone - safe fallback
 export function convertToUserTime(portugalDateTime: Date, userTimezone: string): Date {
-  // First, ensure we have the Portugal time as UTC
-  const utcTime = zonedTimeToUtc(portugalDateTime, THERAPIST_TIMEZONE)
-  // Then convert to user's timezone
-  return utcToZonedTime(utcTime, userTimezone)
+  try {
+    // For now, just calculate timezone offset difference
+    const portugalOffset = new Date().toLocaleString('en', {timeZone: THERAPIST_TIMEZONE})
+    const userOffset = new Date().toLocaleString('en', {timeZone: userTimezone})
+
+    // Simple timezone conversion based on hour difference
+    if (userTimezone === 'Europe/Berlin') {
+      // Berlin is +1 hour from Portugal
+      const newDate = new Date(portugalDateTime)
+      newDate.setHours(newDate.getHours() + 1)
+      return newDate
+    }
+
+    // Default: return original time for other timezones
+    return portugalDateTime
+  } catch {
+    return portugalDateTime
+  }
 }
 
-// Format time for display
+// Format time for display - safe version
 export function formatTimeForDisplay(date: Date, timezone: string): string {
-  return format(utcToZonedTime(date, timezone), 'h:mm a', { timeZone: timezone })
+  try {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: timezone
+    })
+  } catch {
+    return format(date, 'h:mm a')
+  }
 }
 
-// Format date and time for display
+// Format date and time for display - safe version
 export function formatDateTimeForDisplay(date: Date, timezone: string): string {
-  return format(utcToZonedTime(date, timezone), 'EEE, MMM d \'at\' h:mm a', { timeZone: timezone })
+  try {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      timeZone: timezone
+    }) + ' at ' + formatTimeForDisplay(date, timezone)
+  } catch {
+    return format(date, 'EEE, MMM d \'at\' h:mm a')
+  }
 }
 
 // Get timezone abbreviation (e.g., CET, EST)

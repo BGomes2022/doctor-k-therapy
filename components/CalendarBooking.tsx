@@ -15,13 +15,6 @@ import {
   COMMON_TIMEZONES,
   THERAPIST_TIMEZONE
 } from "@/utils/timezone"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 interface TimeSlot {
   time: string
@@ -62,7 +55,6 @@ export default function CalendarBooking({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [userTimezone, setUserTimezone] = useState<string>("")
-  const [showTimezoneSelector, setShowTimezoneSelector] = useState(false)
 
   const texts = {
     en: {
@@ -265,60 +257,21 @@ export default function CalendarBooking({
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">{t.title}</h2>
         
-        {/* Timezone indicator with change option */}
+        {/* Timezone indicator (read-only) */}
         {userTimezone && (
           <div className="mb-4">
-            {!showTimezoneSelector ? (
-              <div className="flex items-center justify-center gap-2">
-                <MapPin className="h-4 w-4 text-blue-600" />
-                <span className="text-sm text-gray-600">
-                  Your timezone: <strong>{getFriendlyTimezoneName(userTimezone)}</strong> ({getTimezoneAbbreviation(userTimezone)})
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowTimezoneSelector(true)}
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  Change
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2">
-                <Select
-                  value={userTimezone}
-                  onValueChange={(value) => {
-                    setUserTimezone(value)
-                    saveUserTimezone(value)
-                    setShowTimezoneSelector(false)
-                  }}
-                >
-                  <SelectTrigger className="w-[280px]">
-                    <SelectValue placeholder="Select your timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COMMON_TIMEZONES.map((tz) => (
-                      <SelectItem key={tz.value} value={tz.value}>
-                        {tz.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowTimezoneSelector(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center justify-center gap-2">
+              <MapPin className="h-4 w-4 text-blue-600" />
+              <span className="text-sm text-gray-600">
+                Your timezone: <strong>{getFriendlyTimezoneName(userTimezone)}</strong> ({getTimezoneAbbreviation(userTimezone)})
+              </span>
+            </div>
           </div>
         )}
         
         {sessionInfo && (
           <p className="text-gray-600">
-            {t.sessionInfo.replace('{{current}}', (sessionInfo.current + 1).toString()).replace('{{total}}', sessionInfo.total.toString())}
+            {t.sessionInfo.replace('{{current}}', sessionInfo.current.toString()).replace('{{total}}', sessionInfo.total.toString())}
           </p>
         )}
       </div>

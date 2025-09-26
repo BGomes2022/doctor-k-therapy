@@ -808,7 +808,7 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bookingId: selectedBooking.bookingId,
+          eventId: selectedBooking.bookingId, // Fixed: Backend expects eventId
           action: 'reschedule',
           newDate: rescheduleData.date,
           newTime: rescheduleData.time,
@@ -821,7 +821,10 @@ export default function AdminDashboard() {
       if (result.success) {
         console.log('Booking rescheduled successfully!')
         setShowRescheduleModal(false)
-        fetchData()
+        // Add small delay to ensure cache is updated before fetching
+        setTimeout(() => {
+          fetchData()
+        }, 500)
       } else {
         console.error(result.error || 'Failed to reschedule booking')
       }

@@ -40,21 +40,8 @@ export async function POST(request: NextRequest) {
 
     const sessionsTotal = googleWorkspaceService.getSessionCountFromPackage(sessionPackage)
 
-    // Create placeholder event first to store patient data
-    const placeholderResult = await googleWorkspaceService.createMedicalDataPlaceholder({
-      bookingToken,
-      patientEmail,
-      patientName,
-      sessionPackage,
-      medicalData: medicalData || {}
-    })
-
-    if (!placeholderResult.success) {
-      return NextResponse.json(
-        { error: 'Failed to store patient data', details: placeholderResult.error },
-        { status: 500 }
-      )
-    }
+    // Patient data is already stored in JSON, skip placeholder creation
+    console.log(`📋 Manual booking for ${patientName} (${patientEmail}) - Token: ${bookingToken}`)
 
     // Create therapy session in Google Calendar
     const calendarResult = await googleWorkspaceService.createTherapySessionBooking({

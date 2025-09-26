@@ -422,7 +422,7 @@ export default function MultiBookingPage() {
               <div className="flex justify-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-stone-600">
                   <Mail className="h-4 w-4" />
-                  <span>{sessionInfo?.patientEmail}</span>
+                  <span>support@doctorktherapy.com</span>
                 </div>
               </div>
             </div>

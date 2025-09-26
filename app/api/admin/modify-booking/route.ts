@@ -103,6 +103,9 @@ export async function POST(request: NextRequest) {
 
       console.log('✅ Event rescheduled:', eventId)
 
+      // SOLUTION: Update the event in cache for immediate UI update
+      googleWorkspaceService.updateCachedEvent(eventId, newDate, newTime);
+
       return NextResponse.json({
         success: true,
         message: 'Booking rescheduled successfully',
@@ -149,6 +152,9 @@ export async function POST(request: NextRequest) {
       })
 
       console.log('✅ Event cancelled:', eventId)
+
+      // SOLUTION: Mark event as cancelled in cache for immediate UI update
+      googleWorkspaceService.markEventAsCancelled(eventId);
 
       // Send enhanced cancellation email with alternatives
       if (patientEmail && patientName) {
