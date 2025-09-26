@@ -1730,8 +1730,9 @@ This is a confidential therapy session.
         }
       }
 
-      // Get events from today onwards (avoid pagination trap with old events)
+      // Get events from 1 week ago to catch recent appointments
       const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 7);
       
       const endDate = new Date();
       endDate.setMonth(endDate.getMonth() + 6);
