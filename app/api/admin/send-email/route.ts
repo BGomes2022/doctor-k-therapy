@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import { GoogleWorkspaceHelper } from "@/utils/googleWorkspace"
+import { GoogleWorkspaceHelper } from "@/utils/google"
 
 export async function POST(req: NextRequest) {
   try {

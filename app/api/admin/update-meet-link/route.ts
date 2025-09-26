@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-const googleWorkspaceService = require('@/utils/googleWorkspace')
+const googleWorkspaceService = require('@/utils/google')
 
 export async function POST(request: NextRequest) {
   try {

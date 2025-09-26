@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { savePatientData, checkPatientExists, addPackageToExistingPatient } from '@/utils/jsonPatientStorage'
-const googleWorkspaceService = require('@/utils/googleWorkspace')
+const googleWorkspaceService = require('@/utils/google')
 
 
 // Email service using Google Workspace

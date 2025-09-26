@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
-const googleWorkspaceService = require('@/utils/googleWorkspace')
+const googleWorkspaceService = require('@/utils/google')
+const bookingCache = require('@/lib/bookingCache')
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,6 +82,27 @@ export async function POST(request: NextRequest) {
     // if (!emailResult.success) {
     //   console.warn('Failed to send manual booking confirmation email:', emailResult.error)
     // }
+
+    // Add booking to local cache for immediate dashboard visibility
+    // This handles Google Calendar API sync delays (5-30 minutes)
+    const cacheBooking = {
+      bookingToken: bookingToken,
+      bookingId: calendarResult.bookingId,
+      eventId: calendarResult.eventId,
+      patientName: patientName,
+      patientEmail: patientEmail,
+      startDateTime: startDateTime.toISOString(),
+      endDateTime: endDateTime.toISOString(),
+      meetLink: calendarResult.meetLink,
+      calendarLink: calendarResult.htmlLink,
+      sessionPackage: sessionPackage,
+      totalSessions: sessionsTotal,
+      medicalData: medicalData || {},
+      notes: notes || ''
+    }
+
+    await bookingCache.addBooking(cacheBooking)
+    console.log('💾 Manual booking cached for immediate dashboard visibility')
 
     return NextResponse.json({
       success: true,
