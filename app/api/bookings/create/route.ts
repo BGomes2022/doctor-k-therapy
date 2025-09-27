@@ -2,9 +2,49 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPatientByToken } from '@/utils/jsonPatientStorage'
 const googleWorkspaceService = require('@/utils/google')
 
+const THERAPIST_TIMEZONE = 'Europe/Lisbon'
+
+// Simple timezone conversion helper
+function convertUserTimeToUTC(dateStr: string, timeStr: string, userTimezone: string): Date {
+  try {
+    // Create date string in user's timezone format
+    const dateTimeStr = `${dateStr}T${timeStr}:00`
+    const localDate = new Date(dateTimeStr)
+
+    // Get the time in user's timezone as string
+    const userTimeString = localDate.toLocaleString('en-US', {
+      timeZone: userTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+
+    // Parse back as UTC
+    const [datePart, timePart] = userTimeString.split(', ')
+    const [month, day, year] = datePart.split('/')
+    const [hour, minute] = timePart.split(':')
+
+    return new Date(Date.UTC(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      parseInt(hour),
+      parseInt(minute),
+      0
+    ))
+  } catch (error) {
+    console.error('Conversion error:', error)
+    // Fallback: treat as UTC
+    return new Date(`${dateStr}T${timeStr}:00.000Z`)
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { bookingToken, selectedDate, selectedTime } = await request.json()
+    const { bookingToken, selectedDate, selectedTime, userTimezone } = await request.json()
 
     // Validate input
     if (!bookingToken || !selectedDate || !selectedTime) {
@@ -13,6 +53,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Default to therapist timezone if user timezone not provided
+    const timezone = userTimezone || THERAPIST_TIMEZONE
 
     // Get patient info from JSON storage (not Google Calendar)
     const patientResult = await getPatientByToken(bookingToken)
@@ -59,19 +102,40 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse and validate the selected time
-    const startDateTime = new Date(`${selectedDate}T${selectedTime}:00.000Z`)
-    if (isNaN(startDateTime.getTime())) {
+    // IMPORTANT: selectedTime is in the user's timezone, we need to convert to Portugal time
+    console.log('🕐 Timezone conversion:', {
+      selectedDate,
+      selectedTime,
+      userTimezone: timezone,
+      therapistTimezone: THERAPIST_TIMEZONE
+    })
+
+    // Create date-time in user's timezone
+    const userDateTime = new Date(`${selectedDate}T${selectedTime}:00`)
+
+    if (isNaN(userDateTime.getTime())) {
       return NextResponse.json(
         { error: 'Invalid date or time format' },
         { status: 400 }
       )
     }
 
+    // Convert user's time to UTC, treating it as being in their timezone
+    const utcDateTime = convertUserTimeToUTC(selectedDate, selectedTime, timezone)
+
+    console.log('🕐 Converted times:', {
+      userLocalTime: userDateTime.toISOString(),
+      utcTime: utcDateTime.toISOString(),
+      willBeStoredInCalendarAs: utcDateTime.toISOString()
+    })
+
     // Calculate end time based on session type
     const sessionType = sessionInfo.sessionPackage?.sessionType || 'therapy'
     const blockDuration = sessionType === 'consultation' ? 30 : 60 // minutes to block
-    const endDateTime = new Date(startDateTime)
+    const endDateTime = new Date(utcDateTime)
     endDateTime.setMinutes(endDateTime.getMinutes() + blockDuration)
+
+    const startDateTime = utcDateTime
 
     // Calculate session number
     const sessionNumber = sessionInfo.sessionsUsed + 1

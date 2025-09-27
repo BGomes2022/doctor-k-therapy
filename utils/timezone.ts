@@ -1,5 +1,4 @@
 import { format } from 'date-fns'
-import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz'
 
 // Dr. K's timezone (Portugal)
 export const THERAPIST_TIMEZONE = 'Europe/Lisbon'
@@ -51,25 +50,84 @@ export function saveUserTimezone(timezone: string) {
   document.cookie = `userTimezone=${encodeURIComponent(timezone)}; max-age=${maxAge}; path=/; SameSite=Lax`
 }
 
-// Convert Portugal time to user's timezone - safe fallback
+// Convert Portugal time to user's timezone using native JavaScript
 export function convertToUserTime(portugalDateTime: Date, userTimezone: string): Date {
   try {
-    // For now, just calculate timezone offset difference
-    const portugalOffset = new Date().toLocaleString('en', {timeZone: THERAPIST_TIMEZONE})
-    const userOffset = new Date().toLocaleString('en', {timeZone: userTimezone})
+    // Use Intl API to get the time in the target timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: userTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    })
 
-    // Simple timezone conversion based on hour difference
-    if (userTimezone === 'Europe/Berlin') {
-      // Berlin is +1 hour from Portugal
-      const newDate = new Date(portugalDateTime)
-      newDate.setHours(newDate.getHours() + 1)
-      return newDate
-    }
+    const parts = formatter.formatToParts(portugalDateTime)
+    const getValue = (type: string) => parts.find(p => p.type === type)?.value || '0'
 
-    // Default: return original time for other timezones
+    return new Date(
+      parseInt(getValue('year')),
+      parseInt(getValue('month')) - 1,
+      parseInt(getValue('day')),
+      parseInt(getValue('hour')),
+      parseInt(getValue('minute')),
+      parseInt(getValue('second'))
+    )
+  } catch (error) {
+    console.error('Error converting to user time:', error)
     return portugalDateTime
-  } catch {
-    return portugalDateTime
+  }
+}
+
+// Convert user's local time to Portugal time
+export function convertUserTimeToPortugal(userDateTime: Date, userTimezone: string): Date {
+  try {
+    // Create a date string in user's timezone
+    const userTimeStr = userDateTime.toLocaleString('en-US', {
+      timeZone: userTimezone,
+      hour12: false
+    })
+
+    // Parse it back treating it as Portugal time
+    const portugalDate = new Date(userTimeStr)
+    return portugalDate
+  } catch (error) {
+    console.error('Error converting to Portugal time:', error)
+    return userDateTime
+  }
+}
+
+// Convert time string (HH:MM) from one timezone to another on a specific date
+export function convertTimeStringBetweenTimezones(
+  dateStr: string,
+  timeStr: string,
+  fromTimezone: string,
+  toTimezone: string
+): string {
+  try {
+    // Create a Date object representing the time in the source timezone
+    // We need to create it as if it's in the source timezone, then convert
+    const [hours, minutes] = timeStr.split(':').map(Number)
+
+    // Create a date object for midnight on the given date
+    const baseDate = new Date(dateStr + 'T00:00:00')
+    baseDate.setHours(hours, minutes, 0, 0)
+
+    // Now treat this Date as if it represents time in the fromTimezone
+    // Convert it to the target timezone using our existing function
+    const convertedDate = convertToUserTime(baseDate, toTimezone)
+
+    // Format as HH:MM
+    const convertedHours = convertedDate.getHours().toString().padStart(2, '0')
+    const convertedMinutes = convertedDate.getMinutes().toString().padStart(2, '0')
+
+    return `${convertedHours}:${convertedMinutes}`
+  } catch (error) {
+    console.error('Error converting time string:', error)
+    return timeStr
   }
 }
 

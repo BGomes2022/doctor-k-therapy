@@ -32,12 +32,13 @@
       "createdAt": "2025-09-25T08:24:54.523Z"
     },
     "sessionInfo": {
-      "packageId": "unknown",
-      "packageName": "Manual Entry",
+      "packageId": "test-package",
+      "packageName": "Test Package (3 Sessions)",
       "price": 0,
-      "sessionsTotal": 1,
+      "sessionsTotal": 3,
       "sessionsUsed": 0,
-      "validUntil": "2025-12-25T09:24:54.523Z"
+      "validUntil": "2025-12-25T09:24:54.523Z",
+      "sessionType": "therapy"
     },
     "status": "active",
     "hasTherapistNotes": false,

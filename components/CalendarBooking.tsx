@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, Calendar, Clock, CheckCircle, Globe, MapPin } from "lucide-react"
-import { 
-  getUserTimezone, 
-  saveUserTimezone, 
+import {
+  getUserTimezone,
+  saveUserTimezone,
   convertToUserTime,
   formatTimeForDisplay,
   getTimezoneAbbreviation,
   getFriendlyTimezoneName,
+  convertTimeStringBetweenTimezones,
   COMMON_TIMEZONES,
   THERAPIST_TIMEZONE
 } from "@/utils/timezone"
@@ -20,6 +21,8 @@ interface TimeSlot {
   time: string
   start: string
   end: string
+  originalDate?: string  // Original Lisbon date for booking
+  originalTime?: string  // Original Lisbon time for booking
 }
 
 interface AvailableDate {
@@ -49,6 +52,8 @@ export default function CalendarBooking({
 }: CalendarBookingProps) {
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
+  const [selectedOriginalDate, setSelectedOriginalDate] = useState<string>("")  // Lisbon date for booking
+  const [selectedOriginalTime, setSelectedOriginalTime] = useState<string>("")  // Lisbon time for booking
   const [availableDates, setAvailableDates] = useState<AvailableDate[]>([])
   const [currentWeekStart, setCurrentWeekStart] = useState(new Date())
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -109,12 +114,15 @@ export default function CalendarBooking({
     try {
       setLoading(true)
       setError("")
-      
+
+      // Get timezone directly to ensure it's available
+      const currentUserTz = getUserTimezone()
+
       // Calculate date range for current 2-week period
       const startDate = new Date(currentWeekStart)
       const endDate = new Date(currentWeekStart)
       endDate.setDate(endDate.getDate() + 13) // 2 weeks
-      
+
       const response = await fetch('/api/bookings/available-times', {
         method: 'POST',
         headers: {
@@ -126,15 +134,17 @@ export default function CalendarBooking({
           endDate: endDate.toISOString().split('T')[0]
         }),
       })
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch available times')
       }
-      
+
       const data = await response.json()
-      
+
       if (data.success) {
-        setAvailableDates(data.availableDates)
+        // Convert all times from Lisbon to user's timezone
+        const convertedDates = convertAvailabilityToUserTimezone(data.availableDates, currentUserTz)
+        setAvailableDates(convertedDates)
       } else {
         throw new Error(data.error || 'Unknown error')
       }
@@ -146,12 +156,126 @@ export default function CalendarBooking({
     }
   }
 
+  // Helper function to get timezone offset in minutes from UTC
+  const getTimezoneOffsetMinutes = (date: Date, timezone: string): number => {
+    try {
+      // Get time in both UTC and target timezone
+      const utcTime = date.getTime()
+
+      // Get time as if it were in the target timezone
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      })
+
+      const parts = formatter.formatToParts(date)
+      const getValue = (type: string) => parts.find(p => p.type === type)?.value || '0'
+
+      const tzDate = new Date(
+        parseInt(getValue('year')),
+        parseInt(getValue('month')) - 1,
+        parseInt(getValue('day')),
+        parseInt(getValue('hour')),
+        parseInt(getValue('minute')),
+        parseInt(getValue('second'))
+      )
+
+      // Calculate offset: positive means ahead of UTC
+      return Math.round((tzDate.getTime() - utcTime) / (1000 * 60))
+    } catch (error) {
+      console.error('Error calculating timezone offset:', error)
+      return 0
+    }
+  }
+
+  // Convert availability times from Lisbon to user's timezone
+  const convertAvailabilityToUserTimezone = (availableDates: AvailableDate[], userTz: string): AvailableDate[] => {
+    if (userTz === THERAPIST_TIMEZONE) {
+      // No conversion needed if user is in same timezone as therapist
+      return availableDates
+    }
+
+    const convertedSlots: { [date: string]: TimeSlot[] } = {}
+
+    availableDates.forEach(dateEntry => {
+      dateEntry.slots.forEach(slot => {
+        // DYNAMISCHE OFFSET-BERECHNUNG für alle Zeitzonen
+        const [hours, minutes] = slot.time.split(':').map(Number)
+
+        // Berechne Timezone-Offsets für ein Testdatum (damit Sommerzeit korrekt ist)
+        const testDate = new Date(dateEntry.date + 'T12:00:00.000Z')
+
+        // Hole UTC-Offsets in Minuten
+        const lisbonOffset = getTimezoneOffsetMinutes(testDate, THERAPIST_TIMEZONE)
+        const userOffset = getTimezoneOffsetMinutes(testDate, userTz)
+
+        // Berechne Differenz (in Minuten)
+        const offsetMinutes = userOffset - lisbonOffset
+
+        // Berechne neue Zeit
+        const totalMinutes = hours * 60 + minutes + offsetMinutes
+        const newHours = Math.floor(totalMinutes / 60)
+        const newMinutes = totalMinutes % 60
+
+        // Normalisiere auf 24h Format
+        const finalHours = ((newHours % 24) + 24) % 24
+        const finalMinutes = ((newMinutes % 60) + 60) % 60
+
+        const userTime = `${finalHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`
+
+        // For now, assume date doesn't change (we might need to handle this for extreme timezone differences)
+        const userDate = dateEntry.date
+
+        // Store the ORIGINAL Lisbon time in the slot (for booking)
+        // But display the USER time
+        if (!convertedSlots[userDate]) {
+          convertedSlots[userDate] = []
+        }
+
+        convertedSlots[userDate].push({
+          time: userTime,
+          start: slot.start,
+          end: slot.end,
+          originalDate: dateEntry.date,  // Store original for booking
+          originalTime: slot.time        // Store original for booking
+        } as any)
+      })
+    })
+
+    // Convert back to array format
+    return Object.keys(convertedSlots)
+      .sort()
+      .map(date => ({
+        date,
+        dayOfWeek: new Date(date).toLocaleDateString(language === 'it' ? 'it-IT' : 'en-US', { weekday: 'long' }),
+        slots: convertedSlots[date].sort((a, b) => a.time.localeCompare(b.time))
+      }))
+  }
+
   const handleBooking = async () => {
     if (!selectedDate || !selectedTime) return
-    
+
     try {
       setIsSubmitting(true)
-      
+
+      // Use original Lisbon time for booking (or user time if no conversion happened)
+      const bookingDate = selectedOriginalDate || selectedDate
+      const bookingTime = selectedOriginalTime || selectedTime
+
+      console.log('📤 Sending booking request:', {
+        displayedDate: selectedDate,
+        displayedTime: selectedTime,
+        bookingDate,
+        bookingTime,
+        userTimezone
+      })
+
       const response = await fetch('/api/bookings/create', {
         method: 'POST',
         headers: {
@@ -159,8 +283,9 @@ export default function CalendarBooking({
         },
         body: JSON.stringify({
           bookingToken,
-          selectedDate,
-          selectedTime
+          selectedDate: bookingDate,
+          selectedTime: bookingTime,
+          userTimezone: userTimezone || THERAPIST_TIMEZONE
         }),
       })
 
@@ -185,6 +310,8 @@ export default function CalendarBooking({
     setCurrentWeekStart(newDate)
     setSelectedDate("")
     setSelectedTime("")
+    setSelectedOriginalDate("")
+    setSelectedOriginalTime("")
   }
 
   const formatDate = (dateStr: string) => {
@@ -194,47 +321,6 @@ export default function CalendarBooking({
       month: 'long',
       day: 'numeric'
     })
-  }
-
-  const formatTime = (timeStr: string, showOriginal: boolean = false) => {
-    // If no timezone offset, return original time
-    if (timezoneOffset === 0) {
-      return timeStr
-    }
-    
-    // Parse the Portugal time (HH:MM format)
-    const [hours, minutes] = timeStr.split(':').map(Number)
-    
-    // Create a date object for today
-    const date = new Date()
-    date.setHours(hours, minutes, 0, 0)
-    
-    // Add timezone offset to get user's local time
-    date.setHours(date.getHours() + timezoneOffset)
-    
-    // Format the local time
-    const localHours = date.getHours()
-    const localMinutes = date.getMinutes()
-    const localTimeStr = `${localHours.toString().padStart(2, '0')}:${localMinutes.toString().padStart(2, '0')}`
-    
-    if (showOriginal) {
-      return `${localTimeStr} (${timeStr} ${t.originalTime})`
-    }
-    
-    return localTimeStr
-  }
-
-  const getTimezoneAbbreviation = () => {
-    try {
-      const date = new Date()
-      const timeStr = date.toLocaleTimeString('en-US', { 
-        timeZoneName: 'short',
-        timeZone: userTimezone 
-      })
-      return timeStr.split(' ').pop() || userTimezone
-    } catch {
-      return userTimezone
-    }
   }
 
   // Check if user has remaining sessions
@@ -370,18 +456,14 @@ export default function CalendarBooking({
                           onClick={() => {
                             setSelectedDate(dateInfo.date)
                             setSelectedTime(slot.time)
+                            // Store original Lisbon time for booking
+                            setSelectedOriginalDate(slot.originalDate || dateInfo.date)
+                            setSelectedOriginalTime(slot.originalTime || slot.time)
                           }}
                           className="justify-center relative flex flex-col py-2"
                         >
                           <span className="text-sm font-medium">
-                            {(() => {
-                              // Convert Portugal time to user's timezone
-                              const [hours, minutes] = slot.time.split(':').map(Number)
-                              const portugalTime = new Date(dateInfo.date)
-                              portugalTime.setHours(hours, minutes, 0, 0)
-                              const userTime = convertToUserTime(portugalTime, userTimezone)
-                              return formatTimeForDisplay(userTime, userTimezone)
-                            })()}
+                            {slot.time}
                           </span>
                         </Button>
                       ))}
@@ -400,13 +482,7 @@ export default function CalendarBooking({
                   <CheckCircle className="h-5 w-5 text-green-600" />
                   <div>
                     <p className="font-medium text-green-900">
-                      {formatDate(selectedDate)} at {(() => {
-                        const [hours, minutes] = selectedTime.split(':').map(Number)
-                        const portugalTime = new Date(selectedDate)
-                        portugalTime.setHours(hours, minutes, 0, 0)
-                        const userTime = convertToUserTime(portugalTime, userTimezone)
-                        return formatTimeForDisplay(userTime, userTimezone)
-                      })()}
+                      {formatDate(selectedDate)} at {selectedTime}
                     </p>
                     <p className="text-sm text-green-700">{t.duration}</p>
                   </div>
