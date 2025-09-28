@@ -13,6 +13,11 @@ interface MedicalFormData {
   emailConfirm: string
   phone: string
   dateOfBirth: string
+  street: string
+  city: string
+  postalCode: string
+  country: string
+  isActiveJW: string
 
   // Emergency Contact
   emergencyContactName: string
@@ -60,6 +65,11 @@ export default function MedicalForm({ language: initialLanguage, userId, onSubmi
     emailConfirm: "",
     phone: "",
     dateOfBirth: "",
+    street: "",
+    city: "",
+    postalCode: "",
+    country: "",
+    isActiveJW: "unknown",
     emergencyContactName: "",
     emergencyContactPhone: "",
     emergencyContactRelation: "",
@@ -132,7 +142,7 @@ export default function MedicalForm({ language: initialLanguage, userId, onSubmi
     return () => clearTimeout(timer)
   }, [formData.email, checkEmailExists])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     setFormData(prev => ({
       ...prev,
@@ -193,6 +203,10 @@ export default function MedicalForm({ language: initialLanguage, userId, onSubmi
     if (!formData.emailConfirm.trim()) newErrors.push("Email confirmation is required")
     if (formData.email !== formData.emailConfirm) newErrors.push("Email addresses do not match")
     if (!formData.phone.trim()) newErrors.push("Phone number is required")
+    if (!formData.street.trim()) newErrors.push("Street address is required")
+    if (!formData.city.trim()) newErrors.push("City is required")
+    if (!formData.postalCode.trim()) newErrors.push("Postal code is required")
+    if (!formData.country.trim()) newErrors.push("Country is required")
     if (!formData.emergencyContactName.trim()) newErrors.push("Emergency contact name is required")
     if (!formData.emergencyContactPhone.trim()) newErrors.push("Emergency contact phone is required")
     if (!formData.currentProblems.trim()) newErrors.push("Current problems description is required")
@@ -436,6 +450,75 @@ export default function MedicalForm({ language: initialLanguage, userId, onSubmi
                     onChange={handleChange}
                   />
                 </div>
+              </div>
+
+              <div className={`space-y-4 transition-all duration-300 ${formCollapsed ? 'opacity-30 pointer-events-none max-h-0 overflow-hidden' : 'opacity-100 max-h-none'}`}>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    {language === "en" ? "Street Address *" : "Indirizzo *"}
+                  </label>
+                  <Input
+                    name="street"
+                    value={formData.street}
+                    onChange={handleChange}
+                    required
+                    placeholder={language === "en" ? "e.g. 123 Main Street" : "es. Via Roma 123"}
+                  />
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-2">
+                      {language === "en" ? "City *" : "Città *"}
+                    </label>
+                    <Input
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      required
+                      placeholder={language === "en" ? "e.g. New York" : "es. Roma"}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-2">
+                      {language === "en" ? "Postal Code *" : "CAP *"}
+                    </label>
+                    <Input
+                      name="postalCode"
+                      value={formData.postalCode}
+                      onChange={handleChange}
+                      required
+                      placeholder={language === "en" ? "e.g. 10001" : "es. 00100"}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">
+                    {language === "en" ? "Country *" : "Paese *"}
+                  </label>
+                  <Input
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    required
+                    placeholder={language === "en" ? "e.g. United States" : "es. Italia"}
+                  />
+                </div>
+              </div>
+
+              <div className={`transition-all duration-300 ${formCollapsed ? 'opacity-30 pointer-events-none max-h-0 overflow-hidden' : 'opacity-100 max-h-none'}`}>
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  {language === "en" ? "Are you an active JW?" : "Sei un TdG attivo?"}
+                </label>
+                <select
+                  name="isActiveJW"
+                  value={formData.isActiveJW}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-stone-300 rounded-md bg-white"
+                >
+                  <option value="yes">{language === "en" ? "Yes" : "Sì"}</option>
+                  <option value="no">{language === "en" ? "No" : "No"}</option>
+                  <option value="unknown">{language === "en" ? "I don't know" : "Non lo so"}</option>
+                </select>
               </div>
             </div>
           </CardContent>

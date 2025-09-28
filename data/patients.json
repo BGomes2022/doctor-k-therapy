@@ -42,7 +42,7 @@
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-09-25T09:42:22.889Z"
+    "lastActivity": "2025-09-28T17:35:37.990Z"
   },
   {
     "id": "3d8a7c60ae5257b5c0809abe45b84c34",
@@ -87,5 +87,27 @@
     "status": "active",
     "hasTherapistNotes": false,
     "lastActivity": "2025-09-28T08:49:22.232Z"
+  },
+  {
+    "id": "76c3a57df0d607d2e1d36491acb81ddc",
+    "bookingToken": "adf9fddeea2649e1fb730b35f66d225b6de718b2483e362e112eb4c4d4ba93c2",
+    "basicInfo": {
+      "fullName": "Matteo Zumiri",
+      "email": "matteozumiri@gmail.com",
+      "phone": "964599235",
+      "preferredLanguage": "en",
+      "createdAt": "2025-09-28T13:40:28.368Z"
+    },
+    "sessionInfo": {
+      "packageId": "consultation",
+      "packageName": "Consultation",
+      "price": 30,
+      "sessionsTotal": 1,
+      "sessionsUsed": 0,
+      "validUntil": "2025-12-28T14:40:28.368Z"
+    },
+    "status": "active",
+    "hasTherapistNotes": false,
+    "lastActivity": "2025-09-28T13:40:28.368Z"
   }
 ]

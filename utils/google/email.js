@@ -1,9 +1,16 @@
-const DOCTOR_EMAIL = process.env.DOCTOR_EMAIL;
+const { DOCTOR_EMAIL } = require('./auth');
 
 // Basic email sending function
 async function sendEmail(gmail, doctorEmail, { to, subject, htmlContent, textContent }) {
+  console.log('🔴 [SENDMAIL] sendEmail called');
+  console.log('🔴 [SENDMAIL] gmail:', !!gmail, typeof gmail);
+  console.log('🔴 [SENDMAIL] doctorEmail:', doctorEmail);
+  console.log('🔴 [SENDMAIL] to:', to);
+  console.log('🔴 [SENDMAIL] subject:', subject);
+
   try {
     if (!gmail) {
+      console.error('🔴 [SENDMAIL] ERROR: Gmail service not initialized');
       throw new Error('Gmail service not initialized');
     }
 
@@ -23,6 +30,7 @@ async function sendEmail(gmail, doctorEmail, { to, subject, htmlContent, textCon
       .replace(/\//g, '_')
       .replace(/=+$/, '');
 
+    console.log('🔴 [SENDMAIL] Calling gmail.users.messages.send...');
     const result = await gmail.users.messages.send({
       userId: 'me',
       requestBody: {
@@ -30,10 +38,11 @@ async function sendEmail(gmail, doctorEmail, { to, subject, htmlContent, textCon
       },
     });
 
-    console.log('✅ Email sent successfully:', result.data.id);
+    console.log('✅ [SENDMAIL] Email sent successfully:', result.data.id);
     return { success: true, messageId: result.data.id };
   } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
+    console.error('❌ [SENDMAIL] Email sending failed:', error.message);
+    console.error('❌ [SENDMAIL] Full error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -958,7 +967,7 @@ async function sendBookingLinkEmail(gmail, doctorEmail, { patientEmail, patientN
               <div class="booking-section">
                   <h3>📅 Book Your Appointment</h3>
                   <p>Click the button below to select your preferred date and time:</p>
-                  <a href="https://doctorktherapy.com/book/${bookingToken}" class="booking-button">Book Session</a>
+                  <a href="https://doctorktherapy.com/booking/${bookingToken}" class="booking-button">Book Session</a>
                   <p style="font-size: 12px; color: #6b7280;">This link is personal and secure - please don't share it</p>
               </div>
 
@@ -1219,7 +1228,7 @@ async function sendCancellationEmailV2(gmail, doctorEmail, { patientEmail, patie
                       <li>Propose a different time that works better for you</li>
                       <li>Access your booking portal for more options</li>
                   </ul>
-                  ${bookingToken ? `<a href="https://doctorktherapy.com/book/${bookingToken}" class="book-button">View Available Times</a>` : ''}
+                  ${bookingToken ? `<a href="https://doctorktherapy.com/booking/${bookingToken}" class="book-button">View Available Times</a>` : ''}
               </div>
 
               <p>Thank you for your understanding and flexibility.</p>
@@ -1238,33 +1247,62 @@ async function sendCancellationEmailV2(gmail, doctorEmail, { patientEmail, patie
   });
 }
 
-async function sendSimpleBookingLinkEmail(gmail, { patientEmail, patientName, bookingToken, language = 'en' }) {
+async function sendSimpleBookingLinkEmail(gmail, doctorEmail, { patientEmail, patientName, bookingToken, language = 'en' }) {
+  console.log('🟢 [EMAIL.JS] sendSimpleBookingLinkEmail called');
+  console.log('🟢 [EMAIL.JS] gmail:', !!gmail);
+  console.log('🟢 [EMAIL.JS] doctorEmail:', doctorEmail);
+  console.log('🟢 [EMAIL.JS] patientEmail:', patientEmail);
+  console.log('🟢 [EMAIL.JS] patientName:', patientName);
+  console.log('🟢 [EMAIL.JS] bookingToken:', bookingToken);
+  console.log('🟢 [EMAIL.JS] language:', language);
+
   const translations = {
     en: {
       subject: 'Your Dr. K Therapy Booking Link',
       greeting: 'Hello',
       message: 'Welcome to Dr. K Therapy! Use your personal booking portal to schedule your therapy sessions.',
       buttonText: 'Book Your Sessions',
-      footer: 'If you have any questions, feel free to reach out to us.'
+      securityNote: 'This link is personal and secure - please don\'t share it',
+      importantNotes: 'Important Notes',
+      note1: 'Sessions are conducted via secure video call',
+      note2: 'Please book at least 24 hours in advance',
+      note3: 'Cancellation policy: 24 hours notice required',
+      helpText: 'If you have any questions or need assistance, please don\'t hesitate to contact me.',
+      lookingForward: 'Looking forward to working with you!',
+      regards: 'Best regards'
     },
     it: {
       subject: 'Il Tuo Link di Prenotazione Dr. K Therapy',
       greeting: 'Ciao',
       message: 'Benvenuto/a a Dr. K Therapy! Usa il tuo portale personale per prenotare le tue sessioni di terapia.',
       buttonText: 'Prenota le Tue Sessioni',
-      footer: 'Se hai domande, non esitare a contattarci.'
+      securityNote: 'Questo link è personale e sicuro - per favore non condividerlo',
+      importantNotes: 'Note Importanti',
+      note1: 'Le sessioni si svolgono tramite videochiamata sicura',
+      note2: 'Prenota con almeno 24 ore di anticipo',
+      note3: 'Politica di cancellazione: richiesto preavviso di 24 ore',
+      helpText: 'Se hai domande o hai bisogno di assistenza, non esitare a contattarmi.',
+      lookingForward: 'Non vedo l\'ora di lavorare con te!',
+      regards: 'Cordiali saluti'
     },
     de: {
       subject: 'Dein Dr. K Therapy Buchungslink',
       greeting: 'Hallo',
       message: 'Herzlich willkommen bei Dr. K Therapy! Nutze dein persönliches Buchungsportal, um deine Therapiesitzungen zu planen.',
       buttonText: 'Sitzungen Buchen',
-      footer: 'Bei Fragen stehen wir dir gerne zur Verfügung.'
+      securityNote: 'Dieser Link ist persönlich und sicher - bitte nicht teilen',
+      importantNotes: 'Wichtige Hinweise',
+      note1: 'Sitzungen finden über sichere Videokonferenz statt',
+      note2: 'Bitte mindestens 24 Stunden im Voraus buchen',
+      note3: 'Stornierungsrichtlinie: 24 Stunden Vorlaufzeit erforderlich',
+      helpText: 'Bei Fragen oder Unterstützungsbedarf zögere nicht, mich zu kontaktieren.',
+      lookingForward: 'Ich freue mich auf die Zusammenarbeit mit dir!',
+      regards: 'Viele Grüße'
     }
   }
 
   const t = translations[language] || translations.en
-  const bookingUrl = `https://doctorktherapy.com/book/${bookingToken}`
+  const bookingUrl = `https://doctorktherapy.com/booking/${bookingToken}`
 
   const htmlContent = `
   <!DOCTYPE html>
@@ -1305,6 +1343,12 @@ async function sendSimpleBookingLinkEmail(gmail, { patientEmail, patientName, bo
               font-weight: 600;
               margin: 20px 0;
           }
+          .notes-box {
+              background: #f0f9ff;
+              padding: 20px;
+              border-radius: 8px;
+              margin: 20px 0;
+          }
           .footer {
               background-color: #f3f4f6;
               padding: 20px 30px;
@@ -1324,8 +1368,21 @@ async function sendSimpleBookingLinkEmail(gmail, { patientEmail, patientName, bo
               <p style="font-size: 16px; color: #4b5563;">${t.message}</p>
               <div style="text-align: center; margin: 30px 0;">
                   <a href="${bookingUrl}" class="button">${t.buttonText}</a>
+                  <p style="font-size: 12px; color: #6b7280; margin-top: 10px;">${t.securityNote}</p>
               </div>
-              <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">${t.footer}</p>
+
+              <div class="notes-box">
+                  <h4 style="margin-top: 0; color: #0369a1;">📝 ${t.importantNotes}</h4>
+                  <ul style="text-align: left; margin: 10px 0;">
+                      <li>${t.note1}</li>
+                      <li>${t.note2}</li>
+                      <li>${t.note3}</li>
+                  </ul>
+              </div>
+
+              <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">${t.helpText}</p>
+              <p style="font-size: 14px; color: #6b7280;">${t.lookingForward}</p>
+              <p style="font-size: 14px; color: #1f2937; margin-top: 20px;">${t.regards},<br><strong>Dr. Katiuscia</strong></p>
           </div>
           <div class="footer">
               <p style="margin: 5px 0;">Dr. Katiuscia Mercogliano</p>
@@ -1336,11 +1393,20 @@ async function sendSimpleBookingLinkEmail(gmail, { patientEmail, patientName, bo
   </html>
   `
 
-  return sendEmail(gmail, DOCTOR_EMAIL, {
+  console.log('🟢 [EMAIL.JS] About to call sendEmail with:');
+  console.log('🟢 [EMAIL.JS] - gmail:', !!gmail);
+  console.log('🟢 [EMAIL.JS] - doctorEmail:', doctorEmail);
+  console.log('🟢 [EMAIL.JS] - to:', patientEmail);
+  console.log('🟢 [EMAIL.JS] - subject:', t.subject);
+
+  const emailResult = await sendEmail(gmail, doctorEmail, {
     to: patientEmail,
     subject: t.subject,
     htmlContent: htmlContent
-  })
+  });
+
+  console.log('🟢 [EMAIL.JS] sendEmail returned:', emailResult);
+  return emailResult;
 }
 
 module.exports = {

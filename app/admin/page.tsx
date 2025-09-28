@@ -88,10 +88,7 @@ export default function AdminDashboard() {
   })
   const [cancelData, setCancelData] = useState({
     reason: "",
-    message: "",
-    suggestAlternative: false,
-    alternativeDate: "",
-    alternativeTime: ""
+    message: ""
   })
   const [editingNotes, setEditingNotes] = useState<string | null>(null)
   const [notesContent, setNotesContent] = useState("")
@@ -789,10 +786,7 @@ export default function AdminDashboard() {
     setSelectedBooking(booking)
     setCancelData({
       reason: "",
-      message: "",
-      suggestAlternative: false,
-      alternativeDate: "",
-      alternativeTime: ""
+      message: ""
     })
     setShowCancelModal(true)
     setOpenMenuBookingId(null)
@@ -818,9 +812,10 @@ export default function AdminDashboard() {
       })
 
       const result = await response.json()
-      
+
       if (result.success) {
         console.log('Booking rescheduled successfully!')
+        alert('✅ Booking rescheduled successfully! Patient has been notified.')
         setShowRescheduleModal(false)
         // Add small delay to ensure cache is updated before fetching
         setTimeout(() => {
@@ -828,6 +823,7 @@ export default function AdminDashboard() {
         }, 500)
       } else {
         console.error(result.error || 'Failed to reschedule booking')
+        alert('Failed to reschedule booking: ' + (result.error || 'Unknown error'))
       }
     } catch (error) {
       console.error('Reschedule error:', error)
@@ -852,20 +848,23 @@ export default function AdminDashboard() {
           eventId: selectedBooking.bookingId,
           action: 'cancel',
           reason: cancelData.reason,
-          message: cancelData.message,
-          newDate: cancelData.suggestAlternative ? cancelData.alternativeDate : null,
-          newTime: cancelData.suggestAlternative ? cancelData.alternativeTime : null
+          message: cancelData.message
         })
       })
 
       const result = await response.json()
-      
+
       if (result.success) {
         console.log('Booking cancelled successfully!')
+        alert('✅ Booking cancelled successfully! Patient has been notified and session credited back.')
         setShowCancelModal(false)
-        fetchData()
+        // Add small delay to ensure backend processing completes
+        setTimeout(() => {
+          fetchData()
+        }, 500)
       } else {
         console.error(result.error || 'Failed to cancel booking')
+        alert('Failed to cancel booking: ' + (result.error || 'Unknown error'))
       }
     } catch (error) {
       console.error('Cancel error:', error)
@@ -946,6 +945,11 @@ export default function AdminDashboard() {
       // Contact Info
       email: data.email || '',
       phone: data.phone || '',
+      street: data.street || '',
+      city: data.city || '',
+      postalCode: data.postalCode || '',
+      country: data.country || '',
+      isActiveJW: data.isActiveJW || 'unknown',
       emergencyContactName: data.emergencyContactName || '',
       emergencyContactPhone: data.emergencyContactPhone || '',
       emergencyContactRelation: data.emergencyContactRelation || '',
@@ -1705,9 +1709,88 @@ export default function AdminDashboard() {
                                     <div className="space-y-3 text-sm">
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Age:</span>
-                                        <span className="font-medium text-stone-700">{data.dateOfBirth ? 
-                                          new Date().getFullYear() - new Date(data.dateOfBirth).getFullYear() 
+                                        <span className="font-medium text-stone-700">{data.dateOfBirth ?
+                                          new Date().getFullYear() - new Date(data.dateOfBirth).getFullYear()
                                           : 'Not provided'} years</span>
+                                      </div>
+                                      <div className="flex justify-between py-1">
+                                        <span className="text-stone-600">Street:</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm w-48"
+                                            value={editValues.street}
+                                            onChange={(e) => setEditValues({...editValues, street: e.target.value})}
+                                            placeholder="Street"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700 text-right max-w-xs">
+                                            {data.street || 'Not provided'}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex justify-between py-1">
+                                        <span className="text-stone-600">City:</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm w-48"
+                                            value={editValues.city}
+                                            onChange={(e) => setEditValues({...editValues, city: e.target.value})}
+                                            placeholder="City"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700 text-right max-w-xs">
+                                            {data.city || 'Not provided'}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex justify-between py-1">
+                                        <span className="text-stone-600">Postal Code:</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm w-48"
+                                            value={editValues.postalCode}
+                                            onChange={(e) => setEditValues({...editValues, postalCode: e.target.value})}
+                                            placeholder="Postal Code"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700 text-right max-w-xs">
+                                            {data.postalCode || 'Not provided'}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex justify-between py-1">
+                                        <span className="text-stone-600">Country:</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <input
+                                            className="border rounded px-2 py-1 text-sm w-48"
+                                            value={editValues.country}
+                                            onChange={(e) => setEditValues({...editValues, country: e.target.value})}
+                                            placeholder="Country"
+                                          />
+                                        ) : (
+                                          <span className="font-medium text-stone-700 text-right max-w-xs">
+                                            {data.country || 'Not provided'}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex justify-between py-1">
+                                        <span className="text-stone-600">Active JW:</span>
+                                        {editingPatient === patient.bookingToken ? (
+                                          <select
+                                            className="border rounded px-2 py-1 text-sm"
+                                            value={editValues.isActiveJW}
+                                            onChange={(e) => setEditValues({...editValues, isActiveJW: e.target.value})}
+                                          >
+                                            <option value="">Select...</option>
+                                            <option value="yes">Yes</option>
+                                            <option value="no">No</option>
+                                            <option value="unknown">I don't know</option>
+                                          </select>
+                                        ) : (
+                                          <span className="font-medium text-stone-700">
+                                            {data.isActiveJW === 'yes' ? 'Yes' : data.isActiveJW === 'no' ? 'No' : data.isActiveJW === 'unknown' ? "I don't know" : "I don't know"}
+                                          </span>
+                                        )}
                                       </div>
                                       <div className="flex justify-between py-1">
                                         <span className="text-stone-600">Emergency Contact:</span>
@@ -2437,53 +2520,6 @@ export default function AdminDashboard() {
                   />
                 </div>
                 
-                {/* Alternative Suggestion Section */}
-                <div className="border-t pt-4">
-                  <label className="flex items-center space-x-2 mb-3">
-                    <input
-                      type="checkbox"
-                      checked={cancelData.suggestAlternative}
-                      onChange={(e) => setCancelData(prev => ({...prev, suggestAlternative: e.target.checked}))}
-                      className="rounded"
-                    />
-                    <span className="text-sm font-medium text-stone-700">
-                      Suggest alternative appointment time
-                    </span>
-                  </label>
-                  
-                  {cancelData.suggestAlternative && (
-                    <div className="space-y-3 ml-6">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-sm font-medium text-stone-700 mb-1">
-                            Alternative Date
-                          </label>
-                          <input
-                            type="date"
-                            value={cancelData.alternativeDate}
-                            onChange={(e) => setCancelData(prev => ({...prev, alternativeDate: e.target.value}))}
-                            min={new Date().toISOString().split('T')[0]}
-                            className="w-full p-2 border border-stone-300 rounded-md text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-stone-700 mb-1">
-                            Alternative Time
-                          </label>
-                          <input
-                            type="time"
-                            value={cancelData.alternativeTime}
-                            onChange={(e) => setCancelData(prev => ({...prev, alternativeTime: e.target.value}))}
-                            className="w-full p-2 border border-stone-300 rounded-md text-sm"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-xs text-stone-500">
-                        💡 Patient will receive email with "Yes/No" buttons for the suggested time
-                      </p>
-                    </div>
-                  )}
-                </div>
                 
                 <div className="flex gap-3 pt-4">
                   <Button
