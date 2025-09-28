@@ -362,9 +362,9 @@ export default function MultiBookingPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {bookingHistory.map((booking) => (
-                  <div 
-                    key={booking.bookingId}
+                {bookingHistory.map((booking, index) => (
+                  <div
+                    key={booking.bookingId || `booking-${index}`}
                     className="flex items-center justify-between p-4 border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors"
                   >
                     <div className="flex items-center gap-4">

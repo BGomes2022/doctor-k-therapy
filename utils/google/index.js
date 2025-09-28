@@ -40,43 +40,85 @@ class GoogleWorkspaceService {
   }
 
   async sendBookingConfirmation(params) {
-    return emailFunctions.sendBookingConfirmation(this, params);
-  }
-
-  async sendVideoSessionInvitation(params) {
-    return emailFunctions.sendVideoSessionInvitation(this, params);
-  }
-
-  async sendSimpleAppointmentConfirmation(params) {
-    return emailFunctions.sendSimpleAppointmentConfirmation(this, params);
-  }
-
-  async sendCancellationEmail(params) {
-    return emailFunctions.sendCancellationEmail(this, params);
-  }
-
-  async sendAdminPackageNotification(params) {
-    return emailFunctions.sendAdminPackageNotification(this, params);
-  }
-
-  async sendAdminBookingNotification(params) {
-    return emailFunctions.sendAdminBookingNotification(this, params);
-  }
-
-  async sendBookingLinkEmail(params) {
-    return emailFunctions.sendBookingLinkEmail(this, params);
-  }
-
-  async sendSimpleBookingLinkEmail(params) {
     if (!this.gmail) {
       const authSuccess = await this.authenticate();
       if (!authSuccess) throw new Error('Authentication failed');
     }
-    return emailFunctions.sendSimpleBookingLinkEmail(this.gmail, params);
+    return emailFunctions.sendBookingConfirmation(this.gmail, DOCTOR_EMAIL, params);
+  }
+
+  async sendVideoSessionInvitation(params) {
+    if (!this.gmail) {
+      const authSuccess = await this.authenticate();
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+    return emailFunctions.sendVideoSessionInvitation(this.gmail, DOCTOR_EMAIL, params);
+  }
+
+  async sendSimpleAppointmentConfirmation(params) {
+    if (!this.gmail) {
+      const authSuccess = await this.authenticate();
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+    return emailFunctions.sendSimpleAppointmentConfirmation(this.gmail, DOCTOR_EMAIL, params);
+  }
+
+  async sendCancellationEmail(params) {
+    if (!this.gmail) {
+      const authSuccess = await this.authenticate();
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+    return emailFunctions.sendCancellationEmail(this.gmail, DOCTOR_EMAIL, params);
+  }
+
+  async sendAdminPackageNotification(params) {
+    if (!this.gmail) {
+      const authSuccess = await this.authenticate();
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+    return emailFunctions.sendAdminPackageNotification(this.gmail, DOCTOR_EMAIL, params);
+  }
+
+  async sendAdminBookingNotification(params) {
+    if (!this.gmail) {
+      const authSuccess = await this.authenticate();
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+    return emailFunctions.sendAdminBookingNotification(this.gmail, DOCTOR_EMAIL, params);
+  }
+
+  async sendBookingLinkEmail(params) {
+    if (!this.gmail) {
+      const authSuccess = await this.authenticate();
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+    return emailFunctions.sendBookingLinkEmail(this.gmail, DOCTOR_EMAIL, params);
+  }
+
+  async sendSimpleBookingLinkEmail(params) {
+    console.log('🔵 [INDEX.JS] sendSimpleBookingLinkEmail called with params:', params);
+    console.log('🔵 [INDEX.JS] DOCTOR_EMAIL:', DOCTOR_EMAIL);
+    console.log('🔵 [INDEX.JS] this.gmail exists?', !!this.gmail);
+
+    if (!this.gmail) {
+      console.log('🔵 [INDEX.JS] Gmail not initialized, authenticating...');
+      const authSuccess = await this.authenticate();
+      console.log('🔵 [INDEX.JS] Authentication result:', authSuccess);
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+
+    console.log('🔵 [INDEX.JS] Calling emailFunctions.sendSimpleBookingLinkEmail...');
+    const result = await emailFunctions.sendSimpleBookingLinkEmail(this.gmail, DOCTOR_EMAIL, params);
+    console.log('🔵 [INDEX.JS] Email result:', result);
+    return result;
   }
 
   async send24HourReminder(params) {
-    return emailFunctions.send24HourReminder(this, params);
+    if (!this.gmail) {
+      const authSuccess = await this.authenticate();
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+    return emailFunctions.send24HourReminder(this.gmail, DOCTOR_EMAIL, params);
   }
 
   async createCalendarEvent(params) {

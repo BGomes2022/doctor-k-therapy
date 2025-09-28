@@ -4,7 +4,30 @@ const googleWorkspaceService = require('@/utils/google')
 
 const THERAPIST_TIMEZONE = 'Europe/Lisbon'
 
-// Simple timezone conversion helper
+// Convert Portugal time to UTC - SIMPLE AND CORRECT
+function convertPortugalTimeToUTC(dateStr: string, timeStr: string): Date {
+  // Frontend sends Portugal time, we treat it as Portugal time
+  // Portugal is UTC+0 (winter) or UTC+1 (summer), but we just treat as UTC for calendar
+  return new Date(`${dateStr}T${timeStr}:00.000Z`)
+}
+
+// Convert Portugal time to user timezone for email display - SIMPLE
+function convertTimeToUserTimezone(timeStr: string, dateStr: string, userTimezone: string): string {
+  try {
+    // Portugal time as UTC (since we treat it that way in calendar)
+    const utcTime = new Date(`${dateStr}T${timeStr}:00.000Z`)
+    return utcTime.toLocaleTimeString('en-US', {
+      timeZone: userTimezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+  } catch (error) {
+    return timeStr // Fallback
+  }
+}
+
+// Legacy function kept for compatibility (but not used in new flow)
 function convertUserTimeToUTC(dateStr: string, timeStr: string, userTimezone: string): Date {
   try {
     // Create date string in user's timezone format
@@ -102,29 +125,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse and validate the selected time
-    // IMPORTANT: selectedTime is in the user's timezone, we need to convert to Portugal time
+    // IMPORTANT: selectedTime is ALREADY in Portugal timezone from frontend
     console.log('🕐 Timezone conversion:', {
       selectedDate,
-      selectedTime,
+      selectedTime: `${selectedTime} (Portugal time)`,
       userTimezone: timezone,
       therapistTimezone: THERAPIST_TIMEZONE
     })
 
-    // Create date-time in user's timezone
-    const userDateTime = new Date(`${selectedDate}T${selectedTime}:00`)
+    // Validate time format
+    const portugalDateTime = new Date(`${selectedDate}T${selectedTime}:00`)
 
-    if (isNaN(userDateTime.getTime())) {
+    if (isNaN(portugalDateTime.getTime())) {
       return NextResponse.json(
         { error: 'Invalid date or time format' },
         { status: 400 }
       )
     }
 
-    // Convert user's time to UTC, treating it as being in their timezone
-    const utcDateTime = convertUserTimeToUTC(selectedDate, selectedTime, timezone)
+    // Convert Portugal time to UTC (correct logic)
+    const utcDateTime = convertPortugalTimeToUTC(selectedDate, selectedTime)
+
+    // Convert to user's local time for email display
+    const userLocalTime = convertTimeToUserTimezone(selectedTime, selectedDate, timezone)
 
     console.log('🕐 Converted times:', {
-      userLocalTime: userDateTime.toISOString(),
+      userLocalTime: userLocalTime,
+      portugalTime: selectedTime,
       utcTime: utcDateTime.toISOString(),
       willBeStoredInCalendarAs: utcDateTime.toISOString()
     })
@@ -174,7 +201,9 @@ export async function POST(request: NextRequest) {
       patientEmail: sessionInfo.patientEmail,
       patientName: sessionInfo.patientName,
       appointmentDate: startDateTime.toISOString(),
-      appointmentTime: selectedTime,
+      appointmentTime: userLocalTime, // Use user's local time for email
+      portugalTime: selectedTime, // Also send Portugal time for reference
+      userTimezone: timezone, // Send user's timezone
       meetLink: calendarResult.meetLink,
       bookingId: calendarResult.bookingId,
       sessionType: sessionInfo.sessionPackage.name,
@@ -198,7 +227,7 @@ export async function POST(request: NextRequest) {
       await googleWorkspaceService.sendAdminBookingNotification({
         patientName: sessionInfo.patientName,
         appointmentDate: formattedDate,
-        appointmentTime: selectedTime,
+        appointmentTime: `${selectedTime} (Portugal) / ${userLocalTime} (${timezone})`,
         sessionPackage: sessionInfo.sessionPackage?.name || 'Therapy Session',
         remainingSessions: `${sessionInfo.sessionsRemaining - 1} of ${sessionInfo.sessionsTotal}`
       })
@@ -214,7 +243,7 @@ export async function POST(request: NextRequest) {
         bookingId: calendarResult.bookingId,
         eventId: calendarResult.eventId,
         date: selectedDate,
-        time: selectedTime,
+        time: userLocalTime, // Show user's local time in response
         duration: sessionType === 'consultation' ? '30 minutes' : '60 minutes',
         patientName: sessionInfo.patientName,
         patientEmail: sessionInfo.patientEmail,

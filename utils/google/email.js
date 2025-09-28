@@ -104,7 +104,7 @@ async function sendBulkEmails(gmail, doctorEmail, { recipients, subject, htmlCon
   }
 }
 
-async function sendBookingConfirmation(gmail, doctorEmail, { patientEmail, patientName, appointmentDate, appointmentTime, meetLink, bookingId, sessionType, sessionNumber, totalSessions }) {
+async function sendBookingConfirmation(gmail, doctorEmail, { patientEmail, patientName, appointmentDate, appointmentTime, portugalTime, userTimezone, meetLink, bookingId, sessionType, sessionNumber, totalSessions }) {
   const formattedDate = new Date(appointmentDate).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -285,8 +285,12 @@ async function sendBookingConfirmation(gmail, doctorEmail, { patientEmail, patie
                   </div>
                   <div class="detail-row">
                       <span class="detail-label">Time:</span>
-                      <span class="detail-value">${appointmentTime} (50 minutes)</span>
+                      <span class="detail-value">${appointmentTime} ${userTimezone ? `(${userTimezone.split('/')[1] || userTimezone})` : ''} (50 minutes)</span>
                   </div>
+                  ${portugalTime ? `<div class="detail-row">
+                      <span class="detail-label">Portugal Time:</span>
+                      <span class="detail-value">${portugalTime} (Therapist Time)</span>
+                  </div>` : ''}
                   <div class="detail-row">
                       <span class="detail-label">Session Type:</span>
                       <span class="detail-value">${sessionType}</span>
@@ -338,7 +342,7 @@ async function sendBookingConfirmation(gmail, doctorEmail, { patientEmail, patie
 
   return await sendEmail(gmail, doctorEmail, {
     to: patientEmail,
-    subject: `Your Therapy Session is Confirmed - ${formattedDate} at ${appointmentTime}`,
+    subject: `Your Therapy Session is Confirmed - ${formattedDate} at ${appointmentTime}${userTimezone ? ` (${userTimezone.split('/')[1] || userTimezone})` : ''}`,
     htmlContent: htmlContent
   });
 }

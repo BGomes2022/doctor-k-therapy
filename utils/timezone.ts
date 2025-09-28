@@ -22,7 +22,7 @@ export function detectUserTimezone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone
   } catch {
-    return 'Europe/Berlin' // Default fallback
+    return 'Europe/Lisbon' // Default fallback to therapist timezone
   }
 }
 

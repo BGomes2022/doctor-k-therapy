@@ -153,13 +153,9 @@ export async function POST(request: NextRequest) {
       console.log(`🔍 DEBUG - NO SLOTS FOUND!`)
     }
 
-    // TEMPORARY: Skip intelligent filtering for debugging
-    const intelligentSlots = result.slots.map(slot => ({
-      ...slot,
-      canAccommodateTherapy: true,
-      canAccommodateConsultation: true
-    }))
-    // const intelligentSlots = googleWorkspaceService.applyIntelligentSlotFiltering(result.slots)
+    // Apply intelligent filtering based on session duration
+    console.log('🧠 Applying intelligent slot filtering...')
+    const intelligentSlots = googleWorkspaceService.applyIntelligentSlotFiltering(result.slots)
 
     console.log(`🔍 After intelligent filtering: ${intelligentSlots.length} slots`)
     console.log(`🔍 DEBUG - First 3 intelligent slots:`, intelligentSlots.slice(0, 3))
