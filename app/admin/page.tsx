@@ -133,6 +133,7 @@ export default function AdminDashboard() {
     recipients: [] as string[]
   })
   const [showArchivedPatients, setShowArchivedPatients] = useState(false)
+  const [resendingBookingLink, setResendingBookingLink] = useState<string | null>(null)
 
   // Load data when user is authenticated
   useEffect(() => {
@@ -1022,6 +1023,30 @@ export default function AdminDashboard() {
     setShowEmailModal(true)
   }
 
+  const handleResendBookingLink = async (bookingToken: string) => {
+    setResendingBookingLink(bookingToken)
+    try {
+      const response = await fetch('/api/admin/resend-booking-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingToken })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert('✅ Booking link sent successfully!')
+      } else {
+        alert('❌ Failed to send booking link: ' + (result.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error resending booking link:', error)
+      alert('❌ Failed to send booking link')
+    } finally {
+      setResendingBookingLink(null)
+    }
+  }
+
   const exportBackup = async () => {
     try {
       const data = {
@@ -1616,18 +1641,37 @@ export default function AdminDashboard() {
                                       </Button>
                                     </>
                                   ) : (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        startEditPatient(patient)
-                                      }}
-                                      className="text-blue-600 hover:text-blue-700"
-                                      title="Edit patient data"
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleResendBookingLink(patient.bookingToken)
+                                        }}
+                                        className="text-green-600 hover:text-green-700"
+                                        title="Resend booking link"
+                                        disabled={resendingBookingLink === patient.bookingToken}
+                                      >
+                                        {resendingBookingLink === patient.bookingToken ? (
+                                          <div className="animate-spin h-4 w-4 border-2 border-green-600 border-t-transparent rounded-full" />
+                                        ) : (
+                                          <Send className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          startEditPatient(patient)
+                                        }}
+                                        className="text-blue-600 hover:text-blue-700"
+                                        title="Edit patient data"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    </>
                                   )}
                                   <Button
                                     size="sm"

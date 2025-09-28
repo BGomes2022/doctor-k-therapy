@@ -65,5 +65,27 @@
     "status": "active",
     "hasTherapistNotes": false,
     "lastActivity": "2025-09-26T17:15:36.226Z"
+  },
+  {
+    "id": "33ea12a3b52d8aa9c588983964f285f6",
+    "bookingToken": "538718e7be46c4e2ba1b982baac27f8a1d14ff3430a12aea33471f51be0ae1f3",
+    "basicInfo": {
+      "fullName": "Benjamin Gomes",
+      "email": "b.gomes@bg-personal.com",
+      "phone": "01773347661",
+      "preferredLanguage": "en",
+      "createdAt": "2025-09-28T08:49:22.232Z"
+    },
+    "sessionInfo": {
+      "packageId": "single-session",
+      "packageName": "Single Session",
+      "price": 100,
+      "sessionsTotal": 1,
+      "sessionsUsed": 0,
+      "validUntil": "2025-12-28T09:49:22.232Z"
+    },
+    "status": "active",
+    "hasTherapistNotes": false,
+    "lastActivity": "2025-09-28T08:49:22.232Z"
   }
 ]

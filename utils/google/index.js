@@ -67,6 +67,14 @@ class GoogleWorkspaceService {
     return emailFunctions.sendBookingLinkEmail(this, params);
   }
 
+  async sendSimpleBookingLinkEmail(params) {
+    if (!this.gmail) {
+      const authSuccess = await this.authenticate();
+      if (!authSuccess) throw new Error('Authentication failed');
+    }
+    return emailFunctions.sendSimpleBookingLinkEmail(this.gmail, params);
+  }
+
   async send24HourReminder(params) {
     return emailFunctions.send24HourReminder(this, params);
   }

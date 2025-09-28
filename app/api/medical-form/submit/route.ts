@@ -74,7 +74,8 @@ export async function POST(request: NextRequest) {
           patientName: existingCheck.patient.basicInfo?.fullName || formData.fullName,
           patientEmail: formData.email,
           sessionPackage: sessionPackage,
-          purchaseDate: new Date().toLocaleDateString('en-US')
+          purchaseDate: new Date().toLocaleDateString('en-US'),
+          doctorEmail: process.env.DOCTOR_EMAIL
         })
 
         return NextResponse.json({
@@ -134,7 +135,8 @@ export async function POST(request: NextRequest) {
         patientName: formData.fullName,
         patientEmail: formData.email,
         sessionPackage: finalSessionPackage,
-        purchaseDate: new Date().toLocaleDateString('en-US')
+        purchaseDate: new Date().toLocaleDateString('en-US'),
+        doctorEmail: process.env.DOCTOR_EMAIL
       })
 
       return NextResponse.json({

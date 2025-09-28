@@ -30,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="permissions-policy" content="geolocation=(self)" />
         <GoogleAnalytics />
       </head>
       <body className={`${dmSans.variable} ${inter.variable} font-sans antialiased`}>

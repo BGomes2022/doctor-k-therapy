@@ -1238,6 +1238,111 @@ async function sendCancellationEmailV2(gmail, doctorEmail, { patientEmail, patie
   });
 }
 
+async function sendSimpleBookingLinkEmail(gmail, { patientEmail, patientName, bookingToken, language = 'en' }) {
+  const translations = {
+    en: {
+      subject: 'Your Dr. K Therapy Booking Link',
+      greeting: 'Hello',
+      message: 'Welcome to Dr. K Therapy! Use your personal booking portal to schedule your therapy sessions.',
+      buttonText: 'Book Your Sessions',
+      footer: 'If you have any questions, feel free to reach out to us.'
+    },
+    it: {
+      subject: 'Il Tuo Link di Prenotazione Dr. K Therapy',
+      greeting: 'Ciao',
+      message: 'Benvenuto/a a Dr. K Therapy! Usa il tuo portale personale per prenotare le tue sessioni di terapia.',
+      buttonText: 'Prenota le Tue Sessioni',
+      footer: 'Se hai domande, non esitare a contattarci.'
+    },
+    de: {
+      subject: 'Dein Dr. K Therapy Buchungslink',
+      greeting: 'Hallo',
+      message: 'Herzlich willkommen bei Dr. K Therapy! Nutze dein persönliches Buchungsportal, um deine Therapiesitzungen zu planen.',
+      buttonText: 'Sitzungen Buchen',
+      footer: 'Bei Fragen stehen wir dir gerne zur Verfügung.'
+    }
+  }
+
+  const t = translations[language] || translations.en
+  const bookingUrl = `https://doctorktherapy.com/book/${bookingToken}`
+
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+      <meta charset="utf-8">
+      <style>
+          body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              color: #374151;
+              line-height: 1.6;
+              margin: 0;
+              padding: 0;
+              background-color: #f9fafb;
+          }
+          .container {
+              max-width: 600px;
+              margin: 0 auto;
+              background-color: white;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          }
+          .header {
+              background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+              color: white;
+              padding: 40px 30px;
+              text-align: center;
+          }
+          .content {
+              padding: 40px 30px;
+          }
+          .button {
+              display: inline-block;
+              padding: 15px 40px;
+              background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+              color: white;
+              text-decoration: none;
+              border-radius: 8px;
+              font-weight: 600;
+              margin: 20px 0;
+          }
+          .footer {
+              background-color: #f3f4f6;
+              padding: 20px 30px;
+              text-align: center;
+              color: #6b7280;
+              font-size: 14px;
+          }
+      </style>
+  </head>
+  <body>
+      <div class="container">
+          <div class="header">
+              <h1 style="margin: 0; font-size: 28px;">Dr. K Therapy</h1>
+          </div>
+          <div class="content">
+              <p style="font-size: 18px; color: #1f2937;"><strong>${t.greeting} ${patientName},</strong></p>
+              <p style="font-size: 16px; color: #4b5563;">${t.message}</p>
+              <div style="text-align: center; margin: 30px 0;">
+                  <a href="${bookingUrl}" class="button">${t.buttonText}</a>
+              </div>
+              <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">${t.footer}</p>
+          </div>
+          <div class="footer">
+              <p style="margin: 5px 0;">Dr. Katiuscia Mercogliano</p>
+              <p style="margin: 5px 0;">Professional Therapist</p>
+          </div>
+      </div>
+  </body>
+  </html>
+  `
+
+  return sendEmail(gmail, DOCTOR_EMAIL, {
+    to: patientEmail,
+    subject: t.subject,
+    htmlContent: htmlContent
+  })
+}
+
 module.exports = {
   sendEmail,
   sendBulkEmails,
@@ -1249,5 +1354,6 @@ module.exports = {
   sendAdminBookingNotification,
   sendBookingLinkEmail,
   send24HourReminder,
-  sendCancellationEmailV2
+  sendCancellationEmailV2,
+  sendSimpleBookingLinkEmail
 };
