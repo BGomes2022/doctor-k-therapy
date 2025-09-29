@@ -33,10 +33,10 @@
     },
     "sessionInfo": {
       "packageId": "test-package",
-      "packageName": "Test Package (3 Sessions)",
+      "packageName": "Test Package (4 Sessions)",
       "price": 0,
-      "sessionsTotal": 3,
-      "sessionsUsed": 0,
+      "sessionsTotal": 4,
+      "sessionsUsed": 1,
       "validUntil": "2025-12-25T09:24:54.523Z",
       "sessionType": "therapy"
     },
@@ -49,7 +49,7 @@
     "bookingToken": "1977233f8ff4b4c19837813dc95f4b0af88be0f3df12a5001d0a54c0ee6f50b4",
     "basicInfo": {
       "fullName": "Vicki Grey",
-      "email": "vlg48@hotmail.com",
+      "email": "b.gomes@talentmatch24.de",
       "phone": "5107576820",
       "preferredLanguage": "en",
       "createdAt": "2025-09-26T17:15:36.226Z"
@@ -64,7 +64,7 @@
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-09-26T17:15:36.226Z"
+    "lastActivity": "2025-09-29T09:15:49.400Z"
   },
   {
     "id": "33ea12a3b52d8aa9c588983964f285f6",
@@ -108,6 +108,6 @@
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-09-28T13:40:28.368Z"
+    "lastActivity": "2025-09-29T09:19:46.511Z"
   }
 ]
