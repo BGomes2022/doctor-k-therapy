@@ -4,24 +4,59 @@ const googleWorkspaceService = require('@/utils/google')
 
 const THERAPIST_TIMEZONE = 'Europe/Lisbon'
 
-// Convert Portugal time to UTC - SIMPLE AND CORRECT
+// Convert Portugal time to UTC - CORRECT FOR PORTUGAL TIMEZONE
 function convertPortugalTimeToUTC(dateStr: string, timeStr: string): Date {
-  // Frontend sends Portugal time, we treat it as Portugal time
-  // Portugal is UTC+0 (winter) or UTC+1 (summer), but we just treat as UTC for calendar
-  return new Date(`${dateStr}T${timeStr}:00.000Z`)
+  // Portugal is UTC+1 (summer), so 13:00 Portugal = 12:00 UTC
+  const [hours, minutes] = timeStr.split(':').map(Number)
+  const utcHours = hours - 1 // Portugal Sommerzeit: UTC+1
+
+  // Handle hour underflow
+  const finalHours = utcHours < 0 ? 23 + utcHours : utcHours
+  const dateAdjust = utcHours < 0 ? -1 : 0
+
+  const baseDate = new Date(`${dateStr}T00:00:00.000Z`)
+  baseDate.setUTCDate(baseDate.getUTCDate() + dateAdjust)
+  baseDate.setUTCHours(finalHours, minutes, 0, 0)
+
+  return baseDate
 }
 
-// Convert Portugal time to user timezone for email display - SIMPLE
+// Helper function from frontend - calculate timezone offset in minutes
+function getTimezoneOffsetMinutes(date: Date, timezone: string): number {
+  try {
+    const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000)
+    const tzTime = new Date(date.toLocaleString('en-US', { timeZone: timezone }))
+    return Math.round((tzTime.getTime() - utcTime) / (1000 * 60))
+  } catch (error) {
+    return 0
+  }
+}
+
+// Convert Portugal time to user timezone - USING FRONTEND LOGIC
 function convertTimeToUserTimezone(timeStr: string, dateStr: string, userTimezone: string): string {
   try {
-    // Portugal time as UTC (since we treat it that way in calendar)
-    const utcTime = new Date(`${dateStr}T${timeStr}:00.000Z`)
-    return utcTime.toLocaleTimeString('en-US', {
-      timeZone: userTimezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    })
+    // Same logic as frontend CalendarBooking.tsx
+    const [hours, minutes] = timeStr.split(':').map(Number)
+
+    // Calculate timezone offsets for the date
+    const testDate = new Date(dateStr + 'T12:00:00.000Z')
+
+    const lisbonOffset = getTimezoneOffsetMinutes(testDate, THERAPIST_TIMEZONE)
+    const userOffset = getTimezoneOffsetMinutes(testDate, userTimezone)
+
+    // Calculate difference in minutes
+    const offsetMinutes = userOffset - lisbonOffset
+
+    // Calculate new time
+    const totalMinutes = hours * 60 + minutes + offsetMinutes
+    const newHours = Math.floor(totalMinutes / 60)
+    const newMinutes = totalMinutes % 60
+
+    // Normalize to 24h format
+    const finalHours = ((newHours % 24) + 24) % 24
+    const finalMinutes = ((newMinutes % 60) + 60) % 60
+
+    return `${finalHours.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`
   } catch (error) {
     return timeStr // Fallback
   }

@@ -1332,7 +1332,10 @@ export default function AdminDashboard() {
                         <div>
                           <p className="text-sm text-stone-600">Upcoming Sessions</p>
                           <p className="text-2xl font-semibold text-stone-800">
-                            {bookings.filter(b => new Date(b.date) >= new Date()).length}
+                            {bookings.filter(b => {
+                              const today = new Date().toISOString().split('T')[0]
+                              return b.date >= today
+                            }).length}
                           </p>
                         </div>
                         <span className="text-2xl">🕐</span>
@@ -1367,8 +1370,10 @@ export default function AdminDashboard() {
                             
                             // Generate Google Meet link for each booking
                             const meetLink = `https://meet.google.com/new`
-                            const bookingDate = new Date(booking.date)
-                            const isUpcoming = bookingDate >= new Date()
+                            // Mark as past only from next day onwards (simple and practical)
+                            const bookingDate = booking.date
+                            const today = new Date().toISOString().split('T')[0]
+                            const isUpcoming = bookingDate >= today
                             
                             return (
                               <tr key={index} className="border-b hover:bg-stone-50">
@@ -2080,11 +2085,15 @@ export default function AdminDashboard() {
                                               })} at {booking.time}
                                             </div>
                                             <span className={`px-1.5 py-0.5 rounded text-xs ${
-                                              new Date(booking.date) >= new Date() 
-                                                ? 'bg-green-100 text-green-700' 
-                                                : 'bg-gray-100 text-gray-700'
+                                              (() => {
+                                                const today = new Date().toISOString().split('T')[0]
+                                                return booking.date >= today
+                                              })() ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
                                             }`}>
-                                              {new Date(booking.date) >= new Date() ? 'Upcoming' : 'Completed'}
+                                              {(() => {
+                                                const today = new Date().toISOString().split('T')[0]
+                                                return booking.date >= today
+                                              })() ? 'Upcoming' : 'Completed'}
                                             </span>
                                           </div>
                                         ))
@@ -2378,7 +2387,10 @@ export default function AdminDashboard() {
                             <div className="flex gap-6">
                               <div className="text-center">
                                 <div className="text-2xl font-bold text-blue-800">
-                                  {bookings.filter(b => b.date >= new Date().toISOString().split('T')[0]).length}
+                                  {bookings.filter(b => {
+                                    const today = new Date().toISOString().split('T')[0]
+                                    return b.date >= today
+                                  }).length}
                                 </div>
                                 <div className="text-xs text-blue-600">Upcoming Sessions</div>
                               </div>
