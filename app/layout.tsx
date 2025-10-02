@@ -5,6 +5,7 @@ import "./globals.css"
 import CookieBanner from "@/components/CookieBanner"
 import GoogleAnalytics from "@/components/GoogleAnalytics"
 import { Providers } from "./providers"
+import { Toaster } from "@/components/ui/toaster"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -37,6 +38,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <CookieBanner />
+          <Toaster />
         </Providers>
       </body>
     </html>

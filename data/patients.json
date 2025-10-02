@@ -11,15 +11,17 @@
     },
     "sessionInfo": {
       "packageId": "single-session",
-      "packageName": "Single Session",
+      "packageName": "Single Session (1 Session)",
       "price": 100,
       "sessionsTotal": 1,
-      "sessionsUsed": 0,
+      "sessionsUsed": 1,
       "validUntil": "2025-12-25T04:04:29.560Z"
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-09-25T03:04:29.560Z"
+    "lastActivity": "2025-09-29T10:00:22.674Z",
+    "lastUpdated": "2025-09-29T10:00:22.674Z",
+    "updatedBy": "Admin"
   },
   {
     "id": "86ed140ade2458e017abfba710fb383e",
@@ -33,16 +35,18 @@
     },
     "sessionInfo": {
       "packageId": "test-package",
-      "packageName": "Test Package (4 Sessions)",
+      "packageName": "Test Package (6 Sessions)",
       "price": 0,
-      "sessionsTotal": 4,
-      "sessionsUsed": 1,
+      "sessionsTotal": 6,
+      "sessionsUsed": 2,
       "validUntil": "2025-12-25T09:24:54.523Z",
       "sessionType": "therapy"
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-09-29T00:03:44.886Z"
+    "lastActivity": "2025-09-29T09:56:33.431Z",
+    "lastUpdated": "2025-09-29T09:56:33.431Z",
+    "updatedBy": "Admin"
   },
   {
     "id": "3d8a7c60ae5257b5c0809abe45b84c34",
@@ -56,15 +60,17 @@
     },
     "sessionInfo": {
       "packageId": "consultation",
-      "packageName": "Consultation",
+      "packageName": "Consultation (1 Session)",
       "price": 30,
       "sessionsTotal": 1,
-      "sessionsUsed": 0,
+      "sessionsUsed": 1,
       "validUntil": "2025-12-26T18:15:36.226Z"
     },
     "status": "active",
     "hasTherapistNotes": false,
-    "lastActivity": "2025-09-29T09:15:49.400Z"
+    "lastActivity": "2025-09-29T10:31:39.485Z",
+    "lastUpdated": "2025-09-29T10:31:39.485Z",
+    "updatedBy": "Admin"
   },
   {
     "id": "33ea12a3b52d8aa9c588983964f285f6",

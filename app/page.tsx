@@ -253,6 +253,7 @@ export default function TherapyWebsite() {
         terms: "Terms of Service",
         disclaimer: "Disclaimer",
         copyright: "All rights reserved.",
+        security: "Security: We never request payment details or personal information via email. Please only provide such information through our secure booking system.",
       },
     },
     it: {
@@ -451,6 +452,7 @@ export default function TherapyWebsite() {
         terms: "Termini di Servizio",
         disclaimer: "Disclaimer",
         copyright: "Tutti i diritti riservati.",
+        security: "Sicurezza: Non richiediamo mai dettagli di pagamento o informazioni personali via email. Si prega di fornire tali informazioni solo attraverso il nostro sistema di prenotazione sicuro.",
       },
     },
   }
@@ -1219,6 +1221,13 @@ export default function TherapyWebsite() {
               </Link>
             </div>
             <div className="text-center text-stone-500">
+              {/* Security Notice */}
+              <div className="mb-4 p-3 bg-stone-50 rounded-lg border border-stone-200">
+                <p className="text-xs font-light flex items-center justify-center gap-2">
+                  <span>🔒</span>
+                  <span>{currentContent.footer.security}</span>
+                </p>
+              </div>
               <p className="font-light">
                 &copy; {new Date().getFullYear()} Dr. Katiuscia Mercogliano. {currentContent.footer.copyright}
               </p>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, Clock, Stethoscope, User, Mail, Phone, ChevronDown, ChevronUp, Heart, Brain, AlertCircle, Settings, Video, Plus, X, Check, AlertTriangle, ChevronLeft, ChevronRight, Trash2, MoreVertical, Edit, Trash, Archive, Send, Download, CheckSquare } from "lucide-react"
+import { SessionManagement } from "@/components/SessionManagement"
 
 interface BookingData {
   bookingId: string
@@ -25,6 +26,11 @@ interface PatientData {
   archived?: boolean
   lastUpdated?: string
   updatedBy?: string
+  sessionsTotal?: number
+  sessionsUsed?: number
+  sessionsRemaining?: number
+  patientName?: string
+  patientEmail?: string
 }
 
 export default function AdminDashboard() {
@@ -98,6 +104,11 @@ export default function AdminDashboard() {
     email: "",
     phone: "",
     dateOfBirth: "",
+    street: "",
+    city: "",
+    postalCode: "",
+    country: "",
+    isActiveJW: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
     emergencyContactRelation: "",
@@ -1156,6 +1167,11 @@ export default function AdminDashboard() {
           email: "",
           phone: "",
           dateOfBirth: "",
+          street: "",
+          city: "",
+          postalCode: "",
+          country: "",
+          isActiveJW: "",
           emergencyContactName: "",
           emergencyContactPhone: "",
           emergencyContactRelation: "",
@@ -1387,9 +1403,9 @@ export default function AdminDashboard() {
                                 </td>
                                 <td className="p-2">{booking.time}</td>
                                 <td className="p-2">
-                                  {medicalData?.fullName || 'Unknown'}
+                                  {patient?.medicalFormData?.fullName || patient?.patientName || booking.patientName || 'Unknown'}
                                   <div className="text-xs text-stone-500">
-                                    {medicalData?.email || ''}
+                                    {patient?.medicalFormData?.email || patient?.patientEmail || booking.patientEmail || ''}
                                   </div>
                                 </td>
                                 <td className="p-2">
@@ -1704,6 +1720,18 @@ export default function AdminDashboard() {
                             
                             {isExpanded && (
                               <div className="px-4 pb-4 border-t bg-gradient-to-br from-cream-50 via-white to-stone-50">
+                                {/* Session Management Component */}
+                                <div className="mt-4 mb-4">
+                                  <SessionManagement
+                                    patient={{
+                                      ...patient,
+                                      patientName: data.fullName || data.name || 'Unknown',
+                                      patientEmail: data.email || patient.patientEmail || 'Unknown'
+                                    }}
+                                    onUpdate={fetchData}
+                                  />
+                                </div>
+
                                 <div className="grid md:grid-cols-2 gap-4 mt-4 auto-rows-fr">
                                   {/* Personal Info */}
                                   <div className="bg-gradient-to-br from-cream-100/50 to-stone-100/30 rounded-lg p-3 border border-cream-200 shadow-sm">
@@ -2606,6 +2634,65 @@ export default function AdminDashboard() {
                         value={newPatientData.dateOfBirth}
                         onChange={(e) => setNewPatientData(prev => ({...prev, dateOfBirth: e.target.value}))}
                       />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address Information */}
+                <div>
+                  <h4 className="text-lg font-medium text-stone-800 mb-4">Address Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-stone-700 mb-2">Street</label>
+                      <Input
+                        value={newPatientData.street}
+                        onChange={(e) => setNewPatientData(prev => ({...prev, street: e.target.value}))}
+                        placeholder="Street address"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-stone-700 mb-2">City</label>
+                      <Input
+                        value={newPatientData.city}
+                        onChange={(e) => setNewPatientData(prev => ({...prev, city: e.target.value}))}
+                        placeholder="City"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-stone-700 mb-2">Postal Code</label>
+                      <Input
+                        value={newPatientData.postalCode}
+                        onChange={(e) => setNewPatientData(prev => ({...prev, postalCode: e.target.value}))}
+                        placeholder="Postal code"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-stone-700 mb-2">Country</label>
+                      <Input
+                        value={newPatientData.country}
+                        onChange={(e) => setNewPatientData(prev => ({...prev, country: e.target.value}))}
+                        placeholder="Country"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* JW Status */}
+                <div>
+                  <h4 className="text-lg font-medium text-stone-800 mb-4">Additional Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-stone-700 mb-2">Are you an active Jehovah's Witness?</label>
+                      <select
+                        className="w-full p-3 border border-stone-300 rounded-md"
+                        value={newPatientData.isActiveJW}
+                        onChange={(e) => setNewPatientData(prev => ({...prev, isActiveJW: e.target.value}))}
+                      >
+                        <option value="">Please select...</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="unknown">I don't know</option>
+                      </select>
                     </div>
                   </div>
                 </div>
