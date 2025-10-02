@@ -285,7 +285,7 @@ export default function ExistingPatientsPage() {
           <p className="text-stone-500 font-light italic text-sm mb-6">
             "{language === "en" ? "See, feel and change for a better life." : "Vedi, senti e cambia per una vita di significato."}"
           </p>
-          <p className="text-stone-500 font-light">
+          <p className="text-stone-500 font-light" suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Dr. Katiuscia Mercogliano. {language === "en" ? "All rights reserved." : "Tutti i diritti riservati."}
           </p>
         </div>

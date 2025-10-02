@@ -83,10 +83,14 @@ export default function CookieBanner() {
     marketing: false,
     functional: false
   })
+  const [isClient, setIsClient] = useState(false)
 
   const texts = translations[language]
 
   useEffect(() => {
+    // Mark as client-side to prevent hydration mismatch
+    setIsClient(true)
+
     // Detect browser language
     const browserLang = navigator.language.toLowerCase()
     if (browserLang.startsWith('it')) {
@@ -161,7 +165,8 @@ export default function CookieBanner() {
     }))
   }
 
-  if (!showBanner) return null
+  // Prevent hydration mismatch by only rendering after client-side mount
+  if (!isClient || !showBanner) return null
 
   return (
     <>

@@ -1228,7 +1228,7 @@ export default function TherapyWebsite() {
                   <span>{currentContent.footer.security}</span>
                 </p>
               </div>
-              <p className="font-light">
+              <p className="font-light" suppressHydrationWarning>
                 &copy; {new Date().getFullYear()} Dr. Katiuscia Mercogliano. {currentContent.footer.copyright}
               </p>
             </div>
