@@ -1,0 +1,9 @@
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Block existing patients page from all search engines
+Disallow: /existing-patients
+
+# Sitemap
+Sitemap: https://doctorktherapy.com/sitemap.xml
